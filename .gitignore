@@ -1,0 +1,11 @@
+web-ext-artifacts
+build
+dist
+*.zip
+*~
+\#*\#
+GSYMS
+GPATH
+GRTAGS
+GTAGS
+GTAGS-files

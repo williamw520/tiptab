@@ -1,0 +1,15 @@
+{
+    "extensionName": {
+        "message": "Tip Tab"
+    },
+    "extensionDescription": {
+        "message": "Manage and navigate the browser tabs."
+    },
+    "browser_action_title": {
+        "message": "Tip Tab"
+    },
+
+    "dummy" : {
+        "message": "Dummy message"
+    }
+}
