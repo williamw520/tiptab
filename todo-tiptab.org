@@ -1,0 +1,25 @@
+
+* Feature Todo
+** DONE Display tab thumbnails in grid.
+** DONE All tab pane.
+** DONE Tabs by window pane.
+** DONE Tabs by container pane.
+** DONE Search on tab titles and url to limit the tabs displayed.
+** DONE Zoom in on mouse hovering on thumbnail.
+** DONE Save and restore UI states.
+** DONE Keyboard shortcut for invoking extension.
+** TODO Display nested tab thumbnails within windows in grid.
+** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
+** TODO Window list bar at the bottom.  Selected on limit the shown tabs to the window.
+
+
+* Documentation
+** Permissions
+*** tabs
+    The "tabs" permission is required in order to get and set the url, title, and favIconUrl properties of a tab.
+*** storage
+    The "storage" permission is required to store and load the session data.
+*** cookies
+    The "cookies" permission is required to get and set the "cookieStoreId" property in a tab.
+*** contextualIdentities
+    The "contextualIdentities" permission is required to get the container information.

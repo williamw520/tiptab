@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<!--
+  Tip Tab
+  A Firefox extension to manage and navigate the browser tabs.
+  Copyright (C) 2018  William Wong (williamw520@gmail.com)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="/pkg/spectre/spectre.css" />
+    <link rel="stylesheet" type="text/css" href="/pkg/spectre/spectre-icons.css" />
+    <link rel="stylesheet" type="text/css" href="/pkg/spectre/spectre-exp.css" />
+    <link rel="stylesheet" type="text/css" href="/styles/tiptab_ui.css"/>
+    <link rel="icon" type="image/png" href="/icons/app-128.png" />
+    <title>Tip Tab</title>
+  </head>
+
+  <body>
+
+    <div class="v-container">
+
+      <header class="container header-bar">
+        <div class="navbar" id="global-cmds">
+          <div class="navbar-section nowrap" style="flex-grow: 0;">
+            <div class="flex-centered logo-box">
+              <div class="logo logo-sm" title="Tip Tab"><img src="/icons/app-256.png"></div>
+            </div>
+          </div>
+
+          <div class="navbar-section nowrap mr-5" style="flex-grow: 1; margin-left: 2px;">
+            <div class="input-group">
+              <div id="searchbar" class="has-icon-left"  style="flex-grow: 1;">
+                <i class="form-icon icon icon-search" style="z-index: 9;"></i>
+                <input type="search" class="tab-search form-input input-sm rounded" placeholder="search tabs" >
+              </div>
+            </div>
+          </div>
+
+          <div class="navbar-section nowrap" style="flex-grow: 0;">
+          </div>
+
+        </div><!-- navbar -->
+      </header>
+
+      <!-- middle content -->
+      <div class="h-container">
+        <div class="mid-pane">
+          
+          <div id="empty-content" class="empty hidden" style="height:100%;">
+            <div class="empty-icon"> <i class="icon icon-message"></i> </div>
+            <p class="empty-title h5">No tab data.</p>
+            <p class="empty-subtitle">Click on Refresh to try again.</p>
+          </div><!-- empty-content -->
+          
+          <div id="main-content" class="container main-content hidden">
+          </div><!-- main-content -->
+
+          <div id="overlay-content" class="container hidden">
+            <div class="overlay-pane"> <img class="overlay-img"> </div>
+          </div><!-- overlay-content -->
+          
+        </div><!-- mid-pane -->
+        
+        <div class="left-pane">
+          <div class="v-btn-bar fixed">
+            <button class="cmd-all-tabs     btn btn-cmd-i mt-4 mb-2" title="all tabs"><i class="icon icon-apps"></i></button>
+            <button class="cmd-by-window    btn btn-cmd-i mt-2 mb-2" title="tabs by window"><i class="icon icon-menu"></i></button>
+            <button class="cmd-by-container btn btn-cmd-i mt-2 mb-2" title="tabs by container "><i class="icon icon-bookmark"></i></button>
+            <!-- <button class="cmd-all-windows  btn btn-cmd-i mt-2 mb-4" title="windows"><i class="icon icon-photo"></i></button> -->
+          </div>
+        </div>
+        <!-- <div class="right-pane"> -->
+        </div>
+
+      </div><!-- h-container -->
+
+      <footer id="footer">&nbsp;</footer>
+
+    </div><!-- v-container -->
+
+    <div id="single-input-dlg" class="modal">
+      <div class="modal-container" role="document">
+        <div class="modal-header">
+          <a href="javascript:void(0)" class="btn btn-clear float-right  modal-close" aria-label="Close"></a>
+          <div class="modal-title h5 dlg-title">Title</div>
+        </div>
+        <div class="modal-body" style="border-top:1px dotted gray; border-bottom:1px dotted gray; padding-bottom:1.8rem;">
+          <div class="content">
+            <form>
+              <div class="form-group">
+                <label class="form-label input-label" for="input-value">Label</label>
+                <input class="form-input input-value" type="text">
+                <input class="input-context" type="hidden">
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary modal-submit">Submit</button>
+          <button class="btn btn-link    modal-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="text-input2-dlg" class="modal">
+      <div class="modal-container" role="document">
+        <div class="modal-header">
+          <a href="javascript:void(0)" class="btn btn-clear float-right  modal-close" aria-label="Close"></a>
+          <div class="modal-title h5 dlg-title">Title</div>
+        </div>
+        <div class="modal-body" style="border-top:1px dotted gray; border-bottom:1px dotted gray; padding-bottom:1.5rem;">
+          <div class="content">
+            <form>
+              <div class="form-group">
+                <label      class="form-label  input-label1" for="input-value1">Label1</label>
+                <textarea   class="form-input  input-value1" rows="5"></textarea>
+                <label      class="form-label  input-label2 mt-2" for="input-value2">Label2</label>
+                <textarea   class="form-input  input-value2" rows="5"></textarea>
+                <input      class="input-context" type="hidden">
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary  modal-submit">Submit</button>
+          <button class="btn btn-link     modal-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="confirm-dlg" class="modal modal-sm ">
+      <div class="modal-container" role="document">
+        <div class="modal-header">
+          <a href="javascript:void(0)" class="btn btn-clear float-right  modal-close" aria-label="Close"></a>
+          <div class="modal-title h5  dlg-title">Confirmation</div>
+        </div>
+        <div class="modal-body" style="border-top:1px dotted gray; border-bottom:1px dotted gray; padding-bottom:1.8rem;">
+          <div class="content">
+            <form>
+              <div class="form-group">
+                <div class="text-msg" >(message)</div>
+                <input class="input-context" type="hidden">
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-link   modal-cancel">Cancel</button>
+          <button class="btn btn-link   modal-submit mw4">Ok</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="text-dlg" class="modal">
+      <div class="modal-container" role="document">
+        <div class="modal-header">
+          <a href="javascript:void(0)" class="btn btn-clear float-right  modal-close" aria-label="Close"></a>
+          <div class="modal-title h5 dlg-title"></div>
+        </div>
+        <div class="modal-body" style="border-top:1px dotted gray; border-bottom:1px dotted gray; padding-bottom:1.8rem;">
+          <div class="content">
+            <form>
+              <div class="flex-centered">
+                <div class="text-msg" >(message)</div>
+                <input class="input-context" type="hidden">
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-link modal-submit mw4">Ok</button>
+        </div>
+      </div>
+    </div>
+    
+    <script src="/pkg/jquery/jquery-3.2.1.js"></script>
+    <script src="/pkg/moment-with-locales.js"></script>
+    <script src="/scripts/util/logger.js"></script>
+    <script src="/scripts/util/appcfg.js"></script>
+    <script src="/scripts/util/app.js"></script>
+    <script src="/scripts/util/dlg.js"></script>
+    <script src="/scripts/tiptab_ui.js"></script>
+  </body>
+
+</html>

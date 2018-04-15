@@ -1,0 +1,59 @@
+{
+    "manifest_version": 2,
+    "name": "__MSG_extensionName__",
+    "description": "__MSG_extensionDescription__",    
+    "version": "1.0",
+    "author": "William Wong",
+    "default_locale": "en",
+
+    "applications": {
+        "gecko": {
+            "id": "tiptab@william.wong",
+            "strict_min_version": "59.0"
+        }
+    },
+
+    "icons": {
+        "32": "icons/app-32.png",
+        "64": "icons/app-64.png",
+        "128": "icons/app-128.png",
+        "256": "icons/app-256.png"
+    },
+
+    "permissions": [
+        "*://*/*",
+        "<all_urls>",
+        "tabs",
+        "storage",
+        "cookies",
+        "contextualIdentities"
+    ],
+
+    "background": {
+        "scripts": [
+            "/pkg/moment-with-locales.js",
+            "scripts/util/logger.js",
+            "scripts/util/appcfg.js",
+            "scripts/util/app.js",
+            "scripts/tiptab_daemon.js"
+        ]
+    },
+
+    "browser_action": {
+        "browser_style": false,
+        "default_icon": "icons/app-256.png",
+        "default_title": "__MSG_browser_action_title__"
+    },
+    "commands": {
+        "_execute_browser_action": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+F"
+            }
+        }
+    },
+    
+
+    "web_accessible_resources": [
+    ]
+
+}
