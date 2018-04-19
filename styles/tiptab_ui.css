@@ -444,7 +444,7 @@ a.disabled {
 .window-tab-lane {
     margin:             1rem;
     background:         #fbfbfb;
-    border:             0.02rem solid #b0b0b0;
+    border:             var(--img-border) solid #b0b0b0;
     box-shadow:         1px 1px #dddddd;
 }
 .window-tab-title {
@@ -458,7 +458,7 @@ a.disabled {
 .container-tab-lane {
     margin:             1rem;
     background:         #fbfbfb;
-    border:             0.02rem solid #b0b0b0;
+    border:             var(--img-border) solid #b0b0b0;
     box-shadow:         2px 1px #dddddd;
 }
 .container-tab-title {
@@ -545,3 +545,14 @@ a.disabled {
     pointer-events:     none;       /* no mouse event so that the elements behind it will get the mouseover event. */
 }
 
+.drop-hover-border {
+    box-sizing:         border-box;
+    border:             var(--img-border) solid #ff9900;
+    box-shadow:         1px 1px #dddddd;
+    opacity:            0.8;
+}
+.drop-hover-opacity .tab-thumbnail {
+    box-sizing:         border-box;
+    border:             var(--img-border) solid #ff9900;
+    box-shadow:         1px 1px #dddddd;
+}
