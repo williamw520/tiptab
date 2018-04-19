@@ -1,5 +1,14 @@
 
 * Feature Todo
+** TODO Display nested tab thumbnails within windows in grid.
+** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
+** TODO Window list bar at the bottom.  Selected on limit the shown tabs to the window.
+
+* Release 1.1 Feature
+** DONE Drag and drop a tab to re-arrange its position within a window.
+** DONE Drag and drop a tab across windows to move it to a different window.
+
+* Release 1.0 Feature
 ** DONE Display tab thumbnails in grid.
 ** DONE All tab pane.
 ** DONE Tabs by window pane.
@@ -8,9 +17,6 @@
 ** DONE Zoom in on mouse hovering on thumbnail.
 ** DONE Save and restore UI states.
 ** DONE Keyboard shortcut for invoking extension.
-** TODO Display nested tab thumbnails within windows in grid.
-** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
-** TODO Window list bar at the bottom.  Selected on limit the shown tabs to the window.
 
 
 * Documentation
