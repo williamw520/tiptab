@@ -54,6 +54,7 @@
     let tabsByWindow = {};
     let tabsByContainer = {};
     let windows = [];
+    let windowsById = {};
     let containers = [];
     let thumbnailsMap = {};         // keyed by tab id
     let thumbnailsPending = {};     // keyed by tab id
@@ -62,6 +63,7 @@
     let mouseStopped = true;
     let mouseMovedTimer;
     let popupDelayTimer;
+    let dragging = false;           // 
     let tiptabWindowActive = true;  // setupDOMListeners() is called too late after the window has been in focus.  Assume window is active on startup.
 
     // Firefox's Content Security Policy for WebExtensions prohibits running any Javascript in the html page.
@@ -169,14 +171,16 @@
         });
 
         // Events on tab thumbnails
-        $("#main-content").on("click", ".tab-thumbnail", function(){
-            let $tabbox = $(this).closest(".tab-box");
-            activateTab($tabbox.data("wid"), $tabbox.data("tid"));
+        $("#main-content").on("click", ".tab-thumbnail", function(e){
+            e.preventDefault();     // Stop the click event.
+            let tid = $(this).closest(".tab-box").data("tid");
+            activateTab(tabsById[tid].windowId, tid);
+            return false;
         });
         $("#main-content").on("click", "a.tab-url", function(e){
             e.preventDefault();     // Stop the click event.
-            let $tabbox = $(this).closest(".tab-box");
-            activateTab($tabbox.data("wid"), $tabbox.data("tid"));
+            let tid = $(this).closest(".tab-box").data("tid");
+            activateTab(tabsById[tid].windowId, tid);
             return false;
         });
 
@@ -206,7 +210,7 @@
 
         // Mouse events on thumbnail
         $("#main-content").on("mouseover", ".tab-img", function(){
-            if (!tiptabWindowActive)
+            if (!tiptabWindowActive || dragging)
                 return;
             // mouse enters the thumbnail image; starts the overlay popup sequence.
             let $tabbox = $(this).closest(".tab-box");
@@ -228,8 +232,8 @@
                 mouseStopped = true;
             }, NOT_MOVING_THRESHOLD);
 
-            if (!thumbnailFocusTid)
-                return;     // no focused thumbnail.
+            if (!thumbnailFocusTid || dragging)
+                return;     // no focused thumbnail or drag-n-drop in progress
 
             // Every mousemove hides the overlay-img.
             $(".overlay-img").css("opacity", "0.0");
@@ -302,7 +306,10 @@
                 let winIds = [...uniqueWinIds];
                 tabsByWindow = winIds.reduce( (map, wid) => { map[wid] = []; return map }, {} );
                 allTabs.forEach( tab => tabsByWindow[tab.windowId].push(tab) );
-                return Promise.all( winIds.map( wid => browser.windows.get(wid) ) ).then( windowArray => windows = windowArray );
+                return Promise.all( winIds.map( wid => browser.windows.get(wid) ) ).then( windowArray => {
+                    windows = windowArray;
+                    windowsById = windows.reduce( (map, win) => { map[win.id] = win; return map }, {});
+                });
             })
             .then( () => {
                 let uniqueContainerId = new Set(allTabs.map( t => t.cookieStoreId ));
@@ -355,6 +362,7 @@
             $("#main-content" ).removeClass("hidden");
             
             effectiveTids.forEach( tid => refreshThumbnail(tid, forceRefresh) );
+            setupDragAndDrop(effectiveTids);
         } else {
             let $mainContent = $("#main-content");
             $mainContent.html("");
@@ -377,7 +385,7 @@
             return renderAllWindows(effectiveTids);
         }
         return "Unknown displayType " + uiState.displayType;
-    };
+    }
     
     function renderContentTitle(title) {
         return `
@@ -413,12 +421,16 @@
     }
 
     function renderWindowTabs(w, effectiveTids) {
-        return `
-            <div class="window-tab-lane" data-wid="${w.id}">
-              <div class="window-tab-title" title="Window">${w.title}</div>
-              ${ renderTabBoxes(tabsByWindow[w.id].filter( t => effectiveTids.has(t.id) ), true) }
-            </div>
-        `;
+        let tabs = tabsByWindow[w.id].filter( t => effectiveTids.has(t.id) );
+        if (tabs && tabs.length > 0) {
+            return `
+                <div class="window-tab-lane" data-wid="${w.id}">
+                  <div class="window-tab-title" title="Window">${w.title}</div>
+                  ${ renderTabBoxes(tabs, "dummy-w-" + w.id) }
+                </div>
+            `;
+        }
+        return "";
     }
 
     function renderContainerTabs(c, effectiveTids) {
@@ -428,23 +440,23 @@
                 <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${c.cookieStoreId == 'firefox-default' ? 'hidden' : 'visible'};">
                 <span>${c.name}</span>
               </div>
-              ${ renderTabBoxes(tabsByContainer[c.cookieStoreId].filter( t => effectiveTids.has(t.id) ), true) }
+              ${ renderTabBoxes(tabsByContainer[c.cookieStoreId].filter( t => effectiveTids.has(t.id) ), "dummy-c-" + c.cookieStoreId) }
             </div>
         `;
     }
 
-    function renderTabBoxes(tabs, paddingBox) {
+    function renderTabBoxes(tabs, dummyId) {
         return `
             <div class="tab-grid">
               ${ tabs.map( tab => renderTabBox(tab) ).join("\n") }
-              ${ paddingBox && tabs.length == 0 ? renderDummyTabBox() : "" }
+              ${ renderDummyTabBox(dummyId) }
             </div>
         `;
     }
 
     function renderTabBox(tab) {
         return `
-            <div class="tab-box" id="tid-${tab.id}"  data-wid="${tab.windowId}" data-tid="${tab.id}" >
+            <div class="tab-box" id="tid-${tab.id}" data-tid="${tab.id}" >
               <div class="tab-thumbnail"><img class="tab-img"></div>
               <div class="tab-subtitle">
                 <a class="tab-url" href="${tab.url}" title="${tab.title}">${tab.title}</a>
@@ -453,9 +465,11 @@
         `;
     }
 
-    function renderDummyTabBox() {
+    function renderDummyTabBox(dummyId) {
+        if (true || !dummyId)
+            return "";
         return `
-            <div class="tab-box" style="pointer-events: none; visibility: hidden;">
+            <div class="tab-box" id="${dummyId}" style="pointer-events: none; visibility: hidden;">
               <div class="tab-thumbnail"><img class="tab-img"></div>
               <div class="tab-subtitle">
                 <a class="tab-url" href="#">&nbsp;</a>
@@ -490,6 +504,89 @@
         $("#tid-" + tid + " img").attr("src", thumbnail);
     }
 
+
+    function setupDragAndDrop(effectiveTids) {
+        switch (uiState.displayType) {
+        case DT_ALL_TABS:
+            break;
+        case DT_BY_WINDOW:
+            effectiveTids.forEach( tid => {
+                let $elem = $("#tid-" + tid).draggable({
+                    revert: "invalid",
+                    zIndex: 100,
+                    start:  function(event, ui){
+                        dragging = true;
+                        markOverlayShown(tid);
+                    },
+                    stop:   function(event, ui){
+                        dragging = false;
+                        markOverlayShown(tid);
+                    },
+                })
+            });
+            
+            effectiveTids.forEach( tid => $("#tid-" + tid).droppable({
+                accept:     ".tab-box",
+                classes:    { "ui-droppable-hover": "drop-hover-opacity" },
+                greedy:     true,
+                drop:       function(event, ui){
+                    let srcTab  = tabsById[ui.draggable.data("tid")];
+                    let destTab = tabsById[$(this).data("tid")];
+                    let srcTabs = tabsByWindow[srcTab.windowId];
+                    let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
+                    let destTabs= tabsByWindow[destTab.windowId];
+                    let destIdx = destTabs.findIndex( tab => tab.id == destTab.id );
+                    if (srcTab.windowId == destTab.windowId && srcIdx < destIdx) {
+                        destIdx--;      // Src and dest tabs on the same window, and src tab is before dest, decrement index by 1 since the src tab will be removed.
+                    }
+                    log.info("tab destIdx " + destIdx);
+                    browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx})
+                        .then( () => {
+                            let destTabs = tabsByWindow[destTab.windowId];
+                            let srcIdx = srcTabs.findIndex( t => t.id == srcTab.id );
+                            srcTabs.splice(srcIdx, srcIdx);
+                            destTabs.splice(destIdx, 0, srcTab);
+                            srcTab.windowId = destTab.windowId;
+
+                            let $srcTabBox  = $("#tid-" + srcTab.id);
+                            let $destTabBox = $("#tid-" + destTab.id);
+                            $srcTabBox.detach();
+                            $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
+                            $srcTabBox.insertBefore($destTabBox);
+                            markOverlayShown(srcTab.id);
+                        });
+                },
+            }) );
+            $(".window-tab-lane").droppable({
+                accept:     ".tab-box",
+                classes:    { "ui-droppable-hover": "drop-hover-border" },
+                drop:       function(event, ui){
+                    let srcTab  = tabsById[ui.draggable.data("tid")];
+                    let destWid = $(this).data("wid");  // data-wid on .window-tab-lane.
+                    browser.tabs.move(srcTab.id, { windowId: destWid, index: -1})
+                        .then( () => {
+                            let srcTabs = tabsByWindow[srcTab.windowId];
+                            let destTabs= tabsByWindow[destWid];
+                            let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
+                            srcTabs.splice(srcIdx, srcIdx);
+                            destTabs.push(srcTab);
+                            srcTab.windowId = destWid;
+                            let $tabBox = $("#tid-" + srcTab.id);
+                            $tabBox.detach();
+                            $tabBox.css({"top":"", "left":""});     // reset dragging position.
+                            $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                            markOverlayShown(srcTab.id);
+                        });
+                },
+            });
+            break;
+        case DT_BY_CONTAINER:
+            break;
+        case DT_ALL_WINDOWS:
+            break;
+        }
+    }
+
     function pSendCmd(msg) {
         lastCmd = msg.cmd;
         return browser.runtime.sendMessage(msg);    // response is returned in .then( response => ... ).
@@ -498,7 +595,7 @@
     function activateTab(wid, tid) {
         tiptabWindowActive = false;
         closeOverlay();
-        browser.windows.update(wid, {focused: true}).then( () => browser.tabs.update(tid, { active: true }) );
+        browser.tabs.update(tid, { active: true }).then( () => browser.windows.update(wid, {focused: true}) );
     }
 
     function activateWindow(wid) {
@@ -510,6 +607,13 @@
     function closeOverlay() {
         thumbnailFocusTid = null;
         overlayShownTid = null;
+        $("#overlay-content").addClass("hidden");
+        $(".overlay-img").attr("src", "#");
+    }
+
+    function markOverlayShown(focusTid) {
+        thumbnailFocusTid = null;
+        overlayShownTid = focusTid;
         $("#overlay-content").addClass("hidden");
         $(".overlay-img").attr("src", "#");
     }
