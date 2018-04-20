@@ -47,6 +47,7 @@
     const NORMAL_ANIMATION_MS = 500;
 
     // Module variables.
+    let PIXELS_PER_REM = 16;
     let uiState = {};
     let lastCmd = "";
     let allTabs = [];
@@ -59,19 +60,29 @@
     let thumbnailsMap = {};         // keyed by tab id
     let thumbnailsPending = {};     // keyed by tab id
     let thumbnailFocusTid = null;
+    let enableOverlay = true;
     let overlayShownTid = null;
     let mouseStopped = true;
     let mouseMovedTimer;
     let popupDelayTimer;
-    let dragging = false;           // 
+    let enableOverlayDelayTimer;
     let tiptabWindowActive = true;  // setupDOMListeners() is called too late after the window has been in focus.  Assume window is active on startup.
 
+    function getFontSizeRem() {
+        return parseFloat(getComputedStyle(document.documentElement).fontSize);
+    }
+
+    function remToPixels(rem) {
+        return rem * PIXELS_PER_REM;
+    }
+    
     // Firefox's Content Security Policy for WebExtensions prohibits running any Javascript in the html page.
     // Wait for the page loaded event before doing anything.
     window.addEventListener("load", function(event){
         // Page is loaded and ready for the script to run.
         Promise.resolve()
             .then(() => log.info("Page initialization starts") )
+            .then(() => PIXELS_PER_REM = getFontSizeRem() )
             .then(() => generateUILayout())
             .then(() => pLoadUiState())
             .then(() => refreshStaticUI())      // for the UI that need to be set up before setting up DOM listeners.
@@ -210,7 +221,7 @@
 
         // Mouse events on thumbnail
         $("#main-content").on("mouseover", ".tab-img", function(){
-            if (!tiptabWindowActive || dragging)
+            if (!tiptabWindowActive || !enableOverlay)
                 return;
             // mouse enters the thumbnail image; starts the overlay popup sequence.
             let $tabbox = $(this).closest(".tab-box");
@@ -232,8 +243,8 @@
                 mouseStopped = true;
             }, NOT_MOVING_THRESHOLD);
 
-            if (!thumbnailFocusTid || dragging)
-                return;     // no focused thumbnail or drag-n-drop in progress
+            if (!thumbnailFocusTid || !enableOverlay)
+                return;     // no focused thumbnail or overlay not enabled
 
             // Every mousemove hides the overlay-img.
             $(".overlay-img").css("opacity", "0.0");
@@ -246,7 +257,7 @@
             let animationMS = mouseStopped ? NORMAL_ANIMATION_MS : FASTER_ANIMATION_MS;
             clearTimeout(popupDelayTimer);
             popupDelayTimer = setTimeout(function(){
-                if (thumbnailFocusTid) {
+                if (thumbnailFocusTid && enableOverlay) {
                     let $tabImg     = $("#tid-" + thumbnailFocusTid + " img");
                     let $overlayImg = $(".overlay-img");
                     let animateTo   = {
@@ -504,60 +515,6 @@
         $("#tid-" + tid + " img").attr("src", thumbnail);
     }
 
-    function addDropEndZone() {
-        windows.forEach( w => {
-            let $winLane    = $(".window-tab-lane[data-wid='" + w.id + "']");
-            let $lastTab = $winLane.find(".tab-thumbnail").last();
-            if ($lastTab.length == 0)
-                return;
-            let winOffset   = $winLane.offset();
-            let lastOffset  = $lastTab.offset();
-            let $endzone    = $("<div class='drop-end-zone' data-wid='" + w.id + "'></div>");
-            $endzone.offset({ top: lastOffset.top, left: lastOffset.left + $lastTab.outerWidth() + 2 });
-            $endzone.height($lastTab.outerHeight());
-            $endzone.width(winOffset.left + $winLane.width() - (lastOffset.left + $lastTab.outerWidth()) - 3);
-            $winLane.append($endzone);
-        });
-    }
-
-    function removeDropEndZone() {
-        $(".drop-end-zone").remove();
-    }
-
-    function addDropEndZoneDroppable() {
-        $(".window-tab-lane .drop-end-zone").droppable({
-            accept:     ".tab-box",
-            classes:    { "ui-droppable-hover": "drop-hover-border" },
-            drop:       function(event, ui){
-                let srcTab  = tabsById[ui.draggable.data("tid")];
-                let destWid = $(this).data("wid");  // data-wid on .drop-end-zone.
-                browser.tabs.move(srcTab.id, { windowId: destWid, index: -1})
-                    .then( () => {
-                        // Move the tab to the end of the window lane.
-                        let srcTabs = tabsByWindow[srcTab.windowId];
-                        let destTabs= tabsByWindow[destWid];
-                        let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
-                        srcTabs.splice(srcIdx, srcIdx);
-                        destTabs.push(srcTab);
-                        srcTab.windowId = destWid;
-                        let $tabBox = $("#tid-" + srcTab.id);
-                        $tabBox.css({ top:"", left:"" });   // reset the dragging position
-                        if (!$tabBox.is(":last-child")) {
-                            let tabWidth = $tabBox.width();
-                            $tabBox.css({ visibility: "hidden" }).animate({ width: 0 }, 200, function(){
-                                $tabBox.detach();
-                                $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                                $tabBox.width(tabWidth).css({ visibility: "visible" });
-                            });
-                        } else {
-                            $tabBox.detach();
-                            $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                        }
-                        markOverlayShown(srcTab.id);
-                    });
-            },
-        });
-    }    
 
     function setupDragAndDrop(effectiveTids) {
         switch (uiState.displayType) {
@@ -566,56 +523,37 @@
         case DT_BY_WINDOW:
             effectiveTids.forEach( tid => {
                 let $elem = $("#tid-" + tid).draggable({
-                    revert: "invalid",
-                    zIndex: 100,
-                    start:  function(event, ui){
-                        dragging = true;
-                        markOverlayShown(tid);
-                        addDropEndZone();
-                        addDropEndZoneDroppable();
+                    revert:         "invalid",
+                    revertDuration: 200,
+                    zIndex:         100,
+                    start:          function(event, ui){
+                        enableOverlay = false;
+                        addDropTabZones(tid, effectiveTids);
+                        addDropEndZones();
+                        $(".drop-tab-zone").droppable({
+                            accept:     ".tab-box",
+                            classes:    { "ui-droppable-hover": "drop-hover-gap" },
+                            drop:       function(event, ui){ dropInFrontOfTab($(this), ui) },
+                        });
+                        $(".drop-end-zone").droppable({
+                            accept:     ".tab-box",
+                            classes:    { "ui-droppable-hover": "drop-hover-endzone" },
+                            drop:       function(event, ui){ dropAtTheEnd($(this), ui) },
+                        });
                     },
-                    stop:   function(event, ui){
-                        dragging = false;
-                        markOverlayShown(tid);
-                        removeDropEndZone();
+                    stop:           function(event, ui){
+                        delayEnableOverlay(4000);
+                        removeDropTabZones();
+                        removeDropEndZones();
                     },
                 })
             });
 
             effectiveTids.forEach( tid => $("#tid-" + tid).droppable({
                 accept:     ".tab-box",
-                classes:    { "ui-droppable-hover": "drop-hover-opacity" },
+                classes:    { "ui-droppable-hover": "drop-hover-border" },
                 greedy:     true,
-                drop:       function(event, ui){
-                    // Move the tab in front of the destination tab.
-                    let srcTab  = tabsById[ui.draggable.data("tid")];
-                    let destTab = tabsById[$(this).data("tid")];
-                    let srcTabs = tabsByWindow[srcTab.windowId];
-                    let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
-                    let destTabs= tabsByWindow[destTab.windowId];
-                    let destIdx = destTabs.findIndex( tab => tab.id == destTab.id );
-                    if (srcTab.windowId == destTab.windowId && srcIdx < destIdx) {
-                        destIdx--;      // Src and dest tabs on the same window, and src tab is before dest, decrement index by 1 since the src tab will be removed.
-                    }
-                    log.info("tab destIdx " + destIdx);
-                    browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx})
-                        .then( () => {
-                            let destTabs = tabsByWindow[destTab.windowId];
-                            let srcIdx = srcTabs.findIndex( t => t.id == srcTab.id );
-                            srcTabs.splice(srcIdx, srcIdx);
-                            destTabs.splice(destIdx, 0, srcTab);
-                            srcTab.windowId = destTab.windowId;
-
-                            let $srcTabBox  = $("#tid-" + srcTab.id);
-                            let $destTabBox = $("#tid-" + destTab.id);
-                            $srcTabBox.detach();
-                            $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
-                            $srcTabBox.insertBefore($destTabBox);
-                            markOverlayShown(srcTab.id);
-                            let toWidth = $srcTabBox.width();
-                            $srcTabBox.width(0).animate({ width: toWidth }, 300);
-                        });
-                },
+                drop:       function(event, ui){ dropInFrontOfTab($(this), ui) },
             }) );
 
             break;
@@ -626,9 +564,107 @@
         }
     }
 
+    function addDropTabZones(draggedTid, effectiveTids) {
+        let tabBoxMargin = remToPixels(0.6);        // see .tab-box style
+        effectiveTids.forEach( tid => {
+            if (draggedTid == tid)
+                return;
+            let $thumbnail  = $("#tid-" + tid + " .tab-thumbnail");
+            let $tabzone    = $("<div class='drop-tab-zone' data-tid='" + tid + "'></div>");
+            $tabzone.offset({ top: $thumbnail.offset().top,  left: $thumbnail.offset().left - tabBoxMargin*2 + 1 })
+                .width( tabBoxMargin*2 - 2 )
+                .height( $thumbnail.outerHeight() );
+            $(document.body).append($tabzone);
+        });
+    }
+
+    function removeDropTabZones() {
+        $(".drop-tab-zone").remove();
+    }
+
+    function addDropEndZones() {
+        windows.forEach( w => {
+            let $winLane    = $(".window-tab-lane[data-wid='" + w.id + "']");
+            let $lastTab    = $winLane.find(".tab-thumbnail").last();
+            if ($lastTab.length == 0)
+                return;
+            let $endzone    = $("<div class='drop-end-zone' data-wid='" + w.id + "'></div>");
+            let endzoneLeft = $lastTab.offset().left + $lastTab.outerWidth() + 2;
+            $endzone.offset({ top: $lastTab.offset().top,  left: endzoneLeft })
+                .width($winLane.offset().left + $winLane.width() - endzoneLeft - 1)
+                .height($lastTab.outerHeight());
+            $(document.body).append($endzone);
+        });
+    }
+
+    function removeDropEndZones() {
+        $(".drop-end-zone").remove();
+    }
+
+    function dropInFrontOfTab($dest, ui) {
+        // Move the tab in front of the destination tab.
+        let srcTab  = tabsById[ui.draggable.data("tid")];
+        let destTab = tabsById[$dest.data("tid")];
+        let srcTabs = tabsByWindow[srcTab.windowId];
+        let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
+        let destTabs= tabsByWindow[destTab.windowId];
+        let destIdx = destTabs.findIndex( tab => tab.id == destTab.id );
+        if (srcTab.windowId == destTab.windowId && srcIdx < destIdx) {
+            destIdx--;      // Src and dest tabs on the same window, and src tab is before dest, decrement index by 1 since the src tab will be removed.
+        }
+        browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx})
+            .then( () => {
+                let destTabs = tabsByWindow[destTab.windowId];
+                let srcIdx = srcTabs.findIndex( t => t.id == srcTab.id );
+                srcTabs.splice(srcIdx, srcIdx);
+                destTabs.splice(destIdx, 0, srcTab);
+                srcTab.windowId = destTab.windowId;
+
+                let $srcTabBox  = $("#tid-" + srcTab.id);
+                let $destTabBox = $("#tid-" + destTab.id);
+                $srcTabBox.detach();
+                $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
+                $srcTabBox.insertBefore($destTabBox);
+                let toWidth = $srcTabBox.width();
+                $srcTabBox.width(0).animate({ width: toWidth }, 300);
+            });
+    }                                   
+
+    function dropAtTheEnd($dest, ui) {
+        let srcTab  = tabsById[ui.draggable.data("tid")];
+        let destWid = $dest.data("wid");  // data-wid on .drop-end-zone.
+        browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( () => {
+            // Move the tab to the end of the window lane.
+            let srcTabs = tabsByWindow[srcTab.windowId];
+            let destTabs= tabsByWindow[destWid];
+            let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
+            srcTabs.splice(srcIdx, srcIdx);
+            destTabs.push(srcTab);
+            srcTab.windowId = destWid;
+            let $tabBox = $("#tid-" + srcTab.id);
+            $tabBox.css({ top:"", left:"" });   // reset the dragging position
+            if (!$tabBox.is(":last-child")) {
+                let tabWidth = $tabBox.width();
+                $tabBox.css({ visibility: "hidden" }).animate({ width: 0 }, 200, function(){
+                    $tabBox.detach();
+                    $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                    $tabBox.width(tabWidth).css({ visibility: "visible" });
+                });
+            } else {
+                $tabBox.detach();
+                $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+            }
+        });
+    }
+                                   
     function pSendCmd(msg) {
         lastCmd = msg.cmd;
         return browser.runtime.sendMessage(msg);    // response is returned in .then( response => ... ).
+    }
+
+    function dim($elem) {
+        let offset = $elem.offset();
+        return { top: offset.top, left: offset.left, width: $elem.width(), height: $elem.height };
     }
 
     function activateTab(wid, tid) {
@@ -650,11 +686,11 @@
         $(".overlay-img").attr("src", "#");
     }
 
-    function markOverlayShown(focusTid) {
-        thumbnailFocusTid = null;
-        overlayShownTid = focusTid;
-        $("#overlay-content").addClass("hidden");
-        $(".overlay-img").attr("src", "#");
+    function delayEnableOverlay(delayMS) {
+        clearTimeout(enableOverlayDelayTimer);
+        enableOverlayDelayTimer = setTimeout(function(){
+            enableOverlay = true;
+        }, delayMS);
     }
 
     log.info("module loaded");

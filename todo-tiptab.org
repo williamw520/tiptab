@@ -1,6 +1,7 @@
 
 * Feature TODO
 ** DONE Establish window lane end zone to drop tab at the end of window lane.
+** DONE Establish gap zone between tabs to drop in front of the tab.
 ** TODO Display nested tab thumbnails within windows in grid.
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
 ** TODO Window list bar at the bottom.  Selected on limit the shown tabs to the window.
