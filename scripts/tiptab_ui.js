@@ -504,6 +504,60 @@
         $("#tid-" + tid + " img").attr("src", thumbnail);
     }
 
+    function addDropEndZone() {
+        windows.forEach( w => {
+            let $winLane    = $(".window-tab-lane[data-wid='" + w.id + "']");
+            let $lastTab = $winLane.find(".tab-thumbnail").last();
+            if ($lastTab.length == 0)
+                return;
+            let winOffset   = $winLane.offset();
+            let lastOffset  = $lastTab.offset();
+            let $endzone    = $("<div class='drop-end-zone' data-wid='" + w.id + "'></div>");
+            $endzone.offset({ top: lastOffset.top, left: lastOffset.left + $lastTab.outerWidth() + 2 });
+            $endzone.height($lastTab.outerHeight());
+            $endzone.width(winOffset.left + $winLane.width() - (lastOffset.left + $lastTab.outerWidth()) - 3);
+            $winLane.append($endzone);
+        });
+    }
+
+    function removeDropEndZone() {
+        $(".drop-end-zone").remove();
+    }
+
+    function addDropEndZoneDroppable() {
+        $(".window-tab-lane .drop-end-zone").droppable({
+            accept:     ".tab-box",
+            classes:    { "ui-droppable-hover": "drop-hover-border" },
+            drop:       function(event, ui){
+                let srcTab  = tabsById[ui.draggable.data("tid")];
+                let destWid = $(this).data("wid");  // data-wid on .drop-end-zone.
+                browser.tabs.move(srcTab.id, { windowId: destWid, index: -1})
+                    .then( () => {
+                        // Move the tab to the end of the window lane.
+                        let srcTabs = tabsByWindow[srcTab.windowId];
+                        let destTabs= tabsByWindow[destWid];
+                        let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
+                        srcTabs.splice(srcIdx, srcIdx);
+                        destTabs.push(srcTab);
+                        srcTab.windowId = destWid;
+                        let $tabBox = $("#tid-" + srcTab.id);
+                        $tabBox.css({ top:"", left:"" });   // reset the dragging position
+                        if (!$tabBox.is(":last-child")) {
+                            let tabWidth = $tabBox.width();
+                            $tabBox.css({ visibility: "hidden" }).animate({ width: 0 }, 200, function(){
+                                $tabBox.detach();
+                                $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                                $tabBox.width(tabWidth).css({ visibility: "visible" });
+                            });
+                        } else {
+                            $tabBox.detach();
+                            $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                        }
+                        markOverlayShown(srcTab.id);
+                    });
+            },
+        });
+    }    
 
     function setupDragAndDrop(effectiveTids) {
         switch (uiState.displayType) {
@@ -517,19 +571,23 @@
                     start:  function(event, ui){
                         dragging = true;
                         markOverlayShown(tid);
+                        addDropEndZone();
+                        addDropEndZoneDroppable();
                     },
                     stop:   function(event, ui){
                         dragging = false;
                         markOverlayShown(tid);
+                        removeDropEndZone();
                     },
                 })
             });
-            
+
             effectiveTids.forEach( tid => $("#tid-" + tid).droppable({
                 accept:     ".tab-box",
                 classes:    { "ui-droppable-hover": "drop-hover-opacity" },
                 greedy:     true,
                 drop:       function(event, ui){
+                    // Move the tab in front of the destination tab.
                     let srcTab  = tabsById[ui.draggable.data("tid")];
                     let destTab = tabsById[$(this).data("tid")];
                     let srcTabs = tabsByWindow[srcTab.windowId];
@@ -554,31 +612,12 @@
                             $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
                             $srcTabBox.insertBefore($destTabBox);
                             markOverlayShown(srcTab.id);
+                            let toWidth = $srcTabBox.width();
+                            $srcTabBox.width(0).animate({ width: toWidth }, 300);
                         });
                 },
             }) );
-            $(".window-tab-lane").droppable({
-                accept:     ".tab-box",
-                classes:    { "ui-droppable-hover": "drop-hover-border" },
-                drop:       function(event, ui){
-                    let srcTab  = tabsById[ui.draggable.data("tid")];
-                    let destWid = $(this).data("wid");  // data-wid on .window-tab-lane.
-                    browser.tabs.move(srcTab.id, { windowId: destWid, index: -1})
-                        .then( () => {
-                            let srcTabs = tabsByWindow[srcTab.windowId];
-                            let destTabs= tabsByWindow[destWid];
-                            let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
-                            srcTabs.splice(srcIdx, srcIdx);
-                            destTabs.push(srcTab);
-                            srcTab.windowId = destWid;
-                            let $tabBox = $("#tid-" + srcTab.id);
-                            $tabBox.detach();
-                            $tabBox.css({"top":"", "left":""});     // reset dragging position.
-                            $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                            markOverlayShown(srcTab.id);
-                        });
-                },
-            });
+
             break;
         case DT_BY_CONTAINER:
             break;

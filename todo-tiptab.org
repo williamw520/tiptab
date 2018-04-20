@@ -1,5 +1,6 @@
 
-* Feature Todo
+* Feature TODO
+** DONE Establish window lane end zone to drop tab at the end of window lane.
 ** TODO Display nested tab thumbnails within windows in grid.
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
 ** TODO Window list bar at the bottom.  Selected on limit the shown tabs to the window.
@@ -29,3 +30,24 @@
     The "cookies" permission is required to get and set the "cookieStoreId" property in a tab.
 *** contextualIdentities
     The "contextualIdentities" permission is required to get the container information.
+
+* 3rd Party Libraries
+** JQuery
+   version 3.2.1
+   https://code.jquery.com/jquery/
+   https://code.jquery.com/jquery-3.2.1.js
+** JQuery UI
+   version 1.12.1
+   https://jqueryui.com/download/all/
+   https://jqueryui.com/resources/download/jquery-ui-1.12.1.zip
+** Moment
+   https://momentjs.com/
+   https://momentjs.com/downloads/moment-with-locales.js
+** Spark-MD5
+   https://github.com/satazor/js-spark-md5
+   https://github.com/satazor/js-spark-md5/blob/master/spark-md5.js, git revision hash 9cb624f on 02/12/2017.
+** Spectre CSS
+   version 0.4.7
+   https://github.com/picturepan2/spectre/releases
+   https://github.com/picturepan2/spectre/archive/v0.4.7.zip, from the directory spectre-0.4.7/docs/dist/.
+
