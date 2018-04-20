@@ -545,14 +545,18 @@ a.disabled {
     pointer-events:     none;       /* no mouse event so that the elements behind it will get the mouseover event. */
 }
 
+.drop-end-zone {
+    position:           absolute;
+    box-sizing:         border-box;
+    border:             var(--img-border) dotted #ff9900;
+}
 .drop-hover-border {
     box-sizing:         border-box;
-    border:             var(--img-border) solid #ff9900;
+    border:             var(--img-border) solid #ff9900 !important;
     box-shadow:         1px 1px #dddddd;
-    opacity:            0.8;
 }
 .drop-hover-opacity .tab-thumbnail {
     box-sizing:         border-box;
-    border:             var(--img-border) solid #ff9900;
+    border:             var(--img-border) solid #ff9900 !important;
     box-shadow:         1px 1px #dddddd;
 }
