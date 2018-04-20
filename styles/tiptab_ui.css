@@ -25,6 +25,8 @@
     --img-height:           4.5rem;
     --img-border:           0.075rem;
 
+    --tab-gap:              0.6rem;
+
     --left-pane-width:      2.2rem;
     --right-pane-width:     8.0rem;
     --logo-box-width:       var(--left-pane-width);
@@ -32,6 +34,8 @@
 
     --overlay-h-pad:        1.0rem;
     --overlay-v-pad:        0.25rem;
+
+    --px1:                  1px;
 }
 
 html {
@@ -449,8 +453,8 @@ a.disabled {
 }
 .window-tab-title {
     font-size:          85%;
-    margin-bottom:      0.6rem;
-    padding:            0.0rem 0.6rem 0.0rem 0.6rem;
+    margin-bottom:      var(--tab-gap);
+    padding:            0.0rem var(--tab-gap) 0.0rem var(--tab-gap);
     background:         #f4f4f4;
     border-bottom:      0.02rem solid #d0d0d0;
 }
@@ -465,8 +469,8 @@ a.disabled {
     display:            flex;
     align-items:        center;
     font-size:          85%;
-    margin-bottom:      0.6rem;
-    padding:            0.1rem 0.6rem 0.1rem 0.6rem;
+    margin-bottom:      var(--tab-gap);
+    padding:            0.1rem var(--tab-gap) 0.1rem var(--tab-gap);
     background:         #f4f4f4;
     border-bottom:      0.02rem solid #d0d0d0;
 }
@@ -480,11 +484,11 @@ a.disabled {
     display:            flex;
     flex-direction:     row;
     flex-wrap:          wrap;
-    margin:             0 0.4rem 0 0.4rem;
+    margin:             0 var(--tab-gap) 0 var(--tab-gap);
 }
 .tab-grid .tab-box {
     flex:               0 0 auto;
-    margin:             0.6rem 0.6rem;
+    margin:             var(--tab-gap) var(--tab-gap);
 
     display:            flex;
     flex-direction:     column;
@@ -545,18 +549,47 @@ a.disabled {
     pointer-events:     none;       /* no mouse event so that the elements behind it will get the mouseover event. */
 }
 
+.drop-tab-zone {
+    position:           absolute;
+    box-sizing:         border-box;
+    border:             var(--img-border) solid #ff9900;
+}
 .drop-end-zone {
     position:           absolute;
     box-sizing:         border-box;
-    border:             var(--img-border) dotted #ff9900;
+    border:             var(--img-border) solid #ff9900;
 }
-.drop-hover-border {
-    box-sizing:         border-box;
-    border:             var(--img-border) solid #ff9900 !important;
+.drop-hover-endzone {
     box-shadow:         1px 1px #dddddd;
+    background-color:   #fff5e6;
 }
-.drop-hover-opacity .tab-thumbnail {
+.drop-hover-endzone::after {
+    padding-left:       0.4rem;
+    content:            "drop at the end";
+}
+.drop-hover-gap::after {
+    position:           absolute;
+    left:               -1px;
+    top:                -1px;
+    width:              calc(var(--tab-gap) + var(--tab-gap) + var(--img-width) + var(--img-border) + var(--img-border) - var(--px1));
+    height:             calc(var(--img-height) + var(--img-border) + var(--img-border));
+    background-color:   #fff5e6;
     box-sizing:         border-box;
-    border:             var(--img-border) solid #ff9900 !important;
-    box-shadow:         1px 1px #dddddd;
+    border:             var(--img-border) solid #ff9900;
+    z-index:            1;
+    padding-left:       0.4rem;
+    content:            "drop in front";
+}
+.drop-hover-border::after {
+    position:           absolute;
+    left:               calc(var(--tab-gap) * -2 + var(--px1));
+    top:                0;
+    width:              calc(var(--tab-gap) + var(--tab-gap) + var(--img-width) + var(--img-border) + var(--img-border) - var(--px1));
+    height:             calc(var(--img-height) + var(--img-border) + var(--img-border));
+    background-color:   #fff5e6;
+    z-index:            1;
+    box-sizing:         border-box;
+    border:             var(--img-border) solid #ff9900;
+    padding-left:       0.4rem;
+    content:            "drop in front";
 }
