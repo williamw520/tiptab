@@ -372,13 +372,14 @@
         return titleMatched || urlMatched;
     }
 
-    function effectiveTabIdSet() {
+    function filterTabs() {
         let filterTokens = app.toLower(uiState.searchTerms);
-        return new Set(allTabs.filter( tab => filterTab(tab, filterTokens) ).map( tab => tab.id ));
+        return allTabs.filter( tab => filterTab(tab, filterTokens) );
     }
 
     function refreshUIContent(forceRefresh, zoomOut) {
-        let effectiveTids = effectiveTabIdSet();
+        let effectiveTabs = filterTabs();
+        let effectiveTids = new Set(effectiveTabs.map( tab => tab.id ));
 
         if (effectiveTids.size > 0) {
             let $mainContent = $("#main-content");
