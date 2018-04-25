@@ -1,10 +1,25 @@
 
 * Feature TODO
-** DONE Establish window lane end zone to drop tab at the end of window lane.
-** DONE Establish gap zone between tabs to drop in front of the tab.
+** DONE Initial zoom out of thumbnails.
+** TODO Overlay controls on thumbnails - drag bar, menu, popup area.
+** TODO Delete tab
+** TODO Clone tab
+** TODO Close window
+** TODO Sort tabs
+** TODO Show pinned tab
+** TODO Show active tab
+** TODO Pin/unpin tab
+** TODO Copy tab URL
+** TODO Reload tab
+** TODO Reload all tabs in window
+** TODO Round robin single line of tabs.
 ** TODO Display nested tab thumbnails within windows in grid.
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
 ** TODO Window list bar at the bottom.  Selected on limit the shown tabs to the window.
+
+* Release 1.2 Feature
+** DONE Establish window lane end zone to drop tab at the end of window lane.
+** DONE Establish gap zone between tabs to drop in front of the tab.
 
 * Release 1.1 Feature
 ** DONE Drag and drop a tab to re-arrange its position within a window.
@@ -16,7 +31,7 @@
 ** DONE Tabs by window pane.
 ** DONE Tabs by container pane.
 ** DONE Search on tab titles and url to limit the tabs displayed.
-** DONE Zoom in on mouse hovering on thumbnail.
+** DONE Tab preview on mouse hovering on thumbnail.
 ** DONE Save and restore UI states.
 ** DONE Keyboard shortcut for invoking extension.
 
@@ -32,6 +47,10 @@
 *** contextualIdentities
     The "contextualIdentities" permission is required to get the container information.
 
+
+* Review note
+The following 3rd party libraries are used in this extension.  The versions and the source locations of where they were obtained are listed below.  Please use text diff when comparing the files in the extension against the file from the sources.  Binary diff might give false positive since the linefeed LF are converted to CRLF between different platforms.
+
 * 3rd Party Libraries
 ** JQuery
    version 3.2.1
@@ -44,9 +63,6 @@
 ** Moment
    https://momentjs.com/
    https://momentjs.com/downloads/moment-with-locales.js
-** Spark-MD5
-   https://github.com/satazor/js-spark-md5
-   https://github.com/satazor/js-spark-md5/blob/master/spark-md5.js, git revision hash 9cb624f on 02/12/2017.
 ** Spectre CSS
    version 0.4.7
    https://github.com/picturepan2/spectre/releases

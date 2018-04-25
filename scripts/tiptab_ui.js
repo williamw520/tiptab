@@ -306,7 +306,6 @@
     }
 
     function reloadTabs() {
-        log.info("reloadTabs");
         browser.tabs.query({})
             .then( tabs => {
                 allTabs = tabs;
@@ -348,7 +347,7 @@
                     iconUrl:        "",
                 }]) )
             })
-            .then( () => refreshUIContent(true) )
+            .then( () => refreshUIContent(true, true) )
     }
 
     function filterTab(tab, filterTokens) {
@@ -362,18 +361,22 @@
         return new Set(allTabs.filter( tab => filterTab(tab, filterTokens) ).map( tab => tab.id ));
     }
 
-    function refreshUIContent(forceRefresh) {
+    function refreshUIContent(forceRefresh, zoomOut) {
         let effectiveTids = effectiveTabIdSet();
 
         if (effectiveTids.size > 0) {
             let $mainContent = $("#main-content");
-            $mainContent.html(renderByDisplayType(effectiveTids));
+            $mainContent.html(renderByDisplayType(effectiveTids, zoomOut));
 
             $("#empty-content").addClass("hidden");
             $("#main-content" ).removeClass("hidden");
             
             effectiveTids.forEach( tid => refreshThumbnail(tid, forceRefresh) );
             setupDragAndDrop(effectiveTids);
+
+            if (zoomOut) {
+                zoomOutAnimation(effectiveTids);
+            }
         } else {
             let $mainContent = $("#main-content");
             $mainContent.html("");
@@ -384,16 +387,24 @@
 
     }
 
-    function renderByDisplayType(effectiveTids) {
+    function zoomOutAnimation(effectiveTids) {
+        effectiveTids.forEach( tid => {
+            let $tabBox = $("#tid-" + tid);
+            let w = $tabBox.width();
+            $tabBox.removeClass("d-invisible").width(0).animate( {  width: w }, 500 );
+        });
+    }
+
+    function renderByDisplayType(effectiveTids, asHidden) {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
-            return renderAllTabs(effectiveTids);
+            return renderAllTabs(effectiveTids, asHidden);
         case DT_BY_WINDOW:
-            return renderByWindow(effectiveTids);
+            return renderByWindow(effectiveTids, asHidden);
         case DT_BY_CONTAINER:
-            return renderByContainer(effectiveTids);
+            return renderByContainer(effectiveTids, asHidden);
         case DT_ALL_WINDOWS:
-            return renderAllWindows(effectiveTids);
+            return renderAllWindows(effectiveTids, asHidden);
         }
         return "Unknown displayType " + uiState.displayType;
     }
@@ -404,70 +415,70 @@
         `;
     }
     
-    function renderAllTabs(effectiveTids) {
+    function renderAllTabs(effectiveTids, asHidden) {
         return `
             ${ renderContentTitle("all tabs") }
             <div class="all-tab-lane">
-              ${ renderTabBoxes(allTabs.filter( t => effectiveTids.has(t.id) )) }
+              ${ renderTabBoxes(allTabs.filter( t => effectiveTids.has(t.id) ), asHidden, null) }
             </div>
         `;
     }
 
-    function renderByWindow(effectiveTids) {
+    function renderByWindow(effectiveTids, asHidden) {
         return `
             ${ renderContentTitle("tabs by window") }
-            ${ windows.map( w => renderWindowTabs(w, effectiveTids) ).join("\n") }
+            ${ windows.map( w => renderWindowTabs(w, effectiveTids, asHidden) ).join("\n") }
         `;
     }
 
-    function renderByContainer(effectiveTids) {
+    function renderByContainer(effectiveTids, asHidden) {
         return `
             ${ renderContentTitle("tabs by container") }
-            ${ containers.map( c => renderContainerTabs(c, effectiveTids) ).join("\n") }
+            ${ containers.map( c => renderContainerTabs(c, effectiveTids, asHidden) ).join("\n") }
         `;
     }
 
-    function renderAllWindows(effectiveTids) {
+    function renderAllWindows(effectiveTids, asHidden) {
         return "all windows";
     }
 
-    function renderWindowTabs(w, effectiveTids) {
+    function renderWindowTabs(w, effectiveTids, asHidden) {
         let tabs = tabsByWindow[w.id].filter( t => effectiveTids.has(t.id) );
         if (tabs && tabs.length > 0) {
             return `
                 <div class="window-tab-lane" data-wid="${w.id}">
                   <div class="window-tab-title" title="Window">${w.title}</div>
-                  ${ renderTabBoxes(tabs, "dummy-w-" + w.id) }
+                  ${ renderTabBoxes(tabs, asHidden, "dummy-w-" + w.id) }
                 </div>
             `;
         }
         return "";
     }
 
-    function renderContainerTabs(c, effectiveTids) {
+    function renderContainerTabs(c, effectiveTids, asHidden) {
         return `
             <div class="container-tab-lane" style="border: 0.1rem solid ${c.colorCode};">
               <div class="container-tab-title" title="${c.cookieStoreId == 'firefox-default' ? '' : 'Container'}">
                 <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${c.cookieStoreId == 'firefox-default' ? 'hidden' : 'visible'};">
                 <span>${c.name}</span>
               </div>
-              ${ renderTabBoxes(tabsByContainer[c.cookieStoreId].filter( t => effectiveTids.has(t.id) ), "dummy-c-" + c.cookieStoreId) }
+              ${ renderTabBoxes(tabsByContainer[c.cookieStoreId].filter( t => effectiveTids.has(t.id) ), asHidden, "dummy-c-" + c.cookieStoreId) }
             </div>
         `;
     }
 
-    function renderTabBoxes(tabs, dummyId) {
+    function renderTabBoxes(tabs, asHidden, dummyId) {
         return `
             <div class="tab-grid">
-              ${ tabs.map( tab => renderTabBox(tab) ).join("\n") }
+              ${ tabs.map( tab => renderTabBox(tab, asHidden) ).join("\n") }
               ${ renderDummyTabBox(dummyId) }
             </div>
         `;
     }
 
-    function renderTabBox(tab) {
+    function renderTabBox(tab, asHidden) {
         return `
-            <div class="tab-box" id="tid-${tab.id}" data-tid="${tab.id}" >
+            <div class="tab-box ${asHidden ? 'd-invisible' : ''}" id="tid-${tab.id}" data-tid="${tab.id}" >
               <div class="tab-thumbnail"><img class="tab-img"></div>
               <div class="tab-subtitle">
                 <a class="tab-url" href="${tab.url}" title="${tab.title}">${tab.title}</a>
@@ -664,7 +675,11 @@
 
     function dim($elem) {
         let offset = $elem.offset();
-        return { top: offset.top, left: offset.left, width: $elem.width(), height: $elem.height };
+        return { left: offset.left, top: offset.top, width: $elem.width(), height: $elem.height() };
+    }
+
+    function setDim($elem, left, top, width, height) {
+        $elem.offset({ left: left, top: top }).width(width).height(height);
     }
 
     function activateTab(wid, tid) {
