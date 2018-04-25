@@ -40,7 +40,7 @@
 
 html {
     /* font-size controls the root em (rem) unit size.  Set this to control the size of all components. */
-    font-size:  16px;
+    font-size:      16px;
 }
 
 body {
@@ -247,7 +247,6 @@ a.disabled {
     white-space:        nowrap;
 }
 
-
 /* override max-height:50rem in Spectre.css to allow many tabs displayed without limit under the accordion header. */
 .accordion input:checked ~ .accordion-body,
 .accordion[open] .accordion-body {
@@ -342,6 +341,9 @@ a.disabled {
 .my-6   {   margin-bottom:  1.2rem;
             margin-top:     1.2rem;   }
 
+.flex-divider-d0 { width: 0.02rem; background: #d0d0d0; };
+.flex-divider-c0 { width: 0.02rem; background: #c0c0c0; };
+.flex-divider-b0 { width: 0.02rem; background: #b0b0b0; };
 
 /* Override Spectre's .dropdown, dropdown-toggle, and .menu to make it more user friendly. */
 .dropdown .dropdown-toggle:focus {
@@ -403,7 +405,7 @@ a.disabled {
 .v-container .h-container {
     flex:           1;          /* for the outer v-container */
 
-    display:        flex;       /* start inner h-container */
+    display:        flex;       /* start the inner h-container */
     flex-direction: row;
     padding-top:    2.2rem;
 }
@@ -475,9 +477,13 @@ a.disabled {
     border-bottom:      0.02rem solid #d0d0d0;
 }
 
-.tab-search {
+.cmd-search {
     border:             .05rem solid #007bff;
     width:              15rem;
+}
+
+.saved-search {
+    height:             100%;
 }
 
 .tab-grid {
@@ -502,6 +508,23 @@ a.disabled {
     width:              calc(var(--img-width)  + var(--img-border) + var(--img-border));
     height:             calc(var(--img-height) + var(--img-border) + var(--img-border));
     cursor:             pointer;
+}
+.tab-thumbnail .dropdown-tab-menu {
+    position:           absolute;
+    top:                0;
+    right:              0;
+    width:              calc(var(--img-height) / 4);
+    height:             calc(var(--img-height) / 4);
+    padding:            0;
+    z-index:            2;
+    opacity:            0.2;
+}
+.tab-thumbnail .cmd-tab-menu {
+    line-height:        1.0;
+    width:              100%;
+    height:             100%;
+    padding:            .0rem .05rem;
+    margin:             0;
 }
 .tab-img {
     width:              var(--img-width);
