@@ -32,7 +32,7 @@
     const ERROR = 1;
     const WARN = 2;
     const INFO = 3;
-    const LOG = 4;      // this is the finest loging level, like debug.
+    const LOG = 4;      // this is the finest logging level, like debug.
 
     class Logger {
         constructor(app, module, level) {

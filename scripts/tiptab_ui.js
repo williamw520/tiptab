@@ -85,7 +85,7 @@
             .then(() => PIXELS_PER_REM = getFontSizeRem() )
             .then(() => generateUILayout())
             .then(() => pLoadUiState())
-            .then(() => refreshStaticUI())      // for the UI that need to be set up before setting up DOM listeners.
+            .then(() => refreshStaticUI())      // for the UI that need to be set up before setting up the DOM listeners.
             .then(() => setupDOMListeners())
             .then(() => reloadTabs())
             .then(() => refreshControls())
@@ -181,6 +181,22 @@
             saveUiStateNow();
         });
 
+        // Events on the tab menu (at the upper right corner of each tab)
+        $("#main-content").on("mouseover", ".cmd-tab-menu", function(e){
+            e.preventDefault();     // Stop the mouseover bubbled up to tab-img
+            $(this).css("opacity", "1.0");
+            return false;
+        });
+        $("#main-content").on("mouseout", ".cmd-tab-menu", function(e){
+            e.preventDefault();     // Stop the mouseout bubbled up to tab-img
+            $(this).css("opacity", "0.2");
+            return false;
+        });
+        $("#main-content").on("click", ".cmd-tab-menu", function(e){
+            e.preventDefault();     // Stop the click bubbled up to tab-img
+            return false;
+        });
+
         // Events on tab thumbnails
         $("#main-content").on("click", ".tab-thumbnail", function(e){
             e.preventDefault();     // Stop the click event.
@@ -201,10 +217,10 @@
         });
 
         // Search handler
-        $(".tab-search").on("click", function(){
+        $(".cmd-search").on("click", function(){
             $(this).select();
         });
-        $(".tab-search").on("keyup paste", function(){
+        $(".cmd-search").on("keyup paste", function(){
             uiState.searchTerms = $(this).val().split(" ");
             dSaveUiState();
             refreshUIContent(false);
@@ -212,7 +228,7 @@
 
         $(window).focus(function(){
             tiptabWindowActive = true;
-            $(".tab-search").focus().select();
+            $(".cmd-search").focus().select();
         });
         $(window).blur(function(){
             tiptabWindowActive = false;
@@ -292,7 +308,7 @@
         let manifest = browser.runtime.getManifest();
         $(".logo-version").html(manifest.version);
 
-        $(".tab-search").val(uiState.searchTerms.join(" ")).focus().select();
+        $(".cmd-search").val(uiState.searchTerms.join(" ")).focus().select();
     }
     
     function refreshControls() {
@@ -312,7 +328,7 @@
                 tabsById = allTabs.reduce( (map, tab) => { map[tab.id] = tab; return map }, {} );
             })
             .then( () => {
-                let uniqueWinIds = new Set(allTabs.map( t => t.windowId ));
+                let uniqueWinIds = new Set(allTabs.map( tab => tab.windowId ));
                 let winIds = [...uniqueWinIds];
                 tabsByWindow = winIds.reduce( (map, wid) => { map[wid] = []; return map }, {} );
                 allTabs.forEach( tab => tabsByWindow[tab.windowId].push(tab) );
@@ -322,7 +338,7 @@
                 });
             })
             .then( () => {
-                let uniqueContainerId = new Set(allTabs.map( t => t.cookieStoreId ));
+                let uniqueContainerId = new Set(allTabs.map( tab => tab.cookieStoreId ));
                 let containerIds = [...uniqueContainerId];
                 tabsByContainer = containerIds.reduce( (map, wid) => { map[wid] = []; return map }, {} );
                 allTabs.filter( tab => tab.cookieStoreId).forEach( tab => tabsByContainer[tab.cookieStoreId].push(tab) );
@@ -479,7 +495,10 @@
     function renderTabBox(tab, asHidden) {
         return `
             <div class="tab-box ${asHidden ? 'd-invisible' : ''}" id="tid-${tab.id}" data-tid="${tab.id}" >
-              <div class="tab-thumbnail"><img class="tab-img"></div>
+              <div class="tab-thumbnail">
+                <!-- <button class="btn cmd-tab-menu"><i class="icon icon-caret"></i></button> -->
+                <img class="tab-img">
+              </div>
               <div class="tab-subtitle">
                 <a class="tab-url" href="${tab.url}" title="${tab.title}">${tab.title}</a>
               </div>
@@ -617,7 +636,7 @@
         let srcTab  = tabsById[ui.draggable.data("tid")];
         let destTab = tabsById[$dest.data("tid")];
         let srcTabs = tabsByWindow[srcTab.windowId];
-        let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
+        let srcIdx  = srcTabs.findIndex( tab => tab.id == srcTab.id );
         let destTabs= tabsByWindow[destTab.windowId];
         let destIdx = destTabs.findIndex( tab => tab.id == destTab.id );
         if (srcTab.windowId == destTab.windowId && srcIdx < destIdx) {
@@ -626,7 +645,7 @@
         browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx})
             .then( () => {
                 let destTabs = tabsByWindow[destTab.windowId];
-                let srcIdx = srcTabs.findIndex( t => t.id == srcTab.id );
+                let srcIdx = srcTabs.findIndex( tab => tab.id == srcTab.id );
                 srcTabs.splice(srcIdx, srcIdx);
                 destTabs.splice(destIdx, 0, srcTab);
                 srcTab.windowId = destTab.windowId;
@@ -648,7 +667,7 @@
             // Move the tab to the end of the window lane.
             let srcTabs = tabsByWindow[srcTab.windowId];
             let destTabs= tabsByWindow[destWid];
-            let srcIdx  = srcTabs.findIndex( t => t.id == srcTab.id );
+            let srcIdx  = srcTabs.findIndex( tab => tab.id == srcTab.id );
             srcTabs.splice(srcIdx, srcIdx);
             destTabs.push(srcTab);
             srcTab.windowId = destWid;
