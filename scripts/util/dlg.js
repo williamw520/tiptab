@@ -80,7 +80,7 @@
                 if ($elem.is("input") || $elem.is("textarea"))
                     $elem.val(inputValues[selectorKey]);
                 else
-                    $elem.html(inputValues[selectorKey]);
+                    $elem.text(inputValues[selectorKey]);
             }
         }
         for (let selectorKey in (elementPropertiesMap || {})) {

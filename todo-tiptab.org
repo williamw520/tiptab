@@ -1,6 +1,7 @@
 
 * Feature TODO
 ** DONE Initial zoom out of thumbnails.
+** DONE Prevent XSS attack by escaping unsafe text from tabs, windows, and containers.
 ** TODO Overlay controls on thumbnails - drag bar, menu, popup area.
 ** TODO Delete tab
 ** TODO Clone tab
