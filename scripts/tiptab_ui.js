@@ -128,32 +128,22 @@
         log.info("setupDOMListeners");
 
         // Dialog setup
-        dlg.setupDlg("#text-dlg", true);
+        dlg.setupDlg("#about-dlg", true);
 
         // Global menu at the top navbar
         $("#global-cmds").on("click", ".cmd-refresh",   reloadTabs);
         $("#global-cmds").on("click", ".cmd-close-ui",  function(){ pSendCmd({ cmd: "close-ui" }) });
         $(".logo").on("click", function() {
             let manifest = browser.runtime.getManifest();
-            dlg.openDlg("#text-dlg",
+            dlg.openDlg("#about-dlg",
                         {
-                            ".dlg-title": "About the Extension",
-                            ".text-msg": `
-                                <br>
-                                <center style="font-size:150%;"><b>${manifest.name}</b></center>
-                                <center>version: ${manifest.version}</center>
-                                <center>Copyright 2018 ${manifest.author}</center>
-                                <center>This software is licensed under the GPL 3 License.</center>
-                                <br>
-                                <center>The following 3rd party packages are used in this software:</center>
-                                <center>  jQuery, licensed under the MIT License</center>
-                                <center>  Spectre.css, licensed under the MIT License</center>
-                                <center>  Moment.js, licensed under the MIT License</center>
-                            `
+                            ".app-name":    manifest.name,
+                            ".app-version": manifest.version,
+                            ".app-author":  manifest.author,
                         },
                         {},
                         ".modal-submit");
-        });        
+        });
 
         // Commands on v-btn-bar
         $(".v-btn-bar").on("click", ".cmd-all-tabs", function(){
@@ -305,9 +295,6 @@
 
     function refreshStaticUI() {
         log.info("refreshStaticUI");
-        let manifest = browser.runtime.getManifest();
-        $(".logo-version").html(manifest.version);
-
         $(".cmd-search").val(uiState.searchTerms.join(" ")).focus().select();
     }
     
@@ -384,6 +371,11 @@
         if (effectiveTids.size > 0) {
             let $mainContent = $("#main-content");
             $mainContent.html(renderByDisplayType(effectiveTids, zoomOut));
+
+            // Fill in the unsafe text of the objects using html-escaped API.
+            fillTabText(effectiveTabs);
+            fillWindowText(windows);
+            fillContainerText(containers);
 
             $("#empty-content").addClass("hidden");
             $("#main-content" ).removeClass("hidden");
@@ -464,7 +456,7 @@
         if (tabs && tabs.length > 0) {
             return `
                 <div class="window-tab-lane" data-wid="${w.id}">
-                  <div class="window-tab-title" title="Window">${w.title}</div>
+                  <div class="window-tab-title" title="Window">WINDOW-TITLE</div>
                   ${ renderTabBoxes(tabs, asHidden, "dummy-w-" + w.id) }
                 </div>
             `;
@@ -472,16 +464,25 @@
         return "";
     }
 
+    // Use html-escaped API to fill in unsafe text.
+    function fillWindowText(windows) {
+        windows.forEach( w => $(".window-tab-lane[data-wid='" + w.id + "'] .window-tab-title").text(w.title) );
+    }
     function renderContainerTabs(c, effectiveTids, asHidden) {
         return `
             <div class="container-tab-lane" style="border: 0.1rem solid ${c.colorCode};">
               <div class="container-tab-title" title="${c.cookieStoreId == 'firefox-default' ? '' : 'Container'}">
                 <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${c.cookieStoreId == 'firefox-default' ? 'hidden' : 'visible'};">
-                <span>${c.name}</span>
+                <span class="container-name" data-cid="${c.cookieStoreId}" style="color: ${c.colorCode}">CONTAINER-NAME</span>
               </div>
               ${ renderTabBoxes(tabsByContainer[c.cookieStoreId].filter( t => effectiveTids.has(t.id) ), asHidden, "dummy-c-" + c.cookieStoreId) }
             </div>
         `;
+    }
+
+    // Use html-escaped API to fill in unsafe text.
+    function fillContainerText(containers) {
+        containers.forEach( c => $(".container-name[data-cid='" + c.cookieStoreId + "']").text(c.name) );
     }
 
     function renderTabBoxes(tabs, asHidden, dummyId) {
@@ -494,6 +495,7 @@
     }
 
     function renderTabBox(tab, asHidden) {
+        // Note that the unsafe text of a tab's url are left out, and will be filled in later, in below.
         return `
             <div class="tab-box ${asHidden ? 'd-invisible' : ''}" id="tid-${tab.id}" data-tid="${tab.id}" >
               <div class="tab-thumbnail">
@@ -501,12 +503,18 @@
                 <img class="tab-img">
               </div>
               <div class="tab-subtitle">
-                <a class="tab-url" href="${tab.url}" title="${tab.title}">${tab.title}</a>
+                <a class="tab-url" href="TAB-URL" title="TAB-TITLE">TAB-TITLE</a>
               </div>
             </div>   
         `;
     }
 
+    // Use html-escaped API to fill in unsafe text of the tabs.
+    function fillTabText(effectiveTabs) {
+        effectiveTabs.forEach( tab => $("#tid-" + tab.id + " .tab-url")
+                                        .attr("href", tab.url).attr("title", tab.title).text(tab.title) );
+    }
+    
     function renderDummyTabBox(dummyId) {
         if (true || !dummyId)
             return "";
