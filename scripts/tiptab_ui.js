@@ -57,6 +57,7 @@
     let windows = [];
     let windowsById = {};
     let containers = [];
+    let containersById = {};
     let thumbnailsMap = {};         // keyed by tab id
     let thumbnailsPending = {};     // keyed by tab id
     let thumbnailFocusTid = null;
@@ -313,44 +314,42 @@
             .then( tabs => {
                 allTabs = tabs;
                 tabsById = allTabs.reduce( (map, tab) => { map[tab.id] = tab; return map }, {} );
-            })
-            .then( () => {
+            }).then( () => {
                 let uniqueWinIds = new Set(allTabs.map( tab => tab.windowId ));
                 let winIds = [...uniqueWinIds];
                 tabsByWindow = winIds.reduce( (map, wid) => { map[wid] = []; return map }, {} );
                 allTabs.forEach( tab => tabsByWindow[tab.windowId].push(tab) );
-                return Promise.all( winIds.map( wid => browser.windows.get(wid) ) ).then( windowArray => {
-                    windows = windowArray;
-                    windowsById = windows.reduce( (map, win) => { map[win.id] = win; return map }, {});
-                });
-            })
-            .then( () => {
+                return Promise.all( winIds.map( wid => browser.windows.get(wid) ));
+            }).then( windowArray => {
+                windows = windowArray;
+                windowsById = windows.reduce((map, win) => { map[win.id] = win; return map }, {});
+            }).then( () => {
                 let uniqueContainerId = new Set(allTabs.map( tab => tab.cookieStoreId ));
                 let containerIds = [...uniqueContainerId];
                 tabsByContainer = containerIds.reduce( (map, wid) => { map[wid] = []; return map }, {} );
-                allTabs.filter( tab => tab.cookieStoreId).forEach( tab => tabsByContainer[tab.cookieStoreId].push(tab) );
-                return Promise.all(
-                    containerIds.filter( cid => cid != "firefox-default" ).map( cid => {
-                        return browser.contextualIdentities.get(cid)
-                            .then( contextualIdentity => contextualIdentity )
-                            .catch( e => {
-                                log.error(e);
-                                return {
-                                    cookieStoreId: cid,
-                                    name: cid,
-                                    colorCode: "#gray",
-                                    iconUrl: "",
-                                }
-                            })
-                    })
-                ).then( contextualIdentities => containers = contextualIdentities.concat([{
+                allTabs.filter( tab => tab.cookieStoreId ).forEach( tab => tabsByContainer[tab.cookieStoreId].push(tab) );
+                return Promise.all( containerIds.filter( cid => cid != "firefox-default" ).map( cid => pGetContainerInfo(cid) ));
+            }).then( contextualIdentities => {
+                containers = contextualIdentities;
+                containers.push({
                     cookieStoreId:  "firefox-default",
                     name:           "outside of any defined container",
-                    colorCode:      "#b0b0b0",
+                    colorCode:      "#c7c9cd",
                     iconUrl:        "",
-                }]) )
-            })
-            .then( () => refreshUIContent(true, true) )
+                });
+                containersById = containers.reduce((map, c) => { map[c.cookieStoreId] = c; return map }, {});
+            }).then( () => refreshUIContent(true, true) )
+    }
+
+    function pGetContainerInfo(cid) {
+        // Get the container info.  Return a fake one in case not found.
+        return browser.contextualIdentities.get(cid)
+            .catch( e => ({
+                cookieStoreId:  cid,
+                name:           cid,
+                colorCode:      "#c7c9cd",
+                iconUrl:        "",
+            }) );
     }
 
     function filterTab(tab, filterTokens) {
@@ -495,10 +494,11 @@
     }
 
     function renderTabBox(tab, asHidden) {
+        let c = containersById[tab.cookieStoreId];
         // Note that the unsafe text of a tab's url are left out, and will be filled in later, in below.
         return `
             <div class="tab-box ${asHidden ? 'd-invisible' : ''}" id="tid-${tab.id}" data-tid="${tab.id}" >
-              <div class="tab-thumbnail">
+              <div class="tab-thumbnail" style="border-color: ${c.colorCode};">
                 <!-- <button class="btn cmd-tab-menu"><i class="icon icon-caret"></i></button> -->
                 <img class="tab-img">
               </div>
@@ -665,7 +665,7 @@
                 $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
                 $srcTabBox.insertBefore($destTabBox);
                 let toWidth = $srcTabBox.width();
-                $srcTabBox.width(0).animate({ width: toWidth }, 300);
+                $srcTabBox.width(0).animate({ width: toWidth }, 400);
             });
     }                                   
 
@@ -684,7 +684,7 @@
             $tabBox.css({ top:"", left:"" });   // reset the dragging position
             if (!$tabBox.is(":last-child")) {
                 let tabWidth = $tabBox.width();
-                $tabBox.css({ visibility: "hidden" }).animate({ width: 0 }, 200, function(){
+                $tabBox.css({ visibility: "hidden" }).animate({ width: 0 }, 400, function(){
                     $tabBox.detach();
                     $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
                     $tabBox.width(tabWidth).css({ visibility: "visible" });
