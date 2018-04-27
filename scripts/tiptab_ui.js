@@ -347,7 +347,7 @@
             .catch( e => ({
                 cookieStoreId:  cid,
                 name:           cid,
-                colorCode:      "#c7c9cd",
+                colorCode:      "gray",
                 iconUrl:        "",
             }) );
     }
@@ -363,6 +363,9 @@
         return allTabs.filter( tab => filterTab(tab, filterTokens) );
     }
 
+    function privateShadowCss(isPrivate) { return isPrivate ? "0 0 0.2rem -.05rem rgba(0,0,0,0.75)" : "none" }
+
+    
     function refreshUIContent(forceRefresh, zoomOut) {
         let effectiveTabs = filterTabs();
         let effectiveTids = new Set(effectiveTabs.map( tab => tab.id ));
@@ -454,7 +457,7 @@
         let tabs = tabsByWindow[w.id].filter( t => effectiveTids.has(t.id) );
         if (tabs && tabs.length > 0) {
             return `
-                <div class="window-tab-lane" data-wid="${w.id}">
+                <div class="window-tab-lane" style="box-shadow: ${privateShadowCss(w.incognito)}" data-wid="${w.id}">
                   <div class="window-tab-title" title="Window">WINDOW-TITLE</div>
                   ${ renderTabBoxes(tabs, asHidden, "dummy-w-" + w.id) }
                 </div>
@@ -468,8 +471,9 @@
         windows.forEach( w => $(".window-tab-lane[data-wid='" + w.id + "'] .window-tab-title").text(w.title) );
     }
     function renderContainerTabs(c, effectiveTids, asHidden) {
+        let isPrivate = c.cookieStoreId == "firefox-private";
         return `
-            <div class="container-tab-lane" style="border: 0.1rem solid ${c.colorCode};">
+            <div class="container-tab-lane" style="border: 0.1rem solid ${c.colorCode}; box-shadow: ${privateShadowCss(isPrivate)}">
               <div class="container-tab-title" title="${c.cookieStoreId == 'firefox-default' ? '' : 'Container'}">
                 <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${c.cookieStoreId == 'firefox-default' ? 'hidden' : 'visible'};">
                 <span class="container-name" data-cid="${c.cookieStoreId}" style="color: ${c.colorCode}">CONTAINER-NAME</span>
@@ -494,11 +498,11 @@
     }
 
     function renderTabBox(tab, asHidden) {
-        let c = containersById[tab.cookieStoreId];
+        let borderColor = containersById[tab.cookieStoreId].colorCode;
         // Note that the unsafe text of a tab's url are left out, and will be filled in later, in below.
         return `
             <div class="tab-box ${asHidden ? 'd-invisible' : ''}" id="tid-${tab.id}" data-tid="${tab.id}" >
-              <div class="tab-thumbnail" style="border-color: ${c.colorCode};">
+              <div class="tab-thumbnail" style="border-color: ${borderColor}; box-shadow: ${privateShadowCss(tab.incognito)};">
                 <!-- <button class="btn cmd-tab-menu"><i class="icon icon-caret"></i></button> -->
                 <img class="tab-img">
               </div>
