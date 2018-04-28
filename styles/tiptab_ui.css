@@ -36,6 +36,9 @@
     --overlay-v-pad:        0.25rem;
 
     --px1:                  1px;
+
+    --private-purple:       #8D20AE;
+    --private-bg:           #25003E;
 }
 
 html {

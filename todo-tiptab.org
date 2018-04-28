@@ -4,6 +4,7 @@
 ** DONE Color the tab thumbnail border according to tab's private window state.
 ** DONE Color the window border according to window's private state.
 ** DONE Color the container border according to container's private state.
+** TODO Show pinned tabs.
 ** TODO Drag tab across normal and private windows.  Now has bug.
 ** TODO Overlay controls on thumbnails - drag bar, menu, popup area.
 ** TODO Delete tab
