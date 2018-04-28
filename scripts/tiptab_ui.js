@@ -46,6 +46,17 @@
     const FASTER_ANIMATION_MS = 200;
     const NORMAL_ANIMATION_MS = 500;
 
+    // Special Firefox container types.
+    const CT_FIREFOX_DEFAULT = "firefox-default";
+    const CT_FIREFOX_PRIVATE = "firefox-private";
+    const CT_SPECIAL_TYPES = [CT_FIREFOX_DEFAULT, CT_FIREFOX_PRIVATE];
+    function is_firefox_default(id) { return id == CT_FIREFOX_DEFAULT }
+    function is_firefox_private(id) { return id == CT_FIREFOX_PRIVATE }
+
+    // Colors
+    const COLOR_DEFAULT = "#c7c9cd";
+    const COLOR_PRIVATE = "#8D20AE";    // purple
+
     // Module variables.
     let PIXELS_PER_REM = 16;
     let uiState = {};
@@ -328,15 +339,9 @@
                 let containerIds = [...uniqueContainerId];
                 tabsByContainer = containerIds.reduce( (map, wid) => { map[wid] = []; return map }, {} );
                 allTabs.filter( tab => tab.cookieStoreId ).forEach( tab => tabsByContainer[tab.cookieStoreId].push(tab) );
-                return Promise.all( containerIds.filter( cid => cid != "firefox-default" ).map( cid => pGetContainerInfo(cid) ));
+                return Promise.all( containerIds.map( cid => pGetContainerInfo(cid) ));
             }).then( contextualIdentities => {
                 containers = contextualIdentities;
-                containers.push({
-                    cookieStoreId:  "firefox-default",
-                    name:           "outside of any defined container",
-                    colorCode:      "#c7c9cd",
-                    iconUrl:        "",
-                });
                 containersById = containers.reduce((map, c) => { map[c.cookieStoreId] = c; return map }, {});
             }).then( () => refreshUIContent(true, true) )
     }
@@ -344,12 +349,32 @@
     function pGetContainerInfo(cid) {
         // Get the container info.  Return a fake one in case not found.
         return browser.contextualIdentities.get(cid)
-            .catch( e => ({
-                cookieStoreId:  cid,
-                name:           cid,
-                colorCode:      "gray",
-                iconUrl:        "",
-            }) );
+            .catch( e => {
+                // log.error("cid not found " + cid, e);
+                switch (cid) {
+                case CT_FIREFOX_DEFAULT:
+                    return {
+                        cookieStoreId:  cid,
+                        name:           "(default container)",
+                        colorCode:      COLOR_DEFAULT,
+                        iconUrl:        "",
+                    };
+                case CT_FIREFOX_PRIVATE:
+                    return {
+                        cookieStoreId:  cid,
+                        name:           "Private Browsing",
+                        colorCode:      COLOR_PRIVATE,
+                        iconUrl:        "",
+                    };
+                default:
+                    return {
+                        cookieStoreId:  cid,
+                        name:           cid,
+                        colorCode:      "gray",
+                        iconUrl:        "",
+                    };
+                }
+            });
     }
 
     function filterTab(tab, filterTokens) {
@@ -363,9 +388,9 @@
         return allTabs.filter( tab => filterTab(tab, filterTokens) );
     }
 
-    function privateShadowCss(isPrivate) { return isPrivate ? "0 0 0.2rem -.05rem rgba(0,0,0,0.75)" : "none" }
+    function private_box_shadow(isPrivate)      { return isPrivate ? "box-shadow: 0 0 0.2rem -.025rem rgba(0,0,0,0.75);" : "" }
+    function private_border_color(isPrivate)    { return isPrivate ? "border-color: " + COLOR_PRIVATE + ";" : "" }
 
-    
     function refreshUIContent(forceRefresh, zoomOut) {
         let effectiveTabs = filterTabs();
         let effectiveTids = new Set(effectiveTabs.map( tab => tab.id ));
@@ -457,7 +482,7 @@
         let tabs = tabsByWindow[w.id].filter( t => effectiveTids.has(t.id) );
         if (tabs && tabs.length > 0) {
             return `
-                <div class="window-tab-lane" style="box-shadow: ${privateShadowCss(w.incognito)}" data-wid="${w.id}">
+                <div class="window-tab-lane" style="${private_border_color(w.incognito)} ${private_box_shadow(w.incognito)}" data-wid="${w.id}">
                   <div class="window-tab-title" title="Window">WINDOW-TITLE</div>
                   ${ renderTabBoxes(tabs, asHidden, "dummy-w-" + w.id) }
                 </div>
@@ -471,11 +496,11 @@
         windows.forEach( w => $(".window-tab-lane[data-wid='" + w.id + "'] .window-tab-title").text(w.title) );
     }
     function renderContainerTabs(c, effectiveTids, asHidden) {
-        let isPrivate = c.cookieStoreId == "firefox-private";
+        let isPrivate = is_firefox_private(c.cookieStoreId);
         return `
-            <div class="container-tab-lane" style="border: 0.1rem solid ${c.colorCode}; box-shadow: ${privateShadowCss(isPrivate)}">
-              <div class="container-tab-title" title="${c.cookieStoreId == 'firefox-default' ? '' : 'Container'}">
-                <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${c.cookieStoreId == 'firefox-default' ? 'hidden' : 'visible'};">
+            <div class="container-tab-lane" style="border: 0.1rem solid ${c.colorCode}; ${private_box_shadow(isPrivate)}">
+              <div class="container-tab-title" title="${is_firefox_default(c.cookieStoreId) ? '' : 'Container'}">
+                <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${is_firefox_default(c.cookieStoreId) ? 'hidden' : 'visible'};">
                 <span class="container-name" data-cid="${c.cookieStoreId}" style="color: ${c.colorCode}">CONTAINER-NAME</span>
               </div>
               ${ renderTabBoxes(tabsByContainer[c.cookieStoreId].filter( t => effectiveTids.has(t.id) ), asHidden, "dummy-c-" + c.cookieStoreId) }
@@ -498,11 +523,11 @@
     }
 
     function renderTabBox(tab, asHidden) {
-        let borderColor = containersById[tab.cookieStoreId].colorCode;
+        let borderColorByContainer = containersById[tab.cookieStoreId].colorCode;
         // Note that the unsafe text of a tab's url are left out, and will be filled in later, in below.
         return `
             <div class="tab-box ${asHidden ? 'd-invisible' : ''}" id="tid-${tab.id}" data-tid="${tab.id}" >
-              <div class="tab-thumbnail" style="border-color: ${borderColor}; box-shadow: ${privateShadowCss(tab.incognito)};">
+              <div class="tab-thumbnail" style="border-color: ${borderColorByContainer}; ${private_box_shadow(tab.incognito)} ">
                 <!-- <button class="btn cmd-tab-menu"><i class="icon icon-caret"></i></button> -->
                 <img class="tab-img">
               </div>
