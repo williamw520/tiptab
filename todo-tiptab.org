@@ -4,19 +4,30 @@
 ** DONE Color the tab thumbnail border according to tab's private window state.
 ** DONE Color the window border according to window's private state.
 ** DONE Color the container border according to container's private state.
-** TODO Show pinned tabs.
-** TODO Drag tab across normal and private windows.  Now has bug.
-** TODO Overlay controls on thumbnails - drag bar, menu, popup area.
-** TODO Delete tab
-** TODO Clone tab
-** TODO Close window
-** TODO Sort tabs
-** TODO Show pinned tab
-** TODO Show active tab
-** TODO Pin/unpin tab
+** DONE Icon for private window.
+** DONE Show pinned tabs.  Icon for pinned window.
+** TODO Show muted tabs.  Icon for muted window.
+** DONE Disable dragging tab across normal and private windows.
+** DONE Show active tab
+** DONE Overlay controls on thumbnails - drag bar, menu, popup area.
+** DONE Delete tab
+** DONE Duplicate tab
+** DONE Reload tab
+** DONE Mute/unmute tab
+** DONE Pin/unpin tab
+** DONE Close window
+** DONE Close all other tabs
+** DONE Close left other tabs
+** DONE Close right other tabs
+** DONE Move to a new window
 ** TODO Copy tab URL
-** TODO Reload tab
+** TODO Save tab screenshot
+** DONE Hide the TipTab tab
+** TODO Different sizes of thumbnails
+** TODO Sort tabs
+** TODO Window command menu.
 ** TODO Reload all tabs in window
+** TODO Save all screenshots
 ** TODO Round robin single line of tabs.
 ** TODO Display nested tab thumbnails within windows in grid.
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
