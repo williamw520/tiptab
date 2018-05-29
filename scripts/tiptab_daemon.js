@@ -32,6 +32,9 @@
     if (modulename)
         scope[modulename] = module;    // set module name in scope, otherwise caller sets the name with the returned module object.
 
+    const tiptabUrl = browser.extension.getURL("tiptab.html");
+    function is_tiptaburl(url) { return url.startsWith(tiptabUrl) };    // sometimes # is added to the end of the url.
+
     function init() {
         Promise.resolve()
             .then(() => log.info("tiptab_daemon init ===================================================== ") )
@@ -44,7 +47,7 @@
     function browserAction_onClicked() {
         browser.tabs.query({}).then( tabs => {
             let uiUrl = browser.extension.getURL("tiptab.html");
-            let uiTab = tabs.find( t => t.url == uiUrl );
+            let uiTab = tabs.find( t => is_tiptaburl(t.url) );
             if (uiTab) {
                 browser.windows.update(uiTab.windowId, {focused: true}).then( () => browser.tabs.update(uiTab.id, {active: true}) );
             } else {

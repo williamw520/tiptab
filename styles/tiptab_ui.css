@@ -25,6 +25,14 @@
     --img-height:           4.5rem;
     --img-border:           0.075rem;
 
+    --topbar-width:         calc(var(--img-width) + 2px);
+    --topbar-height:        calc(var(--img-height) / 5 + 1px);
+    --topbar-btn-width:     calc(var(--img-height) / 5);
+    --topbar-btn-height:    calc(var(--img-height) / 6);
+
+    --thumbnail-width:      calc(var(--img-width)  + var(--img-border) + var(--img-border));
+    --thumbnail-height:     calc(var(--img-height) + var(--img-border) + var(--img-border));
+
     --tab-gap:              0.6rem;
 
     --left-pane-width:      2.2rem;
@@ -39,6 +47,12 @@
 
     --private-purple:       #8D20AE;
     --private-bg:           #25003E;
+    --default-color:        #c7c9cd;
+    --drag-bg:              #fff5e6;
+
+    --topbar-opacity:       0.0;
+    --topbar-opacity-hover: 1.0;
+    --topbar-opacity-half:  0.5;
 }
 
 html {
@@ -247,7 +261,11 @@ a.disabled {
 }
 
 .nowrap {
-    white-space:        nowrap;
+    white-space:    nowrap;
+}
+
+.show-display {
+    display:        block;
 }
 
 /* override max-height:50rem in Spectre.css to allow many tabs displayed without limit under the accordion header. */
@@ -257,7 +275,7 @@ a.disabled {
 }
 
 .window-underline {
-    border-bottom:  .05rem solid #c7c9cd;
+    border-bottom:  .05rem solid var(--default-color);
 }
 
 .sort-selected {
@@ -348,22 +366,6 @@ a.disabled {
 .flex-divider-c0 { width: 0.02rem; background: #c0c0c0; };
 .flex-divider-b0 { width: 0.02rem; background: #b0b0b0; };
 
-/* Override Spectre's .dropdown, dropdown-toggle, and .menu to make it more user friendly. */
-.dropdown .dropdown-toggle:focus {
-    /* Repeatedly clicking on the dropdown-toggle div should toggle the showing/hiding of the menu. */
-    pointer-events: none;           /* Don't accept click event when focused; next click would lose focus. */
-}
-.dropdown .menu {
-    display:        inherit;        /* Negate "display: none" in spectre.css.  Showing/hiding is controlled by visibility below. */
-    visibility:     hidden;         /* Menu is initially hidden when not triggered to show. */
-    transition:     visibility .5s; /* Delay the transition to hidden visibility when clicked to allow the click event to propagate to the menu item. */
-    opacity:        0;              /* Use transparency to fake immediate toggle. */
-}
-.dropdown.active .menu,
-.dropdown .dropdown-toggle:focus + .menu {
-    opacity:        1;              /* Make menu opaque when shown. */
-    visibility:     visible;        /* Show menu. */
-}
 
 .dbg-border {
     border: 1px dotted red;
@@ -457,11 +459,15 @@ a.disabled {
     box-shadow:         1px 1px #dddddd;
 }
 .window-tab-title {
+    max-width:          89vw;
     font-size:          85%;
     margin-bottom:      var(--tab-gap);
     padding:            0.0rem var(--tab-gap) 0.0rem var(--tab-gap);
     background:         #f4f4f4;
     border-bottom:      0.02rem solid #d0d0d0;
+    white-space:        nowrap;
+    overflow:           hidden;
+    text-overflow:      ellipsis;
 }
 
 .container-tab-lane {
@@ -501,49 +507,170 @@ a.disabled {
 
     display:            flex;
     flex-direction:     column;
+
+    position:           relative;       /* set it non-static for its child's absolute position. */
 }
 .tab-thumbnail {
     flex:               1 0 auto;
 
     /* Have an outward border. Add the border size to the width and height. */
     box-sizing:         border-box;
-    border:             var(--img-border) solid #c7c9cd;
-    width:              calc(var(--img-width)  + var(--img-border) + var(--img-border));
-    height:             calc(var(--img-height) + var(--img-border) + var(--img-border));
+    border:             var(--img-border) solid var(--default-color);
+    width:              var(--thumbnail-width);
+    height:             var(--thumbnail-height);
     cursor:             pointer;
-}
-.tab-thumbnail .dropdown-tab-menu {
-    position:           absolute;
-    top:                0;
-    right:              0;
-    width:              calc(var(--img-height) / 4);
-    height:             calc(var(--img-height) / 4);
-    padding:            0;
-    z-index:            2;
-    opacity:            0.2;
-}
-.tab-thumbnail .cmd-tab-menu {
-    line-height:        1.0;
-    width:              100%;
-    height:             100%;
-    padding:            .0rem .05rem;
-    margin:             0;
 }
 .tab-img {
     width:              var(--img-width);
     height:             var(--img-height);
 }
+
 .tab-subtitle {
     flex:               0 0 auto;
     width:              var(--img-width);
     font-size:          80%;
-    overflow:           hidden;
     white-space:        nowrap;
     overflow:           hidden;
     text-overflow:      ellipsis;
 }
-.tab-url {
+
+.tab-topbar {
+    width:              var(--topbar-width);
+    height:             var(--topbar-height);
+    cursor:             default;
 }
+.tab-box:hover .tab-topbar {
+    border:             0.02rem solid var(--default-color);
+    background-color:   black;
+    color:              white;
+}
+.tab-topbar:hover {
+    background-color:   gray !important;
+    /* opacity:            var(--topbar-opacity-half); */
+}
+
+.tab-draggable {
+}
+.tab-draggable:hover {
+    cursor:             move;
+}
+
+.tab-topbar .tab-title {
+    font-size:          70%;
+    white-space:        nowrap;
+    overflow:           hidden;
+    text-overflow:      ellipsis;
+    padding:            0.0rem 0 0 0.1rem;
+}
+
+.tab-topbar-cmds {
+    display:            flex;
+    position:           absolute;
+    top:                0.10rem;
+    left:               0.1rem;
+    height:             var(--topbar-btn-height);
+    padding:            0;
+    opacity:            var(--topbar-opacity);
+}
+.tab-topbar:hover ~ .tab-topbar-cmds {
+    opacity:            var(--topbar-opacity-hover);
+}
+.tab-topbar-cmds:hover {
+    opacity:            var(--topbar-opacity-hover);
+    box-shadow:         0 0 .1rem -.0rem rgba(0,0,0,0.75);
+}
+
+.tab-topbar-cmds .cmd-close-tab {
+    font-size:          50%;
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0rem 0 0 0;
+    padding:            0.16rem 0 0 0;
+}
+
+.tab-topbar-cmds .cmd-private-window {
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0 0 0 0.2rem;
+    padding:            0.2rem 0 0 0;
+}
+.cmd-private-window img {
+    width:              11px;
+    height:             5px;
+}
+
+.tab-topbar-cmds .cmd-pin-tab {
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0 0 0 0.2rem;
+    padding:            0.05rem 0 0 0;
+}
+.cmd-pin-tab img {
+    width:              10px;
+    height:             10px;
+}
+
+.tab-topbar-cmds .cmd-mute-tab {
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0 0 0 0.2rem;
+    padding:            0.05rem 0 0 0;
+}
+.cmd-mute-tab img {
+    width:              10px;
+    height:             10px;
+}
+
+
+.tab-topbar-menu {
+    position:           absolute;
+    top:                0.10rem;
+    right:              0.1rem;
+    line-height:        0;
+    opacity:            var(--topbar-opacity);
+}
+.tab-topbar:hover ~ .tab-topbar-menu {
+    opacity:            var(--topbar-opacity-hover);
+}
+.tab-topbar-menu:hover {
+    opacity:            var(--topbar-opacity-hover);
+}
+
+.btn.tab-menu-dropdown {
+    font-size:          85%;
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        1.0;
+    padding:            0;
+}
+
+
+/* Override Spectre's .dropdown, dropdown-toggle, and .menu to make it more user friendly. */
+.dropdown .dropdown-toggle:focus {
+    /* Repeatedly clicking on the dropdown-toggle div should toggle the showing/hiding of the menu. */
+    pointer-events: none;           /* Don't accept click event when focused; next click would lose focus. */
+}
+.dropdown .menu {
+    display:        inherit;        /* Negate "display: none" in spectre.css.  Showing/hiding is controlled by visibility below. */
+    visibility:     hidden;         /* Menu is initially hidden when not triggered to show. */
+    transition:     visibility .5s; /* Delay the transition to hidden visibility when clicked to allow the click event to propagate to the menu item. */
+    opacity:        0;              /* Use transparency to fake immediate toggle. */
+}
+.dropdown.active .menu,
+.dropdown .dropdown-toggle:focus + .menu {
+    opacity:        1;              /* Make menu opaque when shown. */
+    visibility:     visible;        /* Show menu. */
+}
+.menu .menu-item > a {
+    font-size:      90%;
+    margin:         0 -.4rem;
+    padding:        .5rem .4rem;
+}
+
 
 #overlay-content {
     pointer-events:     none;       /* no mouse event so that the elements behind it will get the mouseover event. */
@@ -587,7 +714,7 @@ a.disabled {
 }
 .drop-hover-endzone {
     box-shadow:         1px 1px #dddddd;
-    background-color:   #fff5e6;
+    background-color:   var(--drag-bg);
 }
 .drop-hover-endzone::after {
     padding-left:       0.4rem;
@@ -598,8 +725,8 @@ a.disabled {
     left:               -1px;
     top:                -1px;
     width:              calc(var(--tab-gap) + var(--tab-gap) + var(--img-width) + var(--img-border) + var(--img-border) - var(--px1));
-    height:             calc(var(--img-height) + var(--img-border) + var(--img-border));
-    background-color:   #fff5e6;
+    height:             var(--thumbnail-height);
+    background-color:   var(--drag-bg);
     box-sizing:         border-box;
     border:             var(--img-border) solid #ff9900;
     z-index:            1;
@@ -609,10 +736,10 @@ a.disabled {
 .drop-hover-border::after {
     position:           absolute;
     left:               calc(var(--tab-gap) * -2 + var(--px1));
-    top:                0;
+    top:                var(--topbar-height);
     width:              calc(var(--tab-gap) + var(--tab-gap) + var(--img-width) + var(--img-border) + var(--img-border) - var(--px1));
-    height:             calc(var(--img-height) + var(--img-border) + var(--img-border));
-    background-color:   #fff5e6;
+    height:             var(--thumbnail-height);
+    background-color:   var(--drag-bg);
     z-index:            1;
     box-sizing:         border-box;
     border:             var(--img-border) solid #ff9900;
