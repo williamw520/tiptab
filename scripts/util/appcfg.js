@@ -31,7 +31,7 @@
 
     // Module export
     module.APPNAME = "tiptab";
-    module.LOGLEVEL = logger.INFO;
+    module.LOGLEVEL = logger.LOG;
 
     let log = new logger.Logger(module.APPNAME, modulename, module.LOGLEVEL);
     log.info("module loaded");
