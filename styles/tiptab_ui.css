@@ -426,7 +426,7 @@ a.disabled {
 }
 
 .main-content {
-    padding:        0 0 5rem 0;
+    padding:        0 0 7rem 0; /* give enough bottom padding for the dropdown menu on tab. */
 }
 
 .v-btn-bar {
@@ -656,20 +656,22 @@ a.disabled {
     pointer-events: none;           /* Don't accept click event when focused; next click would lose focus. */
 }
 .dropdown .menu {
-    display:        inherit;        /* Negate "display: none" in spectre.css.  Showing/hiding is controlled by visibility below. */
-    visibility:     hidden;         /* Menu is initially hidden when not triggered to show. */
-    transition:     visibility .5s; /* Delay the transition to hidden visibility when clicked to allow the click event to propagate to the menu item. */
-    opacity:        0;              /* Use transparency to fake immediate toggle. */
+    display:            inherit;        /* Negate "display: none" in spectre.css.  Showing/hiding is controlled by visibility below. */
+    visibility:         hidden;         /* Menu is initially hidden when not triggered to show. */
+    transition:         visibility .5s; /* Delay the transition to hidden visibility when clicked to allow the click event to propagate to the menu item. */
+    opacity:            0;              /* Use transparency to fake immediate toggle. */
+    max-height:         none;           /* Remove max-height restriction. */
 }
+
 .dropdown.active .menu,
 .dropdown .dropdown-toggle:focus + .menu {
-    opacity:        1;              /* Make menu opaque when shown. */
-    visibility:     visible;        /* Show menu. */
+    opacity:            1;              /* Make menu opaque when shown. */
+    visibility:         visible;        /* Show menu. */
 }
 .menu .menu-item > a {
-    font-size:      90%;
-    margin:         0 -.4rem;
-    padding:        .5rem .4rem;
+    font-size:          85%;
+    margin:             0 -.4rem;
+    padding:            .4rem .4rem .5rem .4rem;
 }
 
 
