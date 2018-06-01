@@ -21,13 +21,16 @@
 ** DONE Close right other tabs
 ** DONE Move to a new window
 ** DONE Retrofit UI drawing architecture.
-** TODO Copy tab URL
-** TODO Save tab screenshot
+** DONE Copy tab URL
+** DONE Reload all tabs in window
+** DONE Undo tab close
 ** DONE Hide the TipTab tab
 ** TODO Different sizes of thumbnails
+** TODO Save tab screenshot
+** TODO Drag and drop to copy tab between normal and private window
+** TODO Copy tab between normal and private window
 ** TODO Sort tabs
 ** TODO Window command menu.
-** TODO Reload all tabs in window
 ** TODO Save all screenshots
 ** TODO Round robin single line of tabs.
 ** TODO Display nested tab thumbnails within windows in grid.
@@ -67,6 +70,8 @@
     The "cookies" permission is required to get and set the "cookieStoreId" property in a tab.
 *** contextualIdentities
     The "contextualIdentities" permission is required to get the container information.
+*** sessions
+    The "sessions" permission is used to undo closed tab.
 
 
 * Review note

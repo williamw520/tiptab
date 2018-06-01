@@ -160,12 +160,15 @@
 
         // Tab command handlers
         $("#main-content").on("click", ".cmd-close-tab",        function(){ closeTab($(this).closest(".tab-box").data("tid"))                       });
-        $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTab($(this).closest(".tab-box").data("tid"))                     });
+        $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTab($(this).closest(".tab-box").data("tid"))                      });
+        $("#main-content").on("click", ".cmd-reload-tabs",      function(){ reloadWindowTabs($(this).closest(".tab-box").data("tid"))               });
         $("#main-content").on("click", ".cmd-duplicate-tab",    function(){ duplicateTab($(this).closest(".tab-box").data("tid"))                   });
-        $("#main-content").on("click", ".cmd-move-tab-new",     function(){ moveTabToNewWindow($(this).closest(".tab-box").data("tid"))             });
+        $("#main-content").on("click", ".cmd-move-tab-new",     function(){ moveTabToNewWindow($(this).closest(".tab-box").data("tid"), false)      });
+        $("#main-content").on("click", ".cmd-copy-tab-url",     function(){ copyTabUrl($(this).closest(".tab-box").data("tid"))                     });
         $("#main-content").on("click", ".cmd-close-others",     function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "all")          });
         $("#main-content").on("click", ".cmd-close-left",       function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "left")         });
         $("#main-content").on("click", ".cmd-close-right",      function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "right")        });
+        $("#main-content").on("click", ".cmd-undo-close",       function(){ undoCloseTab()                                                          });
         $("#main-content").on("click", ".cmd-toggle-pinned",    function(){ toggleTabProperty($(this).closest(".tab-box").data("tid"), "pinned")    });
         $("#main-content").on("click", ".cmd-toggle-muted",     function(){ toggleTabMuted($(this).closest(".tab-box").data("tid"))                 });
 
@@ -382,7 +385,7 @@
 
     function drawContentLayout() {
         let $mainContent = $("#main-content");
-        
+
         switch (uiState.displayType) {
         case DT_ALL_TABS:
             $mainContent.html(renderAllTabLane());
@@ -555,13 +558,17 @@
                   <a href="#" class="btn dropdown-toggle tab-menu-dropdown" tabindex="0"><i class="icon icon-caret"></i></a>
                   <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                     <li class="menu-item"> <a href="#" class="cmd-reload-tab nowrap">Reload Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-reload-tabs nowrap">Reload All Tabs</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-duplicate-tab nowrap">Duplicate Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-move-tab-new nowrap">To New Window</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-copy-tab-url nowrap">Copy URL</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">${tab.pinned ? "Unpin" : "Pin"} Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-muted nowrap">${isMuted(tab) ? "Unmute" : "Mute"} Tab</a> </li>
+                    <li class="divider"></li>
                     <li class="menu-item"> <a href="#" class="cmd-close-others nowrap">Close Other Tabs</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-close-left nowrap">Close Left Tabs</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-close-right nowrap">Close Right Tabs</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">${tab.pinned ? "Unpin" : "Pin"} Tab</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-toggle-muted nowrap">${isMuted(tab) ? "Unmute" : "Mute"} Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-undo-close nowrap">Undo Close Tab</a> </li>
                   </ul>
                 </div>
               </div>
@@ -807,10 +814,22 @@
         browser.tabs.reload(tid);
     }
 
+    function reloadWindowTabs(tid) {
+        let tab = tabsById[tid];
+        let wid = tab.windowId;
+        tabsByWindow[wid].forEach( tab => browser.tabs.reload(tab.id) );
+    }
+
     function moveTabToNewWindow(tid, isPrivateWindow) {
         browser.windows.create({
             tabId:  tid
         });
+    }
+
+    function copyTabUrl(tid) {
+        let tab = tabsById[tid];
+        $("#copy-to-clipboard").val(tab.url).select();  // note that .val() can sandbox unsafe text from tab.url to avoid XSS attack.
+        document.execCommand("copy");
     }
 
     function closeTab(tid) {
@@ -850,6 +869,17 @@
             thumbnailFocusTid = null;
         if (overlayShownTid == tid)
             overlayShownTid = null;
+    }
+
+    function undoCloseTab() {
+        browser.sessions.getRecentlyClosed().then( sessions => {
+            let sessionInfo = sessions[0];
+            if (sessionInfo.tab) {
+                browser.sessions.restore(sessionInfo.tab.sessionId);
+            } else {
+                browser.sessions.restore(sessionInfo.window.sessionId);
+            }
+        })
     }
 
     function toggleTabProperty(tid, property) {
