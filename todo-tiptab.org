@@ -25,7 +25,7 @@
 ** DONE Reload all tabs in window
 ** DONE Undo tab close
 ** DONE Hide the TipTab tab
-** TODO Different sizes of thumbnails
+** DONE Custom thumbnail dimension: small, medium, or large.
 ** TODO Save tab screenshot
 ** TODO Drag and drop to copy tab between normal and private window
 ** TODO Copy tab between normal and private window

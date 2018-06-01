@@ -60,6 +60,10 @@
     const COLOR_DEFAULT = "#c7c9cd";
     const COLOR_PRIVATE = "#8D20AE";    // purple
 
+    // Dimensions for thumbnailSize
+    const imgWidth  = ["8.0rem", "12.0rem", "16.0rem"];
+    const imgHeight = ["4.5rem", "6.75rem",  "9.0rem"];
+
     // Module variables.
     let PIXELS_PER_REM = 16;
     let uiState = {};
@@ -127,6 +131,7 @@
         state = state || {};
         uiState.displayType = state.displayType || DT_ALL_TABS;
         uiState.searchTerms = state.searchTerms || [];
+        uiState.thumbnailSize = state.thumbnailSize || 0;
 
         return uiState;
     }
@@ -157,6 +162,9 @@
         $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_BY_WINDOW)     });
         $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_BY_CONTAINER)  });
         $(".v-btn-bar").on("click", ".cmd-all-windows",         function(){ selectDisplayType(DT_ALL_WINDOWS)   });
+        $(".v-btn-bar").on("click", ".cmd-small-size",          function(){ setThumbnailSize(0)                 });
+        $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                 });
+        $(".v-btn-bar").on("click", ".cmd-large-size",          function(){ setThumbnailSize(2)                 });
 
         // Tab command handlers
         $("#main-content").on("click", ".cmd-close-tab",        function(){ closeTab($(this).closest(".tab-box").data("tid"))                       });
@@ -277,6 +285,9 @@
 
     function refreshStaticUI() {
         log.info("refreshStaticUI");
+
+        setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
+
         $(".cmd-search").val(uiState.searchTerms.join(" ")).focus().select();
     }
     
@@ -288,6 +299,13 @@
     function refreshVBtnBarControls() {
         displayTypes.forEach( dt => $(".cmd-" + dt).removeClass("active") );
         $(".cmd-" + uiState.displayType).addClass("active");
+
+        $(".cmd-small-size").removeClass("active");
+        $(".cmd-medium-size").removeClass("active");
+        $(".cmd-large-size").removeClass("active");
+        if (uiState.thumbnailSize == 0) {   $(".cmd-small-size").addClass("active")     }
+        if (uiState.thumbnailSize == 1) {   $(".cmd-medium-size").addClass("active")    }
+        if (uiState.thumbnailSize == 2) {   $(".cmd-large-size").addClass("active")     }
     }
 
     function reloadAndRefreshTabs() {
@@ -806,6 +824,19 @@
         saveUiStateNow();
     }
 
+    // size: 0-2
+    function setThumbnailSize(size) {
+        uiState.thumbnailSize = size;
+        resizeThumbnails();
+        saveUiStateNow();
+    }
+
+    function resizeThumbnails() {
+        setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
+        refreshVBtnBarControls();
+        refreshUIContent(false, false);
+    }
+
     function duplicateTab(tid) {
         browser.tabs.duplicate(tid);
     }
@@ -928,6 +959,15 @@
         $elem.offset({ left: left, top: top }).width(width).height(height);
     }
 
+    function setCssVar(cssVar, value) {
+        $("html").css(cssVar, value);
+    }
+
+    function setImgDimension(width, height) {
+        setCssVar("--img-width", width);
+        setCssVar("--img-height", height);
+    }
+
     function activateTab(wid, tid) {
         tiptabWindowActive = false;
         closeOverlay();
@@ -957,6 +997,7 @@
     function isMuted(tab) {
         return tab ? (tab.mutedInfo ? tab.mutedInfo.muted : false) : false;
     }
+
 
     log.info("module loaded");
     return module;

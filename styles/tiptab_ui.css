@@ -21,14 +21,16 @@
     --header-height:        2.2rem;
     
     /* thumbnail has 16:9 rato */
-    --img-width:            8.0rem;       
+    --img-width-base:       8.0rem;
+    --img-height-base:      4.5rem;
+    --img-width:            8.0rem;
     --img-height:           4.5rem;
     --img-border:           0.075rem;
 
     --topbar-width:         calc(var(--img-width) + 2px);
-    --topbar-height:        calc(var(--img-height) / 5 + 1px);
-    --topbar-btn-width:     calc(var(--img-height) / 5);
-    --topbar-btn-height:    calc(var(--img-height) / 6);
+    --topbar-height:        calc(var(--img-height-base) / 5 + 1px);
+    --topbar-btn-width:     calc(var(--img-height-base) / 5);
+    --topbar-btn-height:    calc(var(--img-height-base) / 6);
 
     --thumbnail-width:      calc(var(--img-width)  + var(--img-border) + var(--img-border));
     --thumbnail-height:     calc(var(--img-height) + var(--img-border) + var(--img-border));
@@ -459,7 +461,6 @@ a.disabled {
     box-shadow:         1px 1px #dddddd;
 }
 .window-tab-title {
-    max-width:          89vw;
     font-size:          85%;
     margin-bottom:      var(--tab-gap);
     padding:            0.0rem var(--tab-gap) 0.0rem var(--tab-gap);
@@ -660,7 +661,8 @@ a.disabled {
     visibility:         hidden;         /* Menu is initially hidden when not triggered to show. */
     transition:         visibility .5s; /* Delay the transition to hidden visibility when clicked to allow the click event to propagate to the menu item. */
     opacity:            0;              /* Use transparency to fake immediate toggle. */
-    max-height:         none;           /* Remove max-height restriction. */
+    max-height:         none;           /* Remove the max-height restriction. */
+    border:             1px solid #888888;
 }
 
 .dropdown.active .menu,
