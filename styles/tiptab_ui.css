@@ -540,6 +540,8 @@ a.disabled {
     width:              var(--topbar-width);
     height:             var(--topbar-height);
     cursor:             default;
+    padding:            0;
+    line-height:        1.3;
 }
 .tab-box:hover .tab-topbar {
     border:             0.02rem solid var(--default-color);
@@ -558,11 +560,11 @@ a.disabled {
 }
 
 .tab-topbar .tab-title {
-    font-size:          70%;
+    font-size:          80%;
     white-space:        nowrap;
     overflow:           hidden;
     text-overflow:      ellipsis;
-    padding:            0.0rem 0 0 0.1rem;
+    padding:            0.0rem 0 0 0.2rem;
 }
 
 .tab-topbar-cmds {
