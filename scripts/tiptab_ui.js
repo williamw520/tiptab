@@ -94,7 +94,7 @@
             .then(() => pLoadUiState())
             .then(() => refreshStaticUI())      // for the UI that need to be set up before setting up the DOM listeners.
             .then(() => setupDOMListeners())
-            .then(() => reloadTabs())
+            .then(() => reloadAndRefreshTabs())
             .then(() => refreshControls())
             .then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
@@ -138,7 +138,7 @@
         dlg.setupDlg("#about-dlg", true);
 
         // Global menu at the top navbar
-        $("#global-cmds").on("click", ".cmd-refresh",   reloadTabs);
+        $("#global-cmds").on("click", ".cmd-refresh",   reloadAndRefreshTabs);
         $("#global-cmds").on("click", ".cmd-close-ui",  function(){ pSendCmd({ cmd: "close-ui" }) });
         $(".logo").on("click", function() {
             let manifest = browser.runtime.getManifest();
@@ -160,7 +160,7 @@
 
         // Tab command handlers
         $("#main-content").on("click", ".cmd-close-tab",        function(){ closeTab($(this).closest(".tab-box").data("tid"))                       });
-        $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTabs($(this).closest(".tab-box").data("tid"))                     });
+        $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTab($(this).closest(".tab-box").data("tid"))                     });
         $("#main-content").on("click", ".cmd-duplicate-tab",    function(){ duplicateTab($(this).closest(".tab-box").data("tid"))                   });
         $("#main-content").on("click", ".cmd-move-tab-new",     function(){ moveTabToNewWindow($(this).closest(".tab-box").data("tid"))             });
         $("#main-content").on("click", ".cmd-close-others",     function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "all")          });
@@ -287,7 +287,7 @@
         $(".cmd-" + uiState.displayType).addClass("active");
     }
 
-    function reloadTabs() {
+    function reloadAndRefreshTabs() {
         browser.tabs.query({})
             .then( tabs => {
                 allTabs = tabs.filter( tab => !is_tiptaburl(tab.url) );     // get rid of the TipTab tab.
@@ -360,31 +360,14 @@
         let effectiveTids = new Set(effectiveTabs.map( tab => tab.id ));
 
         if (effectiveTids.size > 0) {
-            let $mainContent = $("#main-content");
-            let tabsRenderedAsHidden = zoomOut == true;   // the animation later will show the tab boxes
-
-            $mainContent.html(renderByDisplayType(effectiveTids, tabsRenderedAsHidden));
-
-            // Fill in the unsafe text of the objects using html-escaped API.
-            fillTabText(effectiveTabs);
-            fillWindowText(windows);
-            fillContainerText(containers);
-
+            drawContentLayout();
             $("#empty-content").addClass("hidden");
-            $("#main-content" ).removeClass("hidden");
-
-            effectiveTids.forEach( tid => refreshThumbnail(tid, forceRefresh) );
-            setupDragAndDrop(effectiveTids);
-
-            if (zoomOut) {
-                //zoomOutAnimation(effectiveTids);
-            }
+            $("#main-content" ).removeClass("hidden");  // show the content to force layout calculation; animations in the next step use width and height.
+            refreshContent(forceRefresh, zoomOut);
         } else {
-            let $mainContent = $("#main-content");
-            $mainContent.html("");
-
+            $("#main-content").html("");
+            $("#main-content").addClass("hidden");
             $("#empty-content").removeClass("hidden");
-            $("#main-content" ).addClass("hidden");
         }
 
     }
@@ -397,94 +380,155 @@
         });
     }
 
-    function renderByDisplayType(effectiveTids, tabsRenderedAsHidden) {
+    function drawContentLayout() {
+        let $mainContent = $("#main-content");
+        
         switch (uiState.displayType) {
         case DT_ALL_TABS:
-            return renderAllTabs(effectiveTids, tabsRenderedAsHidden);
+            $mainContent.html(renderAllTabLane());
+            break;
         case DT_BY_WINDOW:
-            return renderByWindow(effectiveTids, tabsRenderedAsHidden);
+            $mainContent.html(renderWindowLanes());
+            fillWindowText(windows);                        // fill in the unsafe text of the objects using html-escaped API.
+            break;
         case DT_BY_CONTAINER:
-            return renderByContainer(effectiveTids, tabsRenderedAsHidden);
+            $mainContent.html(renderContainerLanes());
+            fillContainerText(containers);                  // fill in the unsafe text of the objects using html-escaped API.
+            break;
         case DT_ALL_WINDOWS:
-            return renderAllWindows(effectiveTids, tabsRenderedAsHidden);
+            renderAllWindows();
+            break;
+        default:
+            $mainContent.html("Unknown displayType " + uiState.displayType);
+            break;
         }
-        return "Unknown displayType " + uiState.displayType;
     }
     
-    function renderContentTitle(title) {
-        return `
-            <div class="content-title">${title}</div>
-        `;
+    function refreshContent(forceRefresh, zoomOut) {
+        switch (uiState.displayType) {
+        case DT_ALL_TABS:
+            refreshAllTabs(forceRefresh, zoomOut);
+            break;
+        case DT_BY_WINDOW:
+            refreshWindows(forceRefresh, zoomOut);
+            break;
+        case DT_BY_CONTAINER:
+            refreshContainers(forceRefresh, zoomOut);
+            break;
+        case DT_ALL_WINDOWS:
+            refreshAllWindows(forceRefresh, zoomOut);
+            break;
+        }
     }
     
-    function renderAllTabs(effectiveTids, tabsRenderedAsHidden) {
+    function renderAllTabLane() {
         return `
-            ${ renderContentTitle("all tabs") }
+            <div class="content-title">all tabs</div>
             <div class="all-tab-lane">
-              ${ renderTabBoxes(allTabs.filter( t => effectiveTids.has(t.id) ), tabsRenderedAsHidden, null) }
+              <div class="tab-grid"></div>
             </div>
         `;
     }
 
-    function renderByWindow(effectiveTids, tabsRenderedAsHidden) {
-        return `
-            ${ renderContentTitle("tabs by window") }
-            ${ windows.map( w => renderWindowTabs(w, effectiveTids, tabsRenderedAsHidden) ).join("\n") }
-        `;
-    }
+    function refreshAllTabs(forceRefresh, zoomOut) {
+        let tabsRenderedAsHidden = zoomOut == true;                         // the animation later will show the tab boxes
+        let effectiveTabs = filterTabs();
+        let html = renderTabGrid(effectiveTabs, tabsRenderedAsHidden);      // unsafe text are left out.
+        $(".all-tab-lane .tab-grid").html(html);
+        fillTabText(effectiveTabs);                                         // fill in the unsafe text using escaped API.
 
-    function renderByContainer(effectiveTids, tabsRenderedAsHidden) {
-        return `
-            ${ renderContentTitle("tabs by container") }
-            ${ containers.map( c => renderContainerTabs(c, effectiveTids, tabsRenderedAsHidden) ).join("\n") }
-        `;
-    }
-
-    function renderAllWindows(effectiveTids, tabsRenderedAsHidden) {
-        return "all windows";
-    }
-
-    function renderWindowTabs(w, effectiveTids, tabsRenderedAsHidden) {
-        let tabs = tabsByWindow[w.id].filter( t => effectiveTids.has(t.id) );
-        if (tabs && tabs.length > 0) {
-            return `
-                <div class="window-tab-lane" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}" data-wid="${w.id}">
-                  <div class="window-tab-title" title="Window">WINDOW-TITLE</div>
-                  ${ renderTabBoxes(tabs, tabsRenderedAsHidden, "dummy-w-" + w.id) }
-                </div>
-            `;
+        let effectiveTids = new Set(effectiveTabs.map( tab => tab.id ));
+        effectiveTids.forEach( tid => refreshThumbnail(tid, forceRefresh) );
+        if (zoomOut) {
+            zoomOutAnimation(effectiveTids);
         }
-        return "";
+    }
+
+    function renderWindowLanes() {
+        return `
+            <div class="content-title">tabs by window</div>
+            ${ windows.map( w => `
+                <div class="window-tab-lane" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
+                  <div class="window-tab-title" title="Window">WINDOW-TITLE</div>
+                  <div class="tab-grid"></div>
+                </div>
+            ` ).join("\n") }
+        `;
     }
 
     // Use html-escaped API to fill in unsafe text.
     function fillWindowText(windows) {
         windows.forEach( w => $(".window-tab-lane[data-wid='" + w.id + "'] .window-tab-title").text(w.title) );
     }
-    function renderContainerTabs(c, effectiveTids, tabsRenderedAsHidden) {
-        let isPrivate = is_firefox_private(c.cookieStoreId);
+
+    function refreshWindows(forceRefresh, zoomOut) {
+        let tabsRenderedAsHidden = zoomOut == true;                         // the animation later will show the tab boxes
+        let effectiveTabs = filterTabs();
+        windows.forEach( w => refreshWindowTabs(w, effectiveTabs, tabsRenderedAsHidden) )
+        let effectiveTids = new Set(effectiveTabs.map( tab => tab.id ));
+        effectiveTids.forEach( tid => refreshThumbnail(tid, forceRefresh) );
+        setupDragAndDrop(effectiveTids);
+        if (zoomOut) {
+            zoomOutAnimation(effectiveTids);
+        }
+    }
+
+    function refreshWindowTabs(w, effectiveTabs, tabsRenderedAsHidden) {
+        let windowTabs = effectiveTabs.filter( tab => tab.windowId == w.id );
+        let html = renderTabGrid(windowTabs, tabsRenderedAsHidden);         // unsafe text are left out.
+        $(".window-tab-lane[data-wid='" + w.id + "'] .tab-grid").html(html);
+        fillTabText(windowTabs);                                            // fill in the unsafe text using escaped API.
+    }
+
+    function renderContainerLanes() {
         return `
-            <div class="container-tab-lane" style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(isPrivate)}">
-              <div class="container-tab-title" title="${is_firefox_default(c.cookieStoreId) ? '' : 'Container'}">
-                <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${is_firefox_default(c.cookieStoreId) ? 'hidden' : 'visible'};">
-                <span class="container-name" data-cid="${c.cookieStoreId}" style="color: ${c.colorCode}">CONTAINER-NAME</span>
-              </div>
-              ${ renderTabBoxes(tabsByContainer[c.cookieStoreId].filter( t => effectiveTids.has(t.id) ), tabsRenderedAsHidden, "dummy-c-" + c.cookieStoreId) }
-            </div>
+            <div class="content-title">tabs by container</div>
+            ${ containers.map( c => `
+                <div class="container-tab-lane" data-cid="${c.cookieStoreId}" style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(is_firefox_private(c.cookieStoreId))}">
+                  <div class="container-tab-title" title="${is_firefox_default(c.cookieStoreId) ? '' : 'Container'}">
+                    <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${is_firefox_default(c.cookieStoreId) ? 'hidden' : 'visible'};">
+                    <span class="container-name" style="color: ${c.colorCode}">CONTAINER-NAME</span>
+                  </div>
+                  <div class="tab-grid"></div>
+                </div>
+            ` ).join("\n") }
         `;
     }
 
     // Use html-escaped API to fill in unsafe text.
     function fillContainerText(containers) {
-        containers.forEach( c => $(".container-name[data-cid='" + c.cookieStoreId + "']").text(c.name) );
+        containers.forEach( c => $(".container-tab-lane[data-cid='" + c.cookieStoreId + "'] .container-name").text(c.name) );
     }
 
-    function renderTabBoxes(tabs, tabsRenderedAsHidden, dummyId) {
-        return `
-            <div class="tab-grid">
-              ${ tabs.map( tab => renderTabBox(tab, tabsRenderedAsHidden) ).join("\n") }
-            </div>
-        `;
+    function refreshContainers(forceRefresh, zoomOut) {
+        let tabsRenderedAsHidden = zoomOut == true;                         // the animation later will show the tab boxes
+        let effectiveTabs = filterTabs();
+        containers.forEach( c => refreshContainerTabs(c, effectiveTabs, tabsRenderedAsHidden) )
+        let effectiveTids = new Set(effectiveTabs.map( tab => tab.id ));
+        effectiveTids.forEach( tid => refreshThumbnail(tid, forceRefresh) );
+        if (zoomOut) {
+            zoomOutAnimation(effectiveTids);
+        }
+    }
+
+    function refreshContainerTabs(c, effectiveTabs, tabsRenderedAsHidden) {
+        let containerTabs = effectiveTabs.filter( tab => tab.cookieStoreId == c.cookieStoreId );
+        let html = renderTabGrid(containerTabs, tabsRenderedAsHidden);      // unsafe text are left out.
+        $(".container-tab-lane[data-cid='" + c.cookieStoreId + "'] .tab-grid").html(html);
+        fillTabText(containerTabs);                                         // fill in the unsafe text using escaped API.
+    }
+
+
+    function renderAllWindows() {
+        return "all windows";
+    }
+
+    function refreshAllWindows(forceRefresh, zoomOut) {
+    }
+
+
+    function renderTabGrid(tabs, tabsRenderedAsHidden) {
+        return ` ${ tabs.map( tab => renderTabBox(tab, tabsRenderedAsHidden) ).join("\n") } `;
     }
 
     function renderTabBox(tab, tabsRenderedAsHidden) {
@@ -751,7 +795,7 @@
     function selectDisplayType(displayType) {
         uiState.displayType = displayType;
         refreshVBtnBarControls();
-        refreshUIContent(false);
+        refreshUIContent(false, false);
         saveUiStateNow();
     }
 

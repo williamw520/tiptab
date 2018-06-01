@@ -6,7 +6,7 @@
 ** DONE Color the container border according to container's private state.
 ** DONE Icon for private window.
 ** DONE Show pinned tabs.  Icon for pinned window.
-** TODO Show muted tabs.  Icon for muted window.
+** DONE Show muted tabs.  Icon for muted window.
 ** DONE Disable dragging tab across normal and private windows.
 ** DONE Show active tab
 ** DONE Overlay controls on thumbnails - drag bar, menu, popup area.
@@ -20,6 +20,7 @@
 ** DONE Close left other tabs
 ** DONE Close right other tabs
 ** DONE Move to a new window
+** DONE Retrofit UI drawing architecture.
 ** TODO Copy tab URL
 ** TODO Save tab screenshot
 ** DONE Hide the TipTab tab

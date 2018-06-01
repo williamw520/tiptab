@@ -500,6 +500,7 @@ a.disabled {
     flex-direction:     row;
     flex-wrap:          wrap;
     margin:             0 var(--tab-gap) 0 var(--tab-gap);
+    padding:            0 0 var(--tab-gap) 0;
 }
 .tab-grid .tab-box {
     flex:               0 0 auto;
