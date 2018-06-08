@@ -55,6 +55,7 @@
     --topbar-opacity:       0.0;
     --topbar-opacity-hover: 1.0;
     --topbar-opacity-half:  0.5;
+    --status-bar-opacity:   0.7;
 }
 
 html {
@@ -454,21 +455,39 @@ a.disabled {
     padding:            1rem 1rem 1rem 0.5rem;
 }
 
-.window-tab-lane {
+.window-lane {
     margin:             1rem;
     background:         #fbfbfb;
     border:             var(--img-border) solid #b0b0b0;
     box-shadow:         1px 1px #dddddd;
 }
-.window-tab-title {
-    font-size:          85%;
+.window-topbar {
+    position:           relative;
     margin-bottom:      var(--tab-gap);
-    padding:            0.0rem var(--tab-gap) 0.0rem var(--tab-gap);
+    padding:            0.0rem calc(var(--tab-gap)/2) 0.0rem calc(var(--tab-gap)/2);
     background:         #f4f4f4;
     border-bottom:      0.02rem solid #d0d0d0;
+}
+.window-title {
+    font-size:          85%;
     white-space:        nowrap;
     overflow:           hidden;
     text-overflow:      ellipsis;
+    
+}
+.window-topbar-menu {
+    position:           absolute;
+    top:                0.15rem;
+    right:              calc(var(--tab-gap)/2);
+    line-height:        0;
+    /* opacity:            var(--topbar-opacity); */
+}
+.btn.window-menu-dropdown {
+    font-size:          85%;
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        1.0;
+    padding:            0;
 }
 
 .container-tab-lane {
@@ -553,6 +572,57 @@ a.disabled {
     /* opacity:            var(--topbar-opacity-half); */
 }
 
+.tab-status-bar {
+    display:            flex;
+    position:           absolute;
+    bottom:             0.15rem;
+    left:               0;
+    width:              100%;
+    padding:            0.0rem 0.0rem 0.0rem 0.15rem;
+    opacity:            var(--status-bar-opacity);
+}
+.tab-box:hover .tab-status-bar {
+    background-color:   rgba(128, 128, 128, 0.7);
+    opacity:            1;
+}
+
+.cmd-private-window {
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0 0.1rem 0 0.1rem;
+    padding:            0.2rem 0 0 0;
+}
+.cmd-private-window img {
+    width:              11px;
+    height:             5px;
+}
+
+.cmd-pin-tab {
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0 0.1rem 0 0.1rem;
+    padding:            0.05rem 0 0 0;
+}
+.cmd-pin-tab img {
+    width:              10px;
+    height:             10px;
+}
+
+.cmd-mute-tab {
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0 0.1rem 0 0.1rem;
+    padding:            0.05rem 0 0 0;
+}
+.cmd-mute-tab img {
+    width:              10px;
+    height:             10px;
+}
+
+
 .tab-draggable {
 }
 .tab-draggable:hover {
@@ -591,42 +661,6 @@ a.disabled {
     line-height:        0;
     margin:             0rem 0 0 0;
     padding:            0.16rem 0 0 0;
-}
-
-.tab-topbar-cmds .cmd-private-window {
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
-    line-height:        0;
-    margin:             0 0 0 0.2rem;
-    padding:            0.2rem 0 0 0;
-}
-.cmd-private-window img {
-    width:              11px;
-    height:             5px;
-}
-
-.tab-topbar-cmds .cmd-pin-tab {
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
-    line-height:        0;
-    margin:             0 0 0 0.2rem;
-    padding:            0.05rem 0 0 0;
-}
-.cmd-pin-tab img {
-    width:              10px;
-    height:             10px;
-}
-
-.tab-topbar-cmds .cmd-mute-tab {
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
-    line-height:        0;
-    margin:             0 0 0 0.2rem;
-    padding:            0.05rem 0 0 0;
-}
-.cmd-mute-tab img {
-    width:              10px;
-    height:             10px;
 }
 
 

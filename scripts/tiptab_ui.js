@@ -41,6 +41,10 @@
     const DT_BY_CONTAINER = "by-container";
     const DT_ALL_WINDOWS = "all-windows"
     const displayTypes = [DT_ALL_TABS, DT_BY_WINDOW, DT_BY_CONTAINER, DT_ALL_WINDOWS];
+    function is_all_tabs()      { return uiState.displayType == DT_ALL_TABS }
+    function is_by_window()     { return uiState.displayType == DT_BY_WINDOW }
+    function is_by_container()  { return uiState.displayType == DT_BY_CONTAINER }
+    function is_all_windows()   { return uiState.displayType == DT_ALL_WINDOWS }
 
     // Overlay animation parameters
     const NOT_MOVING_THRESHOLD = 4000;
@@ -61,8 +65,8 @@
     const COLOR_PRIVATE = "#8D20AE";    // purple
 
     // Dimensions for thumbnailSize
-    const imgWidth  = ["8.0rem", "12.0rem", "16.0rem"];
-    const imgHeight = ["4.5rem", "6.75rem",  "9.0rem"];
+    const imgWidth  = ["8.0rem", "11.5rem", "15rem"];
+    const imgHeight = ["4.5rem", "6.46875rem",  "8.4375rem"];
 
     // Module variables.
     let PIXELS_PER_REM = 16;
@@ -166,17 +170,24 @@
         $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                 });
         $(".v-btn-bar").on("click", ".cmd-large-size",          function(){ setThumbnailSize(2)                 });
 
+        // Window command handlers
+        $("#main-content").on("click", ".cmd-reload-tabs",      function(){ reloadWindowTabs($(this).closest(".window-lane").data("wid"))           });
+        $("#main-content").on("click", ".cmd-copy-titles-urls", function(){ copyWindowTabTitleUrls($(this).closest(".window-lane").data("wid"))     });
+        $("#main-content").on("click", ".cmd-undo-close",       function(){ undoCloseTab()                                                          });
+        $("#main-content").on("click", ".cmd-mute-all",         function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), true)       });
+        $("#main-content").on("click", ".cmd-unmute-all",       function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), false)      });
+        $("#main-content").on("click", ".cmd-pin-all",          function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), true)        });
+        $("#main-content").on("click", ".cmd-unpin-all",        function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), false)       });
+
         // Tab command handlers
         $("#main-content").on("click", ".cmd-close-tab",        function(){ closeTab($(this).closest(".tab-box").data("tid"))                       });
         $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTab($(this).closest(".tab-box").data("tid"))                      });
-        $("#main-content").on("click", ".cmd-reload-tabs",      function(){ reloadWindowTabs($(this).closest(".tab-box").data("tid"))               });
         $("#main-content").on("click", ".cmd-duplicate-tab",    function(){ duplicateTab($(this).closest(".tab-box").data("tid"))                   });
         $("#main-content").on("click", ".cmd-move-tab-new",     function(){ moveTabToNewWindow($(this).closest(".tab-box").data("tid"), false)      });
         $("#main-content").on("click", ".cmd-copy-tab-url",     function(){ copyTabUrl($(this).closest(".tab-box").data("tid"))                     });
         $("#main-content").on("click", ".cmd-close-others",     function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "all")          });
         $("#main-content").on("click", ".cmd-close-left",       function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "left")         });
         $("#main-content").on("click", ".cmd-close-right",      function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "right")        });
-        $("#main-content").on("click", ".cmd-undo-close",       function(){ undoCloseTab()                                                          });
         $("#main-content").on("click", ".cmd-toggle-pinned",    function(){ toggleTabProperty($(this).closest(".tab-box").data("tid"), "pinned")    });
         $("#main-content").on("click", ".cmd-toggle-muted",     function(){ toggleTabMuted($(this).closest(".tab-box").data("tid"))                 });
 
@@ -192,7 +203,7 @@
         });
 
         // Events on the window lane
-        $("#main-content").on("click", ".window-tab-lane", function(){
+        $("#main-content").on("click", ".window-lane", function(){
             activateWindow($(this).data("wid"));
         });
 
@@ -469,8 +480,25 @@
         return `
             <div class="content-title">tabs by window</div>
             ${ windows.map( w => `
-                <div class="window-tab-lane" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
-                  <div class="window-tab-title" title="Window">WINDOW-TITLE</div>
+                <div class="window-lane" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
+                  <div class="window-topbar" title="Window">
+                    <div class="window-title" title="Window">WINDOW-TITLE</div>
+                    <div class="dropdown dropdown-right window-topbar-menu" >
+                      <div class="btn-group" style="margin:0">
+                        <a href="#" class="btn dropdown-toggle window-menu-dropdown" tabindex="0"><i class="icon icon-caret"></i></a>
+                        <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
+                          <li class="menu-item"> <a href="#" class="cmd-reload-tabs nowrap">Reload All Tabs</a> </li>
+                          <li class="menu-item"> <a href="#" class="cmd-undo-close nowrap">Undo Close Tab</a> </li>
+                          <li class="menu-item"> <a href="#" class="cmd-copy-titles-urls nowrap">Copy All Titles & Urls</a> </li>
+                          <li class="divider"></li>
+                          <li class="menu-item"> <a href="#" class="cmd-mute-all nowrap">Mute All Tabs</a> </li>
+                          <li class="menu-item"> <a href="#" class="cmd-unmute-all nowrap">Unmute All Tabs</a> </li>
+                          <li class="menu-item"> <a href="#" class="cmd-pin-all nowrap">Pin All Tabs</a> </li>
+                          <li class="menu-item"> <a href="#" class="cmd-unpin-all nowrap">Unpin All Tabs</a> </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                   <div class="tab-grid"></div>
                 </div>
             ` ).join("\n") }
@@ -479,7 +507,7 @@
 
     // Use html-escaped API to fill in unsafe text.
     function fillWindowText(windows) {
-        windows.forEach( w => $(".window-tab-lane[data-wid='" + w.id + "'] .window-tab-title").text(w.title) );
+        windows.forEach( w => $(".window-lane[data-wid='" + w.id + "'] .window-title").text(w.title) );
     }
 
     function refreshWindows(forceRefresh, zoomOut) {
@@ -497,7 +525,7 @@
     function refreshWindowTabs(w, effectiveTabs, tabsRenderedAsHidden) {
         let windowTabs = effectiveTabs.filter( tab => tab.windowId == w.id );
         let html = renderTabGrid(windowTabs, tabsRenderedAsHidden);         // unsafe text are left out.
-        $(".window-tab-lane[data-wid='" + w.id + "'] .tab-grid").html(html);
+        $(".window-lane[data-wid='" + w.id + "'] .tab-grid").html(html);
         fillTabText(windowTabs);                                            // fill in the unsafe text using escaped API.
     }
 
@@ -564,11 +592,8 @@
                 <div class="tab-title" title="TAB-TITLE">TAB-TITLE</div>
               </div>
 
-              <div class="tab-topbar-cmds dbg-border">
+              <div class="tab-topbar-cmds">
                 <a href="#" class="btn cmd-close-tab" title="Close the tab" tabindex="-1"><i class="icon icon-cross"></i></a>
-                <a href="#" class="btn cmd-private-window   ${isPrivate    ? 'd-block' : 'd-none'}" title="Private window"><img src="icons/eyepatch.png" ></a>
-                <a href="#" class="btn cmd-pin-tab          ${tab.pinned   ? 'd-block' : 'd-none'}" title="Tab is pinned"><img src="icons/pin.png" ></a>
-                <a href="#" class="btn cmd-mute-tab         ${isMuted(tab) ? 'd-block' : 'd-none'}" title="Tab is muted"><img src="icons/mute.png" ></a>
               </div>
 
               <div class="dropdown dropdown-right tab-topbar-menu" >
@@ -576,17 +601,15 @@
                   <a href="#" class="btn dropdown-toggle tab-menu-dropdown" tabindex="0"><i class="icon icon-caret"></i></a>
                   <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                     <li class="menu-item"> <a href="#" class="cmd-reload-tab nowrap">Reload Tab</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-reload-tabs nowrap">Reload All Tabs</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-muted nowrap">${isMuted(tab) ? "Unmute" : "Mute"} Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">${tab.pinned ? "Unpin" : "Pin"} Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-duplicate-tab nowrap">Duplicate Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-move-tab-new nowrap">To New Window</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-copy-tab-url nowrap">Copy URL</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">${tab.pinned ? "Unpin" : "Pin"} Tab</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-toggle-muted nowrap">${isMuted(tab) ? "Unmute" : "Mute"} Tab</a> </li>
-                    <li class="divider"></li>
-                    <li class="menu-item"> <a href="#" class="cmd-close-others nowrap">Close Other Tabs</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-close-left nowrap">Close Left Tabs</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-close-right nowrap">Close Right Tabs</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-undo-close nowrap">Undo Close Tab</a> </li>
+                    <li class="divider   ${is_by_window() ? 'd-block' : 'd-none'}"></li>
+                    <li class="menu-item ${is_by_window() ? 'd-block' : 'd-none'}"> <a href="#" class="cmd-close-others nowrap">Close Other Tabs</a> </li>
+                    <li class="menu-item ${is_by_window() ? 'd-block' : 'd-none'}"> <a href="#" class="cmd-close-left nowrap">Close Left Tabs</a> </li>
+                    <li class="menu-item ${is_by_window() ? 'd-block' : 'd-none'}"> <a href="#" class="cmd-close-right nowrap">Close Right Tabs</a> </li>
                   </ul>
                 </div>
               </div>
@@ -595,6 +618,11 @@
                 <img class="tab-img">
               </div>
 
+              <div class="tab-status-bar">
+                <a href="#" class="btn cmd-private-window   ${isPrivate    ? 'd-block' : 'd-none'}" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
+                <a href="#" class="btn cmd-pin-tab          ${tab.pinned   ? 'd-block' : 'd-none'}" title="Tab is pinned"><img src="icons/pin.png" ></a>
+                <a href="#" class="btn cmd-mute-tab         ${isMuted(tab) ? 'd-block' : 'd-none'}" title="Tab is muted"><img src="icons/mute.png" ></a>
+              </div>
             </div>   
         `;
     }
@@ -742,7 +770,7 @@
         let isDraggedPrivate = is_firefox_private(tabsById[draggedTid].cookieStoreId);
 
         windows.forEach( w => {
-            let $winLane    = $(".window-tab-lane[data-wid='" + w.id + "']");
+            let $winLane    = $(".window-lane[data-wid='" + w.id + "']");
             let $lastTab    = $winLane.find(".tab-thumbnail").last();
             if ($lastTab.length == 0)
                 return;
@@ -807,12 +835,12 @@
                 let tabWidth = $tabBox.width();
                 $tabBox.css({ visibility: "hidden" }).animate({ width: 0 }, 400, function(){
                     $tabBox.detach();
-                    $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                    $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
                     $tabBox.width(tabWidth).css({ visibility: "visible" });
                 });
             } else {
                 $tabBox.detach();
-                $(".window-tab-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
             }
         });
     }
@@ -838,17 +866,33 @@
     }
 
     function duplicateTab(tid) {
-        browser.tabs.duplicate(tid);
+        browser.tabs.duplicate(tid).catch( e => log.warn(e) );
     }
 
     function reloadTab(tid) {
         browser.tabs.reload(tid);
     }
 
-    function reloadWindowTabs(tid) {
-        let tab = tabsById[tid];
-        let wid = tab.windowId;
+    function reloadWindowTabs(wid) {
         tabsByWindow[wid].forEach( tab => browser.tabs.reload(tab.id) );
+    }
+
+    function copyWindowTabTitleUrls(wid) {
+        let urls = [].concat.apply([], tabsByWindow[wid].map( tab => [tab.title, tab.url, ""] )).join("\n");
+        $("#copy-to-clipboard").val(urls).select();     // note that .val() can sandbox unsafe text from tab.url to avoid XSS attack.
+        document.execCommand("copy");
+    }
+
+    function muteWindowTabs(wid, isMuting) {
+        Promise.all( tabsByWindow[wid].map( tab => browser.tabs.update(tab.id, { muted: isMuting }) ) )
+            .then( updatedTabs => updatedTabs.map( tab => tabsById[tab.id].mutedInfo = tab.mutedInfo ) )
+            .then( () => {} )
+    }
+
+    function pinWindowTabs(wid, isPinning) {
+        Promise.all( tabsByWindow[wid].map( tab => browser.tabs.update(tab.id, { pinned: isPinning }) ) )
+            .then( updatedTabs => updatedTabs.map( tab => tabsById[tab.id].pinned = tab.pinned ) )
+            .then( () => {} )
     }
 
     function moveTabToNewWindow(tid, isPrivateWindow) {
