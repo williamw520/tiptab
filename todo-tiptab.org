@@ -32,7 +32,7 @@
 ** DONE Window command: Pin all, unpin all.
 ** DONE Window command: Copy all titles and urls
 ** DONE Bottom status bar overlay.
-** TODO Refresh UI after cmds.
+** DONE Refresh individual or group of UI items after commands.
 ** TODO Save tab screenshot
 ** TODO Drag and drop to copy tab between normal and private window
 ** TODO Copy tab between normal and private window

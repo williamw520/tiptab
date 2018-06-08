@@ -772,7 +772,7 @@ a.disabled {
     border:             var(--img-border) solid #ff9900;
     z-index:            1;
     padding-left:       0.4rem;
-    content:            "drop in front";
+    content:            "drop in front gap";
 }
 .drop-hover-border::after {
     position:           absolute;
@@ -785,5 +785,5 @@ a.disabled {
     box-sizing:         border-box;
     border:             var(--img-border) solid #ff9900;
     padding-left:       0.4rem;
-    content:            "drop in front";
+    content:            "drop in front border";
 }
