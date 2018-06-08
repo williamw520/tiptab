@@ -22,16 +22,21 @@
 ** DONE Move to a new window
 ** DONE Retrofit UI drawing architecture.
 ** DONE Copy tab URL
-** DONE Reload all tabs in window
-** DONE Undo tab close
 ** DONE Hide the TipTab tab
 ** DONE Custom thumbnail dimension: small, medium, or large.
 ** DONE Display nested tab thumbnails within windows in grid.  Window lanes.
+** DONE Window command menu.
+** DONE Window command: Reload all tabs in window
+** DONE Window command: Undo tab close
+** DONE Window command: Mute all, unmute all.
+** DONE Window command: Pin all, unpin all.
+** DONE Window command: Copy all titles and urls
+** DONE Bottom status bar overlay.
+** TODO Refresh UI after cmds.
 ** TODO Save tab screenshot
 ** TODO Drag and drop to copy tab between normal and private window
 ** TODO Copy tab between normal and private window
 ** TODO Sort tabs
-** TODO Window command menu.
 ** TODO Save all screenshots
 ** TODO Round robin single line of tabs.
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
