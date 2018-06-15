@@ -4,9 +4,11 @@
 ** DONE Color the tab thumbnail border according to tab's private window state.
 ** DONE Color the window border according to window's private state.
 ** DONE Color the container border according to container's private state.
-** DONE Icon for private window.
-** DONE Show pinned tabs.  Icon for pinned window.
-** DONE Show muted tabs.  Icon for muted window.
+** DONE Status icon for private window.
+** DONE Status icon for pinned window.
+** DONE Status icon for muted window.
+** TODO Status icon for container, showing the container icon and name.
+** TODO Starting animation is showing full size thumbnail one by one (rather than zoom in each one).
 ** DONE Disable dragging tab across normal and private windows.
 ** DONE Show active tab
 ** DONE Overlay controls on thumbnails - drag bar, menu, popup area.
@@ -33,14 +35,14 @@
 ** DONE Window command: Copy all titles and urls
 ** DONE Bottom status bar overlay.
 ** DONE Refresh individual or group of UI items after commands.
-** TODO Save tab screenshot
+** DONE Save tab screenshot
+** TODO Minimized window bar at the bottom.  Selected windows to limit the ones whose tabs are shown.
+** TODO Minimized container bar at the bottom.  Selected containers to limit the ones whose tabs are shown.
+** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
+** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Drag and drop to copy tab between normal and private window
 ** TODO Copy tab between normal and private window
 ** TODO Sort tabs
-** TODO Save all screenshots
-** TODO Round robin single line of tabs.
-** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
-** TODO Window list bar at the bottom.  Selected on limit the shown tabs to the window.
 
 * Release 1.3 Feature
 ** DONE Initial zoom out of thumbnails.
@@ -77,6 +79,8 @@
     The "contextualIdentities" permission is required to get the container information.
 *** sessions
     The "sessions" permission is used to undo closed tab.
+*** downloads
+    The "downloads" permission is used to download the tab window image.
 
 
 * Review note
