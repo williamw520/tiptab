@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "__MSG_extensionName__",
     "description": "__MSG_extensionDescription__",    
-    "version": "1.3",
+    "version": "2.0",
     "author": "William Wong",
     "default_locale": "en",
 
@@ -27,7 +27,8 @@
         "storage",
         "cookies",
         "contextualIdentities",
-        "sessions"
+        "sessions",
+        "downloads"
     ],
 
     "background": {
