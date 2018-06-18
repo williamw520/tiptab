@@ -7,8 +7,8 @@
 ** DONE Status icon for private window.
 ** DONE Status icon for pinned window.
 ** DONE Status icon for muted window.
-** TODO Status icon for container, showing the container icon and name.
-** TODO Starting animation is showing full size thumbnail one by one (rather than zoom in each one).
+** DONE Status icon for container, showing the container icon and name.
+** DONE Starting animation is showing full size thumbnail one by one (rather than zoom in each one).
 ** DONE Disable dragging tab across normal and private windows.
 ** DONE Show active tab
 ** DONE Overlay controls on thumbnails - drag bar, menu, popup area.
@@ -33,6 +33,7 @@
 ** DONE Window command: Mute all, unmute all.
 ** DONE Window command: Pin all, unpin all.
 ** DONE Window command: Copy all titles and urls
+** DONE Window commands applied to effective tabs after search filtering.
 ** DONE Bottom status bar overlay.
 ** DONE Refresh individual or group of UI items after commands.
 ** DONE Save tab screenshot
