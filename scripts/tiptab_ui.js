@@ -59,6 +59,7 @@
     const CT_SPECIAL_TYPES = [CT_FIREFOX_DEFAULT, CT_FIREFOX_PRIVATE];
     function is_firefox_default(id) { return id == CT_FIREFOX_DEFAULT }
     function is_firefox_private(id) { return id == CT_FIREFOX_PRIVATE }
+    function is_real_container(id)  { return !is_firefox_default(id) && !is_firefox_private(id) }
 
     // Colors
     const COLOR_DEFAULT = "#c7c9cd";
@@ -202,7 +203,7 @@
 
         // Command containers stop event propagation
         $("#main-content").on("click",
-                              ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .cmd-private-window, .cmd-pin-tab, .cmd-mute-tab",
+                              ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .cmd-priv-window, .cmd-pin-tab, .cmd-mute-tab",
                               function(e){ return stopEvent(e) });
 
         // Search handler
@@ -457,10 +458,15 @@
     }
 
     function zoomOutAnimation(tids) {
+        if (tids.length == 0)
+            return;
+        let total = 500;
+        let inc = total / tids.length;
+        let delayMS = 0;
         tids.forEach( tid => {
             let $tabBox = $tabbox(tid);
-            let w = $tabBox.width();
-            $tabBox.removeClass("d-invisible").width(0).animate( {  width: w }, 500 );
+            $tabBox.removeClass("d-invisible").css("opacity", "0").stop().delay(delayMS).animate( {  opacity: 1 }, 100 );
+            delayMS += inc;
         });
     }
 
@@ -653,8 +659,9 @@
 
     // Unsafe text of the tab are not rendered.  Caller needs to call fillTabText() later to fill in the unsafe text.
     function renderTabBox(tab, tabsRenderedAsHidden) {
-        let borderColorByContainer = containerById[tab.cookieStoreId].colorCode;
+        let c = containerById[tab.cookieStoreId];
         let isPrivate = is_firefox_private(tab.cookieStoreId);
+        let isContainer = is_real_container(tab.cookieStoreId);
 
         // Note that the unsafe text of a tab's url are left out, and will be filled in later, in below.
         return `
@@ -687,14 +694,15 @@
                 </div>
               </div>
 
-              <div class="tab-thumbnail" style="border-color: ${borderColorByContainer}; ${box_shadow_private(tab.incognito)}; ${box_shadow_active(tab.active)}; ">
+              <div class="tab-thumbnail" style="border-color: ${c.colorCode}; ${box_shadow_private(tab.incognito)}; ${box_shadow_active(tab.active)}; ">
                 <img class="tab-img">
               </div>
 
               <div class="tab-status-bar">
-                <a href="#" class="btn cmd-private-window   ${isPrivate    ? 'd-block' : 'd-none'}" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
-                <a href="#" class="btn cmd-pin-tab          ${tab.pinned   ? 'd-block' : 'd-none'}" title="Tab is pinned"><img src="icons/pin.png" ></a>
-                <a href="#" class="btn cmd-mute-tab         ${isMuted(tab) ? 'd-block' : 'd-none'}" title="Tab is muted"><img src="icons/mute.png" ></a>
+                <a href="#" class="btn cmd-priv-window  ${css_display(isPrivate)}"    title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
+                <a href="#" class="btn cmd-cont-tab     ${css_display(isContainer)}"  title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
+                <a href="#" class="btn cmd-pin-tab      ${css_display(tab.pinned)}"   title="Tab is pinned"><img src="icons/pin.png" ></a>
+                <a href="#" class="btn cmd-mute-tab     ${css_display(isMuted(tab))}" title="Tab is muted"><img src="icons/mute.png" ></a>
               </div>
             </div>   
         `;
@@ -704,17 +712,24 @@
     function fillTabText(tabs) {
         tabs.forEach( tab => $tabbox(tab.id).find(".tab-url").attr("href", tab.url).attr("title", tab.title).text(tab.title) );
         tabs.forEach( tab => $tabbox(tab.id).find(".tab-title").attr("title", tab.title).text(tab.title) );
+        tabs.forEach( tab => $tabbox(tab.id).find(".cmd-cont-tab").attr("title", "Container: " + containerById[tab.cookieStoreId].name) );
     }
 
     function refreshTabStatusBar(tab) {
         let $statusbar = $tabbox(tab.id).find(".tab-status-bar");
 
         if (is_firefox_private(tab.cookieStoreId)) {
-            $statusbar.find(".cmd-private-window").removeClass("d-none").addClass("d-block");
+            $statusbar.find(".cmd-priv-window").removeClass("d-none").addClass("d-block");
         } else {
-            $statusbar.find(".cmd-private-window").removeClass("d-block").addClass("d-none");
+            $statusbar.find(".cmd-priv-window").removeClass("d-block").addClass("d-none");
         }
-        
+
+        if (is_real_container(tab.cookieStoreId)) {
+            $statusbar.find(".cmd-cont-tab").removeClass("d-none").addClass("d-block");
+        } else {
+            $statusbar.find(".cmd-cont-tab").removeClass("d-block").addClass("d-none");
+        }
+
         if (tab.pinned) {
             $statusbar.find(".cmd-pin-tab").removeClass("d-none").addClass("d-block");
         } else {
@@ -762,9 +777,11 @@
     function box_shadow_private(isPrivate)      { return isPrivate ? "box-shadow: 0 0 .4rem -.02rem rgba(0, 0, 0, 0.75);" : "" }
     function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .3rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
     function border_color_private(isPrivate)    { return isPrivate ? "border-color: " + COLOR_PRIVATE + ";" : "" }
+    function css_display(showing)               { return showing  ? "d-block" : "d-none" }
     function css_draggable()                    { return uiState.displayType == DT_BY_WINDOW ? "tab-draggable" : "" }
     function css_droppable_private(isPrivate)   { return isPrivate ? "droppable-private" : "droppable-normal" }
-
+    
+ 
     function setupDragAndDrop(draggableTids, droppableTids) {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
