@@ -586,16 +586,28 @@ a.disabled {
     opacity:            1;
 }
 
-.cmd-private-window {
+.cmd-priv-window {
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.2rem 0 0 0;
 }
-.cmd-private-window img {
+.cmd-priv-window img {
     width:              11px;
     height:             5px;
+}
+
+.cmd-cont-tab {
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0 0.1rem 0 0.1rem;
+    padding:            0rem 0 0 0;
+}
+.cmd-cont-tab img {
+    width:              10px;
+    height:             10px;
 }
 
 .cmd-pin-tab {
