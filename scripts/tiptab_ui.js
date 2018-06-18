@@ -202,9 +202,7 @@
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
 
         // Command containers stop event propagation
-        $("#main-content").on("click",
-                              ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .cmd-priv-window, .cmd-pin-tab, .cmd-mute-tab",
-                              function(e){ return stopEvent(e) });
+        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private, .status-pin, .status-mute", function(e){ return stopEvent(e) });
 
         // Search handler
         $(".cmd-search").on("click",                            function(){ $(this).select()                                                        });
@@ -699,10 +697,10 @@
               </div>
 
               <div class="tab-status-bar">
-                <a href="#" class="btn cmd-priv-window  ${css_display(isPrivate)}"    title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
-                <a href="#" class="btn cmd-cont-tab     ${css_display(isContainer)}"  title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
-                <a href="#" class="btn cmd-pin-tab      ${css_display(tab.pinned)}"   title="Tab is pinned"><img src="icons/pin.png" ></a>
-                <a href="#" class="btn cmd-mute-tab     ${css_display(isMuted(tab))}" title="Tab is muted"><img src="icons/mute.png" ></a>
+                <a href="#" class="btn status-private   ${css_display(isPrivate)}"    title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
+                <a href="#" class="btn status-container ${css_display(isContainer)}"  title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
+                <a href="#" class="btn status-pin       ${css_display(tab.pinned)}"   title="Tab is pinned"><img src="icons/pin.png" ></a>
+                <a href="#" class="btn status-mute      ${css_display(isMuted(tab))}" title="Tab is muted"><img src="icons/mute.png" ></a>
               </div>
             </div>   
         `;
@@ -712,34 +710,34 @@
     function fillTabText(tabs) {
         tabs.forEach( tab => $tabbox(tab.id).find(".tab-url").attr("href", tab.url).attr("title", tab.title).text(tab.title) );
         tabs.forEach( tab => $tabbox(tab.id).find(".tab-title").attr("title", tab.title).text(tab.title) );
-        tabs.forEach( tab => $tabbox(tab.id).find(".cmd-cont-tab").attr("title", "Container: " + containerById[tab.cookieStoreId].name) );
+        tabs.forEach( tab => $tabbox(tab.id).find(".status-container").attr("title", "Container: " + containerById[tab.cookieStoreId].name) );
     }
 
     function refreshTabStatusBar(tab) {
         let $statusbar = $tabbox(tab.id).find(".tab-status-bar");
 
         if (is_firefox_private(tab.cookieStoreId)) {
-            $statusbar.find(".cmd-priv-window").removeClass("d-none").addClass("d-block");
+            $statusbar.find(".status-private").removeClass("d-none").addClass("d-block");
         } else {
-            $statusbar.find(".cmd-priv-window").removeClass("d-block").addClass("d-none");
+            $statusbar.find(".status-private").removeClass("d-block").addClass("d-none");
         }
 
         if (is_real_container(tab.cookieStoreId)) {
-            $statusbar.find(".cmd-cont-tab").removeClass("d-none").addClass("d-block");
+            $statusbar.find(".status-container").removeClass("d-none").addClass("d-block");
         } else {
-            $statusbar.find(".cmd-cont-tab").removeClass("d-block").addClass("d-none");
+            $statusbar.find(".status-container").removeClass("d-block").addClass("d-none");
         }
 
         if (tab.pinned) {
-            $statusbar.find(".cmd-pin-tab").removeClass("d-none").addClass("d-block");
+            $statusbar.find(".status-pin").removeClass("d-none").addClass("d-block");
         } else {
-            $statusbar.find(".cmd-pin-tab").removeClass("d-block").addClass("d-none");
+            $statusbar.find(".status-pin").removeClass("d-block").addClass("d-none");
         }
 
         if (isMuted(tab)) {
-            $statusbar.find(".cmd-mute-tab").removeClass("d-none").addClass("d-block");
+            $statusbar.find(".status-mute").removeClass("d-none").addClass("d-block");
         } else {
-            $statusbar.find(".cmd-mute-tab").removeClass("d-block").addClass("d-none");
+            $statusbar.find(".status-mute").removeClass("d-block").addClass("d-none");
         }
     }
 

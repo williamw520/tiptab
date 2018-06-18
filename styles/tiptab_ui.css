@@ -586,50 +586,50 @@ a.disabled {
     opacity:            1;
 }
 
-.cmd-priv-window {
+.status-private {
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.2rem 0 0 0;
 }
-.cmd-priv-window img {
+.status-private img {
     width:              11px;
     height:             5px;
 }
 
-.cmd-cont-tab {
+.status-container {
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0rem 0 0 0;
 }
-.cmd-cont-tab img {
+.status-container img {
     width:              10px;
     height:             10px;
 }
 
-.cmd-pin-tab {
+.status-pin {
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.05rem 0 0 0;
 }
-.cmd-pin-tab img {
+.status-pin img {
     width:              10px;
     height:             10px;
 }
 
-.cmd-mute-tab {
+.status-mute {
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.05rem 0 0 0;
 }
-.cmd-mute-tab img {
+.status-mute img {
     width:              10px;
     height:             10px;
 }
