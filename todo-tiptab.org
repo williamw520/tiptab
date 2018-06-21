@@ -37,8 +37,9 @@
 ** DONE Bottom status bar overlay.
 ** DONE Refresh individual or group of UI items after commands.
 ** DONE Save tab screenshot
-** TODO Minimized window bar at the bottom.  Selected windows to limit the ones whose tabs are shown.
-** TODO Minimized container bar at the bottom.  Selected containers to limit the ones whose tabs are shown.
+** DONE Footer window bar.  Selected windows to limit the ones whose tabs are shown.
+** DONE Footer container bar.  Selected containers to limit the ones whose tabs are shown.
+** TODO Show appropriate message on the empty pane, in case filtering/footer hide all the tabs.
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Drag and drop to copy tab between normal and private window

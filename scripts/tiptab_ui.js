@@ -62,8 +62,12 @@
     function is_real_container(id)  { return !is_firefox_default(id) && !is_firefox_private(id) }
 
     // Colors
-    const COLOR_DEFAULT = "#c7c9cd";
+    //const COLOR_DEFAULT = "#c7c9cd";
+    const COLOR_DEFAULT = "#97999d";
     const COLOR_PRIVATE = "#8D20AE";    // purple
+
+    // Chars
+    const CHAR_CHECKMARK = "&#x2713;";
 
     // Dimensions for thumbnailSize
     const imgWidth  = ["8.0rem", "11.5rem", "15rem"];
@@ -139,12 +143,14 @@
         uiState.displayType = state.displayType || DT_ALL_TABS;
         uiState.searchTerms = state.searchTerms || [];
         uiState.thumbnailSize = state.thumbnailSize || 0;
+        uiState.windowFooterBtns = state.windowFooterBtns || {};            // a flag means the window is deselected.
+        uiState.containerFooterBtns = state.containerFooterBtns || {};      // a flag means the container is deselected.
 
         return uiState;
     }
 
     function setupDOMListeners() {
-        log.info("setupDOMListeners");
+        //log.info("setupDOMListeners");
 
         // Dialog setup
         dlg.setupDlg("#about-dlg", true);
@@ -194,7 +200,10 @@
         $("#main-content").on("click", ".cmd-close-right",      function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "right")        });
         $("#main-content").on("click", ".cmd-toggle-pinned",    function(){ toggleTabPinned($(this).closest(".tab-box").data("tid"))                });
         $("#main-content").on("click", ".cmd-toggle-muted",     function(){ toggleTabMuted($(this).closest(".tab-box").data("tid"))                 });
-        
+
+        // Footer command handlers
+        $(".footer-bar").on("click", ".footer-btn",             function(){ toggleFooterBtn($(this).data("wid"), $(this).data("cid"))               });
+
         // Events on tab thumbnails
         $("#main-content").on("click", ".tab-thumbnail",        function(e){ activateTid($(this).closest(".tab-box").data("tid")); return stopEvent(e) });
 
@@ -286,7 +295,7 @@
     }
 
     function refreshStaticUI() {
-        log.info("refreshStaticUI");
+        //log.info("refreshStaticUI");
 
         setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
 
@@ -294,7 +303,7 @@
     }
     
     function refreshControls() {
-        log.info("refreshControls");
+        //log.info("refreshControls");
         refreshVBtnBarControls();
     }
 
@@ -385,7 +394,7 @@
                 case CT_FIREFOX_DEFAULT:
                     return {
                         cookieStoreId:  cid,
-                        name:           "(default container)",
+                        name:           "General Tabs",
                         colorCode:      COLOR_DEFAULT,
                         iconUrl:        "",
                     };
@@ -419,7 +428,19 @@
     function filterTab(tab, filterTokens) {
         let titleMatched = app.hasAll(tab.title, filterTokens, true);
         let urlMatched = app.hasAll(tab.url, filterTokens, true);
-        return titleMatched || urlMatched;
+        
+        let isHidden = false;
+        switch (uiState.displayType) {
+        case DT_ALL_TABS:
+        case DT_BY_WINDOW:
+            isHidden = uiState.windowFooterBtns[tab.windowId];
+            break;
+        case DT_BY_CONTAINER:
+            isHidden = uiState.containerFooterBtns[tab.cookieStoreId];
+            break;
+        }
+
+        return (titleMatched || urlMatched) && !isHidden;
     }
 
     function filterTabs() {
@@ -439,6 +460,11 @@
     function effectiveContainerTabs(cid) {
         // TODO: get tabIds from container's tab array.
         return toTabs(effectiveTabIds).filter( tab => tab.cookieStoreId == cid );
+    }
+
+    function refreshOnSearch() {
+        updateEffectiveTabIds();
+        refreshUIContent(false, false);
     }
 
     function refreshUIContent(forceRefreshImg, zoomOut) {
@@ -475,14 +501,20 @@
         switch (uiState.displayType) {
         case DT_ALL_TABS:
             $mainContent.html(renderAllTabLane());
+            redrawWindowFooterBtns();
+            refreshWindowFooterBtns();
             break;
         case DT_BY_WINDOW:
             $mainContent.html(renderWindowLanes());
             fillWindowText(windowIds);                      // fill in the unsafe text of the objects using html-escaped API.
+            redrawWindowFooterBtns();
+            refreshWindowFooterBtns();
             break;
         case DT_BY_CONTAINER:
             $mainContent.html(renderContainerLanes());
             fillContainerText(containerIds);                // fill in the unsafe text of the objects using html-escaped API.
+            redrawContainerFooterBtns();
+            refreshContainerFooterBtns();
             break;
         case DT_ALL_WINDOWS:
             renderAllWindows();
@@ -536,7 +568,7 @@
         return `
             <div class="content-title">tabs by window</div>
             ${ windowIds.map( wid => windowById[wid] ).map( w => `
-                <div class="window-lane" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
+                <div class="window-lane d-none" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
                   <div class="window-topbar" title="Window">
                     <div class="window-title" title="Window">WINDOW-TITLE</div>
                     <div class="dropdown dropdown-right window-topbar-menu" >
@@ -560,6 +592,43 @@
             ` ).join("\n") }
         `;
     }
+
+    function redrawWindowFooterBtns() {
+        $(".footer-btns").html(
+            `${ windowIds.map( wid => windowById[wid] ).map( w => `
+                <button class="btn footer-btn badge" data-wid="${w.id}" data-badge="${CHAR_CHECKMARK}"></button>
+                ` ).join("\n") }
+        `);
+    }
+
+    function refreshWindowFooterBtns() {
+        windowIds.map( wid => windowById[wid] ).forEach( w => {
+            $(".footer-btn[data-wid='" + w.id + "']")
+                .attr("title", "Window: " + w.title).text(titleLetter(w.title))
+                .removeClass("deselected").addClass(uiState.windowFooterBtns[w.id] ? "deselected" : "");
+        });
+    }
+
+    function redrawContainerFooterBtns() {
+        $(".footer-btns").html(
+            `${ containerIds.map( cid => containerById[cid] ).map( c => `
+                <button class="btn footer-btn badge" data-cid="${c.cookieStoreId}" data-badge="${CHAR_CHECKMARK}" style="color: ${c.colorCode}"></button>
+                ` ).join("\n") }
+        `);
+    }
+ 
+    function refreshContainerFooterBtns() {
+        containerIds.map( cid => containerById[cid] ).forEach( c => {
+            $(".footer-btn[data-cid='" + c.cookieStoreId + "']")
+                .attr("title", "Container: " + c.name).text(titleLetter(c.name))
+                .removeClass("deselected").addClass(uiState.containerFooterBtns[c.cookieStoreId] ? "deselected" : "");
+        });
+    }
+
+    function titleLetter(title, defaultLetter) {
+        return title.length ? title.substring(0, 1) : defaultLetter;
+    }
+
 
     // Use html-escaped API to fill in unsafe text.
     function fillWindowText(windowIds) {
@@ -590,16 +659,20 @@
 
     function refreshWindowTabs(wid, tabsRenderedAsHidden) {
         let windowTabs = effectiveWindowTabs(wid);
-        let html = renderTabGrid(windowTabs, tabsRenderedAsHidden);         // unsafe text are left out.
-        $(".window-lane[data-wid='" + wid + "'] .tab-grid").html(html);
-        fillTabText(windowTabs);                                            // fill in the unsafe text using escaped API.
+        if (windowTabs.length > 0) {
+            let $window_lane = $(".window-lane[data-wid='" + wid + "']");
+            $window_lane.removeClass("d-none");
+            let html = renderTabGrid(windowTabs, tabsRenderedAsHidden);     // unsafe text are left out.
+            $window_lane.find(".tab-grid").html(html);
+            fillTabText(windowTabs);                                        // fill in the unsafe text using escaped API.
+        }
     }
 
     function renderContainerLanes() {
         return `
             <div class="content-title">tabs by container</div>
             ${ containerIds.map( cid => containerById[cid] ).map( c => `
-                <div class="container-tab-lane" data-cid="${c.cookieStoreId}" style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(is_firefox_private(c.cookieStoreId))}">
+                <div class="container-tab-lane d-none" data-cid="${c.cookieStoreId}" style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(is_firefox_private(c.cookieStoreId))}">
                   <div class="container-tab-title" title="${is_firefox_default(c.cookieStoreId) ? '' : 'Container'}">
                     <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${is_firefox_default(c.cookieStoreId) ? 'hidden' : 'visible'};">
                     <span class="container-name" style="color: ${c.colorCode}">CONTAINER-NAME</span>
@@ -627,9 +700,13 @@
 
     function refreshContainerTabs(cid, tabsRenderedAsHidden) {
         let containerTabs = effectiveContainerTabs(cid);
-        let html = renderTabGrid(containerTabs, tabsRenderedAsHidden);      // unsafe text are left out.
-        $(".container-tab-lane[data-cid='" + cid + "'] .tab-grid").html(html);
-        fillTabText(containerTabs);                                         // fill in the unsafe text using escaped API.
+        if (containerTabs.length > 0) {
+            let $conainer_tab_lane = $(".container-tab-lane[data-cid='" + cid + "']");
+            $conainer_tab_lane.removeClass("d-none");
+            let html = renderTabGrid(containerTabs, tabsRenderedAsHidden);      // unsafe text are left out.
+            $conainer_tab_lane.find(".tab-grid").html(html);
+            fillTabText(containerTabs);                                         // fill in the unsafe text using escaped API.
+        }
     }
 
 
@@ -771,6 +848,7 @@
         $tabimg(tid).attr("src", thumbnail);
     }
 
+ 
     function stopEvent(e)                       { e.preventDefault(); return false }
     function box_shadow_private(isPrivate)      { return isPrivate ? "box-shadow: 0 0 .4rem -.02rem rgba(0, 0, 0, 0.75);" : "" }
     function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .3rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
@@ -1118,12 +1196,25 @@
         });
     }
 
+    function toggleFooterBtn(wid, cid) {
+        if (wid) {
+            uiState.windowFooterBtns[wid] = !uiState.windowFooterBtns[wid];
+            refreshWindowFooterBtns();
+        }
+        if (cid) {
+            uiState.containerFooterBtns[cid] = !uiState.containerFooterBtns[cid];
+            refreshContainerFooterBtns();
+        }
+        dSaveUiState();
+        refreshOnSearch();
+    }
+
     function pSendCmd(msg) {
         return browser.runtime.sendMessage(msg);    // response is returned in .then( response => ... ).
     }
 
     function $tabbox(tid) { return $("#tid-" + tid) }
-    
+
     function getFontSizeRem() {
         return parseFloat(getComputedStyle(document.documentElement).fontSize);
     }
@@ -1170,8 +1261,7 @@
     function searchTabs(searchText) {
         uiState.searchTerms = searchText.split(" ");
         dSaveUiState();
-        updateEffectiveTabIds();
-        refreshUIContent(false, false);
+        refreshOnSearch();
     }
 
     function closeOverlay() {
