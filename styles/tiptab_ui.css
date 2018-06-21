@@ -19,6 +19,7 @@
 
 :root {
     --header-height:        2.2rem;
+    --footer-height:        2.2rem;
     
     /* thumbnail has 16:9 rato */
     --img-width-base:       8.0rem;
@@ -143,6 +144,12 @@ body {
     border:         .05rem solid #007bff;
 }
 
+.wnd-img {
+    width:          1.0rem;
+    height:         1.0rem;
+}
+
+/* Modify the badge for btn-cmd-i */
 .badge.btn-cmd-i[data-badge]::after {
     background:     #4f9fef;
     font-size:      .5rem;
@@ -156,6 +163,18 @@ body {
     width:          6px;
 }
 
+/* Modify the badge for footer-btn */
+.badge.footer-btn[data-badge]::after {
+    background:     #4f9fef;
+    font-size:      .5rem;
+    min-width:      0.7rem;
+    height:         0.7rem;
+}
+.badge.footer-btn:not([data-badge])::after,
+.badge.footer-btn[data-badge=""]::after,
+.deselected.badge.footer-btn[data-badge]::after {
+    display:        none;
+}
 
 .cmd-size {
     width:          4.70rem;
@@ -405,6 +424,35 @@ a.disabled {
     display:        flex;
 }
 
+.footer-bar {
+    position:       fixed;
+    left:           var(--left-pane-width);
+    bottom:         0;
+    height:         var(--footer-height);
+    width:          100%;
+    margin-left:    auto;
+    margin-right:   auto;
+    padding-left:   0.8rem;
+
+    border-top:     0.02rem solid #e0e0e0;
+    background:     #fdfdfd;
+    z-index:        10;
+    
+    display:        flex;
+    align-items:    center;
+}
+.footer-bar .footer-btns {
+    display:        flex;
+    flex-direction: row;
+    align-items:    center;
+}
+.footer-btns .btn.footer-btn {
+    height:         1.3rem;
+    width:          1.4rem;
+    padding:        .05rem .05rem;
+    margin-right:   0.8rem;
+}
+
 .v-container {
     height:         100vh;
     display:        flex;
@@ -432,7 +480,7 @@ a.disabled {
     padding:        0 0 7rem 0; /* give enough bottom padding for the dropdown menu on tab. */
 }
 
-.v-btn-bar {
+.left-pane .v-btn-bar {
     display:            flex;
     flex-direction:     column;
     align-items:        center;
