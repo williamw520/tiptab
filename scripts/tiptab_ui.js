@@ -477,6 +477,11 @@
             $("#main-content").html("");
             $("#main-content").addClass("hidden");
             $("#empty-content").removeClass("hidden");
+            if (tabIds.length > 0) {
+                $("#empty-msg1").text("Tabs are hidden due to filtering by search or by window selection at the footer.");
+            } else {
+                $("#empty-msg1").text("");
+            }
         }
 
     }
