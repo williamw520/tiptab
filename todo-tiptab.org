@@ -40,6 +40,7 @@
 ** DONE Footer window bar.  Selected windows to limit the ones whose tabs are shown.
 ** DONE Footer container bar.  Selected containers to limit the ones whose tabs are shown.
 ** DONE Show appropriate message on the empty pane, in case filtering/footer hide all the tabs.
+** DONE Preserve the last active tab of the TipTab's window.
 ** TODO Custom key binding for invocation.
 ** TODO Keyboard navigation Tab to select and Enter to jump.
 ** TODO Single strip round robin of thumbnail.  Mouse drag or touch to sling the strip.

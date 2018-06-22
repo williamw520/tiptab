@@ -74,9 +74,12 @@
     const imgHeight = ["4.5rem", "6.46875rem",  "8.4375rem"];
 
     // Module variables.
-    let PIXELS_PER_REM = 16;
+    let pixels_per_rem = 16;
+    let currentWid;
+    let currentTid;
+    let currentLastActiveTabId = -1;
+
     let uiState = {};
-    
     let tabById = {};               // the only map holding the Tab objects.
     let tabIds = [];                // track the order of the tabs, id only.
     let windowById = {};            // the only map holding the Window objects
@@ -104,7 +107,9 @@
         // Page is loaded and ready for the script to run.
         Promise.resolve()
             .then(() => log.info("Page initialization starts") )
-            .then(() => PIXELS_PER_REM = getFontSizeRem() )
+            .then(() => pixels_per_rem = getFontSizeRem() )
+            .then(() => pGetCurrnetTab() )
+            .then(() => pGetLastActiveTab() )
             .then(() => generateUILayout())
             .then(() => pLoadUiState())
             .then(() => refreshStaticUI())      // for the UI that need to be set up before setting up the DOM listeners.
@@ -114,6 +119,18 @@
             .then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
+
+
+    function pGetCurrnetTab() {
+        return browser.tabs.getCurrent().then( tab => {
+            currentWid = tab.windowId;
+            currentTid = tab.id;
+        });
+    }
+
+    function pGetLastActiveTab() {
+        return pSendCmd({ cmd: "last-active-tab", wid: currentWid, currentTid: currentTid }).then( res => currentLastActiveTabId = res.lastActiveTabId );
+    }
 
     async function saveUiStateNow() {
         //log.info("saveUiStateNow");
@@ -416,6 +433,9 @@
             });
     }
 
+    function wasTabActive(tab) {
+        return (tab.windowId == currentWid && tab.id == currentLastActiveTabId) ? true : tab.active;
+    }
 
     function toTabs(tids) {
         return tids.map( tid => tabById[tid] );
@@ -578,7 +598,7 @@
                     <div class="window-title" title="Window">WINDOW-TITLE</div>
                     <div class="dropdown dropdown-right window-topbar-menu" >
                       <div class="btn-group" style="margin:0">
-                        <a href="#" class="btn dropdown-toggle window-menu-dropdown" tabindex="0"><i class="icon icon-caret"></i></a>
+                        <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="0"><i class="icon icon-caret"></i></a>
                         <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                           <li class="menu-item"> <a href="#" class="cmd-reload-tabs nowrap">Reload All Tabs</a> </li>
                           <li class="menu-item"> <a href="#" class="cmd-undo-close nowrap">Undo Close Tab</a> </li>
@@ -774,7 +794,7 @@
                 </div>
               </div>
 
-              <div class="tab-thumbnail" style="border-color: ${c.colorCode}; ${box_shadow_private(tab.incognito)}; ${box_shadow_active(tab.active)}; ">
+              <div class="tab-thumbnail" style="border-color: ${c.colorCode}; ${box_shadow_private(tab.incognito)}; ${box_shadow_active(wasTabActive(tab))}; ">
                 <img class="tab-img">
               </div>
 
@@ -1225,7 +1245,7 @@
     }
 
     function remToPixels(rem) {
-        return rem * PIXELS_PER_REM;
+        return rem * pixels_per_rem;
     }
     
     function dim($elem) {
