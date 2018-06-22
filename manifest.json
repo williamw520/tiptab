@@ -37,6 +37,7 @@
             "scripts/util/logger.js",
             "scripts/util/appcfg.js",
             "scripts/util/app.js",
+            "scripts/util/ringbuf.js",
             "scripts/tiptab_daemon.js"
         ]
     },
