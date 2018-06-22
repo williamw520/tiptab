@@ -25,20 +25,26 @@
     // import logger
     // import appcfg
     // import app
+    let RingBuf = ringbuf.RingBuf;
 
     let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
 
-    var module = function() { };       // Module object to be returned.
+    let module = function() { };        // Module object to be returned.
     if (modulename)
-        scope[modulename] = module;    // set module name in scope, otherwise caller sets the name with the returned module object.
+        scope[modulename] = module;     // set module name in scope, otherwise caller sets the name with the returned module object.
 
-    const tiptabUrl = browser.extension.getURL("tiptab.html");
-    function is_tiptaburl(url) { return url.startsWith(tiptabUrl) };    // sometimes # is added to the end of the url.
+    const MAX_ACTIVATED_HISTORY = 10;
+    const TIPTAB_URL = browser.extension.getURL("tiptab.html");
+
+    let activatedHistory = {};          // Keyed by windowId.  Value is a RingBuf listing the tabId of the last activated tabs.
+
+    function is_tiptaburl(url) { return url.startsWith(TIPTAB_URL) };   // sometimes # is added to the end of the url.
 
     function init() {
         Promise.resolve()
             .then(() => log.info("tiptab_daemon init ===================================================== ") )
             .then(() => browser.browserAction.onClicked.addListener(browserAction_onClicked) )
+            .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
             .then(() => setupMessageHandlers() )
             .then(() => log.info("tiptab_daemon init done ----------------------------------------------- ") )
             .catch( e => console.warn(dump(e)) )
@@ -56,13 +62,39 @@
         });
     }
 
+    function tabs_onActivated(activeInfo) {
+        // log.info("tabs_onActivated tabId " + activeInfo.tabId + " winId " + activeInfo.windowId);
+
+        let tabHistory = activatedHistory[activeInfo.windowId];
+        if (!tabHistory) {
+            tabHistory = activatedHistory[activeInfo.windowId] = new RingBuf(MAX_ACTIVATED_HISTORY);
+        }
+        tabHistory.push(activeInfo.tabId);
+    }
+
     function setupMessageHandlers() {
         log.info("setupMessageHandlers");
         return browser.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
-            log.info("onMessage() ", msg);
+            // log.info("onMessage() ", msg);
             switch (msg.cmd) {
             case "dbg-test":
+                log.info(msg);
                 break;
+            case "last-active-tab":
+                if (sendResponse) {
+                    if (msg.wid && activatedHistory[msg.wid]) {
+                        let history = activatedHistory[msg.wid];
+                        for (let i = history.newestIndex - 1; i >= 0; i--) {
+                            let tid = history.get(i);
+                            if (tid != msg.currentTid) {
+                                sendResponse({ lastActiveTabId: tid });
+                                return;
+                            }
+                        }
+                    }
+                    sendResponse({ lastActiveTabId: -1 });
+                }
+                return;
             default:
                 log.info("onMessage() unknown cmd: " + msg.cmd);
                 break;
