@@ -25,6 +25,7 @@
     // import appcfg
     // import app
     // import dlg
+    let TipTabSettings = settings.TipTabSettings;
 
     let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
 
@@ -74,6 +75,7 @@
     const imgHeight = ["4.5rem", "6.46875rem",  "8.4375rem"];
 
     // Module variables.
+    let ttSettings = new TipTabSettings();
     let pixels_per_rem = 16;
     let currentWid;
     let currentTid;
@@ -107,6 +109,7 @@
         // Page is loaded and ready for the script to run.
         Promise.resolve()
             .then(() => log.info("Page initialization starts") )
+            .then(() => settings.pLoad().then(tts => ttSettings = tts) )
             .then(() => pixels_per_rem = getFontSizeRem() )
             .then(() => pGetCurrnetTab() )
             .then(() => pGetLastActiveTab() )
@@ -116,6 +119,7 @@
             .then(() => setupDOMListeners())
             .then(() => reloadAndRefreshTabs())
             .then(() => refreshControls())
+            .then(() => pMonitorDataChange())
             .then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
@@ -164,6 +168,15 @@
         uiState.containerFooterBtns = state.containerFooterBtns || {};      // a flag means the container is deselected.
 
         return uiState;
+    }
+
+    function pMonitorDataChange() {
+        // Monitor settings storage change.
+        return browser.storage.onChanged.addListener(storageChange => {
+            if (app.has(storageChange, "TipTabSettings")) {
+                ttSettings = new TipTabSettings(storageChange.TipTabSettings.newValue);
+            }
+        });
     }
 
     function setupDOMListeners() {
@@ -267,7 +280,7 @@
                 mouseStopped = true;
             }, NOT_MOVING_THRESHOLD);
 
-            if (!thumbnailFocusTid || !enableOverlay)
+            if (!ttSettings.thumbnailPopup || !thumbnailFocusTid || !enableOverlay)
                 return;     // no focused thumbnail or overlay not enabled
 
             // Every mousemove hides the overlay-img.
@@ -598,7 +611,7 @@
                     <div class="window-title" title="Window">WINDOW-TITLE</div>
                     <div class="dropdown dropdown-right window-topbar-menu" >
                       <div class="btn-group" style="margin:0">
-                        <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="0"><i class="icon icon-caret"></i></a>
+                        <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
                         <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                           <li class="menu-item"> <a href="#" class="cmd-reload-tabs nowrap">Reload All Tabs</a> </li>
                           <li class="menu-item"> <a href="#" class="cmd-undo-close nowrap">Undo Close Tab</a> </li>
@@ -777,7 +790,7 @@
 
               <div class="dropdown dropdown-right tab-topbar-menu" >
                 <div class="btn-group" style="margin:0">
-                  <a href="#" class="btn dropdown-toggle tab-menu-dropdown" tabindex="0"><i class="icon icon-caret"></i></a>
+                  <a href="#" class="btn dropdown-toggle tab-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
                   <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                     <li class="menu-item"> <a href="#" class="cmd-reload-tab nowrap">Reload Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-toggle-muted nowrap">${isMuted(tab) ? "Unmute" : "Mute"} Tab</a> </li>

@@ -47,6 +47,7 @@
         "default_icon": "icons/app-256.png",
         "default_title": "__MSG_browser_action_title__"
     },
+    
     "commands": {
         "_execute_browser_action": {
             "suggested_key": {
@@ -54,7 +55,12 @@
             }
         }
     },
-    
+
+    "options_ui": {
+        "page": "options.html",
+        "browser_style": true,
+        "open_in_tab": true
+    },
 
     "web_accessible_resources": [
     ]
