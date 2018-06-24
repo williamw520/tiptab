@@ -1,0 +1,49 @@
+/*
+  Tip Tab
+  A Firefox extension to manage and navigate the browser tabs.
+  Copyright (C) 2018  William Wong (williamw520@gmail.com)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+:root {
+    --header-height:        2.2rem;
+    --footer-height:        2.2rem;
+}
+    
+
+html {
+    /* font-size controls the root em (rem) unit size.  Set this to control the size of all components. */
+    font-size: 18px;
+}
+
+
+.dbg-border {
+    border: 1px dotted red;
+}
+.dbg-border2 {
+    border: 1px dotted blue;
+}
+.dbg-border3 {
+    border: 1px dotted orange;
+}
+.dbg-bg {
+    background: yellow;
+}
+.dbg-bg2 {
+    background: red;
+}
+.dbg-bg3 {
+    background: blue;
+}
