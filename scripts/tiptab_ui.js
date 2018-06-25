@@ -236,6 +236,7 @@
 
         // Events on tab thumbnails
         $("#main-content").on("click", ".tab-thumbnail",        function(e){ activateTid($(this).closest(".tab-box").data("tid")); return stopEvent(e) });
+        $("#main-content").on("keyup", ".tab-box",              onTabBoxEnterKey);
 
         // Events on the window lane
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
@@ -634,7 +635,7 @@
     function redrawWindowFooterBtns() {
         $(".footer-btns").html(
             `${ windowIds.map( wid => windowById[wid] ).map( w => `
-                <button class="btn footer-btn badge" data-wid="${w.id}" data-badge="${CHAR_CHECKMARK}"></button>
+                <button class="btn footer-btn badge" data-wid="${w.id}" data-badge="${CHAR_CHECKMARK}" tabindex="-1"></button>
                 ` ).join("\n") }
         `);
     }
@@ -650,7 +651,7 @@
     function redrawContainerFooterBtns() {
         $(".footer-btns").html(
             `${ containerIds.map( cid => containerById[cid] ).map( c => `
-                <button class="btn footer-btn badge" data-cid="${c.cookieStoreId}" data-badge="${CHAR_CHECKMARK}" style="color: ${c.colorCode}"></button>
+                <button class="btn footer-btn badge" data-cid="${c.cookieStoreId}" data-badge="${CHAR_CHECKMARK}" style="color: ${c.colorCode}" tabindex="-1"></button>
                 ` ).join("\n") }
         `);
     }
@@ -778,7 +779,7 @@
 
         // Note that the unsafe text of a tab's url are left out, and will be filled in later, in below.
         return `
-            <div class="tab-box ${css_droppable_private(isPrivate)} ${tabsRenderedAsHidden ? 'd-invisible' : ''}" id="tid-${tab.id}" data-tid="${tab.id}" >
+            <div class="tab-box ${css_droppable_private(isPrivate)} ${tabsRenderedAsHidden ? 'd-invisible' : ''}" id="tid-${tab.id}" data-tid="${tab.id}" tabindex="0">
 
               <div class="tab-topbar ${css_draggable()}" title="Drag the top bar to start drag and drop on the thumbnail.">
                 <div class="tab-title" title="TAB-TITLE">TAB-TITLE</div>
@@ -812,10 +813,10 @@
               </div>
 
               <div class="tab-status-bar">
-                <a href="#" class="btn status-private   ${css_display(isPrivate)}"    title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
-                <a href="#" class="btn status-container ${css_display(isContainer)}"  title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
-                <a href="#" class="btn status-pin       ${css_display(tab.pinned)}"   title="Tab is pinned"><img src="icons/pin.png" ></a>
-                <a href="#" class="btn status-mute      ${css_display(isMuted(tab))}" title="Tab is muted"><img src="icons/mute.png" ></a>
+                <a href="#" class="btn status-private   ${css_display(isPrivate)}"    tabindex="-1" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
+                <a href="#" class="btn status-container ${css_display(isContainer)}"  tabindex="-1" title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
+                <a href="#" class="btn status-pin       ${css_display(tab.pinned)}"   tabindex="-1" title="Tab is pinned"><img src="icons/pin.png" ></a>
+                <a href="#" class="btn status-mute      ${css_display(isMuted(tab))}" tabindex="-1" title="Tab is muted"><img src="icons/mute.png" ></a>
               </div>
             </div>   
         `;
@@ -1090,7 +1091,6 @@
     function duplicateTab(tid) {
         browser.tabs.duplicate(tid)
             .then( newTab => {
-                
                 activateTab(newTab);
             }).catch( e => log.warn(e) );
     }
@@ -1294,6 +1294,14 @@
         tiptabWindowActive = false;
         closeOverlay();
         browser.windows.update(wid, {focused: true});
+    }
+
+    function onTabBoxEnterKey(event) {
+        if (event.which == 13) {
+            activateTid($(this).data("tid"));
+            return stopEvent(event);
+        }
+        return false;
     }
 
     function searchTabs(searchText) {
