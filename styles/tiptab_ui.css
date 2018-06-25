@@ -633,6 +633,10 @@ a.disabled {
     background-color:   rgba(128, 128, 128, 0.7);
     opacity:            1;
 }
+.tab-box:focus {
+    box-shadow:         0 0 .2rem -.0rem rgba(0, 0, 255, 1.0);
+    outline:            none;
+}
 
 .status-private {
     width:              var(--topbar-btn-width);
