@@ -231,6 +231,9 @@
         $("#main-content").on("click", ".cmd-toggle-pinned",    function(){ toggleTabPinned($(this).closest(".tab-box").data("tid"))                });
         $("#main-content").on("click", ".cmd-toggle-muted",     function(){ toggleTabMuted($(this).closest(".tab-box").data("tid"))                 });
 
+        // Tab topbar event handlers
+        $("#main-content").on("click", ".tab-topbar",           function(){ $(this).closest(".tab-box").focus()                                     });
+        
         // Footer command handlers
         $(".footer-bar").on("click", ".footer-btn",             function(){ toggleFooterBtn($(this).data("wid"), $(this).data("cid"))               });
 
