@@ -77,9 +77,11 @@
 }(this, "logger"));    // Pass in the global scope as 'this' scope.
 
 
-// Tests
-let _RUNTEST = false;
-if (_RUNTEST) {
+// Unit Tests
+let _RUNTEST_LOGGER = false;
+if (_RUNTEST_LOGGER) {
+    console.log("Run unit tests");
+
     let none = new logger.Logger("LoggerTests", "TestNone", logger.NONE);
     none.error("none not shown");
     none.warn("warn not shown");

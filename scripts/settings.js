@@ -56,12 +56,14 @@
 
         _newVersion1(capacity) {
             this.thumbnailPopup = true;
-            this.appHotKey = 0;
+            this.enableHotKey = true;
+            this.appHotKey = "";
         }
 
         _fromVersion1(jsonObj) {
             this.thumbnailPopup = jsonObj.thumbnailPopup;
-            this.appHotKey      = jsonObj.appHotKey;
+            this.enableHotKey   = jsonObj.hasOwnProperty("enableHotKey") ? jsonObj.enableHotKey : true;
+            this.appHotKey      = jsonObj.appHotKey || "";
             return this._validate();
         }
 
@@ -72,15 +74,15 @@
     }
 
     function pLoad() {
-        return browser.storage.local.get("TipTabSettings").then( results => new TipTabSettings(results.TipTabSettings) );
+        return browser.storage.local.get("tipTabSettings").then( results => new module.TipTabSettings(results.tipTabSettings) );
     }
 
     function pSave(tipTabSettings) {
-        return browser.storage.local.set({ "TipTabSettings": tipTabSettings });
+        return browser.storage.local.set({ "tipTabSettings": tipTabSettings });
     }
 
     function pRemove() {
-        return browser.storage.local.remove("TipTabSettings");
+        return browser.storage.local.remove("tipTabSettings");
     }
 
     function pUpdate(property, value) {
