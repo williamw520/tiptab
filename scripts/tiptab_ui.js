@@ -113,13 +113,13 @@
             .then(() => pixels_per_rem = getFontSizeRem() )
             .then(() => pGetCurrnetTab() )
             .then(() => pGetLastActiveTab() )
-            .then(() => generateUILayout())
-            .then(() => pLoadUiState())
-            .then(() => refreshStaticUI())      // for the UI that need to be set up before setting up the DOM listeners.
-            .then(() => setupDOMListeners())
-            .then(() => reloadAndRefreshTabs())
-            .then(() => refreshControls())
-            .then(() => pMonitorDataChange())
+            .then(() => generateUILayout() )
+            .then(() => pLoadUiState() )
+            .then(() => refreshStaticUI() )     // for the UI that need to be set up before setting up the DOM listeners.
+            .then(() => setupDOMListeners() )
+            .then(() => reloadAndRefreshTabs() )
+            .then(() => refreshControls() )
+            .then(() => pMonitorDataChange() )
             .then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
@@ -173,8 +173,8 @@
     function pMonitorDataChange() {
         // Monitor settings storage change.
         return browser.storage.onChanged.addListener(storageChange => {
-            if (app.has(storageChange, "TipTabSettings")) {
-                ttSettings = new TipTabSettings(storageChange.TipTabSettings.newValue);
+            if (app.has(storageChange, "tipTabSettings")) {
+                ttSettings = new TipTabSettings(storageChange.tipTabSettings.newValue);
             }
         });
     }
@@ -233,7 +233,7 @@
 
         // Tab topbar event handlers
         $("#main-content").on("click", ".tab-topbar",           function(){ $(this).closest(".tab-box").focus()                                     });
-        
+
         // Footer command handlers
         $(".footer-bar").on("click", ".footer-btn",             function(){ toggleFooterBtn($(this).data("wid"), $(this).data("cid"))               });
 
@@ -1331,6 +1331,12 @@
         return tab ? (tab.mutedInfo ? tab.mutedInfo.muted : false) : false;
     }
 
+    function refreshBrowserActionTooltip() {
+        let manifest = browser.runtime.getManifest();
+        let hotkey   = ttSettings.appHotKey || "Ctrl-Shift-F";
+        let tooltip  = manifest.name + " (hot key " + hotkey + ")";
+        browser.browserAction.setTitle({ title: tooltip });
+    }
 
     log.info("module loaded");
     return module;

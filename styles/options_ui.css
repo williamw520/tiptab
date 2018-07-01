@@ -28,6 +28,27 @@ html {
     font-size: 18px;
 }
 
+.form-input-error {
+    display:        none;
+    font-size:      .7rem;
+    margin-top:     .2rem;
+}
+.is-error + .form-input-error {
+    display:        block;
+    color:          #e85600;
+}
+
+.keypress-cover {
+    position:       absolute;
+    top:            0;
+    bottom:         0;
+    left:           0;
+    right:          0;
+    overflow:       hidden;
+    background:     gray;
+    opacity:        .20;
+    z-index:        1000;
+}
 
 .dbg-border {
     border: 1px dotted red;

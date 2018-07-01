@@ -51,15 +51,7 @@
     }
 
     function browserAction_onClicked() {
-        browser.tabs.query({}).then( tabs => {
-            let uiUrl = browser.extension.getURL("tiptab.html");
-            let uiTab = tabs.find( t => is_tiptaburl(t.url) );
-            if (uiTab) {
-                browser.windows.update(uiTab.windowId, {focused: true}).then( () => browser.tabs.update(uiTab.id, {active: true}) );
-            } else {
-                browser.tabs.create({ url: uiUrl });
-            }
-        });
+        pOpenTipTabUI();
     }
 
     function tabs_onActivated(activeInfo) {
@@ -72,6 +64,19 @@
         tabHistory.push(activeInfo.tabId);
     }
 
+    function getLastActiveTab(wid, currentTid) {
+        if (wid && activatedHistory[wid]) {
+            let history = activatedHistory[wid];
+            for (let i = history.newestIndex - 1; i >= 0; i--) {
+                let tid = history.get(i);
+                if (tid != currentTid) {
+                    return tid;
+                }
+            }
+        }
+        return -1;
+    }
+
     function setupMessageHandlers() {
         log.info("setupMessageHandlers");
         return browser.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
@@ -80,19 +85,15 @@
             case "dbg-test":
                 log.info(msg);
                 break;
+            case "open-ui":
+                pOpenTipTabUI();
+                break;
+            case "close-ui":
+                log.info("close-ui not implementated yet");
+                break;
             case "last-active-tab":
                 if (sendResponse) {
-                    if (msg.wid && activatedHistory[msg.wid]) {
-                        let history = activatedHistory[msg.wid];
-                        for (let i = history.newestIndex - 1; i >= 0; i--) {
-                            let tid = history.get(i);
-                            if (tid != msg.currentTid) {
-                                sendResponse({ lastActiveTabId: tid });
-                                return;
-                            }
-                        }
-                    }
-                    sendResponse({ lastActiveTabId: -1 });
+                    sendResponse({ lastActiveTabId: getLastActiveTab(msg.wid, msg.currentTid) });
                 }
                 return;
             default:
@@ -101,6 +102,18 @@
             }
         });
     }
+
+    function pOpenTipTabUI() {
+        return browser.tabs.query({}).then( tabs => {
+            let uiUrl = browser.extension.getURL("tiptab.html");
+            let uiTab = tabs.find( t => is_tiptaburl(t.url) );
+            if (uiTab) {
+                browser.windows.update(uiTab.windowId, {focused: true}).then( () => browser.tabs.update(uiTab.id, {active: true}) );
+            } else {
+                browser.tabs.create({ url: uiUrl });
+            }
+        });
+    }    
 
     init();
 

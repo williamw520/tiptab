@@ -62,6 +62,20 @@
         "open_in_tab": true
     },
 
+    "content_scripts": [
+        {
+            "js": [
+                "scripts/util/logger.js",
+                "scripts/util/appcfg.js",
+                "scripts/util/wwhotkey.js",
+                "scripts/settings.js",
+                "scripts/content_inject.js"
+            ],
+            "matches": ["*://*/*"],
+            "match_about_blank": true
+        }
+    ],
+
     "web_accessible_resources": [
     ]
 
