@@ -44,11 +44,14 @@
 ** DONE Setting support.  Option UI page.
 ** DONE Keyboard navigation with the Tab key to select a tab box and Enter to activate it.
 ** DONE Custom key binding for invocation hot key.
-** TODO Single strip round robin of thumbnail.  Mouse drag or touch to sling the strip.
+** DONE New extension icon.
+** TODO Drag and drop to copy tab between normal and private window.
+** TODO Drag and drop to copy tab between containers.
+** TODO Bookmark a tab.
+** TODO Bookmark all tabs of a window.
+** TODO Show bookmarks as tab box, with saved thumbnails shown.
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
 ** TODO Save all screenshots.  This needs zip support in Javascript.
-** TODO Drag and drop to copy tab between normal and private window
-** TODO Copy tab between normal and private window
 ** TODO Sort tabs
 
 * Release 1.3 Feature
