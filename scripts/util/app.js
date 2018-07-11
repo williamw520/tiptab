@@ -77,6 +77,7 @@
 
     app.arrayMove   = function(array, from, to) { array.splice(to, 0, array.splice(from, 1)[0]); return array };
     app.flatten     = function(array) { return [].concat.apply([], array) };
+    app.addAfter    = function(array, obj, afterIndex) { if (afterIndex > -1) { array.splice(afterIndex + 1, 0, obj) } else { array.push(obj) } }
 
     app.debounce = function(operationFunc, waitMS, resetWaitTime, context) {
         let timeoutId = null;

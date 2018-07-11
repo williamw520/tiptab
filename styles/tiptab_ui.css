@@ -418,7 +418,7 @@ a.disabled {
     padding-left:   0;
     padding-right:  0;
     background:     #fdfdfd;
-    border-bottom:  0.02rem solid #bdbdbd;
+    border-bottom:  0.02rem solid #b0b0b0;
     z-index:        10;
     
     display:        flex;
@@ -434,7 +434,8 @@ a.disabled {
     margin-right:   auto;
     padding-left:   0.8rem;
 
-    border-top:     0.02rem solid #e0e0e0;
+    box-shadow:     0px -1px #ffffff;
+    border-top:     0.02rem solid #c0c0c0;
     background:     #fdfdfd;
     z-index:        10;
     
@@ -451,6 +452,7 @@ a.disabled {
     width:          1.4rem;
     padding:        .05rem .05rem;
     margin-right:   0.8rem;
+    margin-top:     0.2rem;
 }
 
 .v-container {
@@ -488,7 +490,7 @@ a.disabled {
     margin:             0;
     width:              var(--left-pane-width);
     height:             100%;
-    border-right:       0.02rem solid #e0e0e0;
+    border-right:       0.02rem solid #c0c0c0;
 }
 
 .content-title {
@@ -687,9 +689,9 @@ a.disabled {
 }
 
 
-.tab-draggable {
+.draggable-item {
 }
-.tab-draggable:hover {
+.draggable-item:hover {
     cursor:             move;
 }
 
@@ -807,25 +809,34 @@ a.disabled {
     pointer-events:     none;       /* no mouse event so that the elements behind it will get the mouseover event. */
 }
 
-.drop-tab-zone {
-    position:           absolute;
-    box-sizing:         border-box;
-    border:             var(--img-border) solid #ff9900;
-}
 .drop-end-zone {
     position:           absolute;
     box-sizing:         border-box;
     border:             var(--img-border) solid #ff9900;
 }
-.drop-hover-endzone {
+.drop-end-zone.onhover-move-to-end-zone {
     box-shadow:         1px 1px #dddddd;
     background-color:   var(--drag-bg);
 }
-.drop-hover-endzone::after {
+.drop-end-zone.onhover-move-to-end-zone::after {
     padding-left:       0.4rem;
-    content:            "drop at the end";
+    content:            "move to the end";
 }
-.drop-hover-gap::after {
+.drop-end-zone.onhover-copy-to-container {
+    box-shadow:         1px 1px #dddddd;
+    background-color:   var(--drag-bg);
+}
+.drop-end-zone.onhover-copy-to-container::after {
+    padding-left:       0.4rem;
+    content:            "copy URL to this container";
+}
+
+.drop-tab-gap-zone {
+    position:           absolute;
+    box-sizing:         border-box;
+    border:             var(--img-border) solid #ff9900;
+}
+.drop-tab-gap-zone.onhover-drop-tab-gap::after {
     position:           absolute;
     left:               -1px;
     top:                -1px;
@@ -836,9 +847,10 @@ a.disabled {
     border:             var(--img-border) solid #ff9900;
     z-index:            1;
     padding-left:       0.4rem;
-    content:            "drop in front gap";
+    content:            "move in front gap";
 }
-.drop-hover-border::after {
+
+.tab-box.onhover-drop-tab-border::after {
     position:           absolute;
     left:               calc(var(--tab-gap) * -2 + var(--px1));
     top:                var(--topbar-height);
@@ -849,5 +861,5 @@ a.disabled {
     box-sizing:         border-box;
     border:             var(--img-border) solid #ff9900;
     padding-left:       0.4rem;
-    content:            "drop in front border";
+    content:            "move in front border";
 }
