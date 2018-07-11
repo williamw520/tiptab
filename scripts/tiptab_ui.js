@@ -84,23 +84,25 @@
     let uiState = {};
     let tabById = {};               // the only map holding the Tab objects.
     let tabIds = [];                // track the order of the tabs, id only.
-    let windowById = {};            // the only map holding the Window objects
+    let windowById = {};            // the only map holding the Window objects.  note that the tabs member is not loaded; use tabIdsByWid instead.
     let windowIds = [];             // track the order of the windows, id only.
+    let tabIdsByWid = {};           // track the list of tab ids by window id.
     let containerById = {};         // the only map holding the Container objects
     let containerIds = [];          // track the order of the containers, id only.
-    
+
     let effectiveTabIds = [];       // list of tab ids after filtering.
     let effectiveTidSet = new Set();
-    let tabIdsByWid = {};           // list of tab ids of the window id.
     let thumbnailsMap = {};         // keyed by tab id
-    let thumbnailsPending = {};     // keyed by tab id
-    let thumbnailFocusTid = null;
+    let thumbnailsCapturing = {};   // keyed by tab id
+
+    let thumbnailFocusTid = null;   // related to thumbnail popup on mouse move.
     let enableOverlay = true;
     let overlayShownTid = null;
     let mouseStopped = true;
     let mouseMovedTimer;
     let popupDelayTimer;
     let enableOverlayDelayTimer;
+
     let tiptabWindowActive = true;  // setupDOMListeners() is called too late after the window has been in focus.  Assume window is active on startup.
 
     // Firefox's Content Security Policy for WebExtensions prohibits running any Javascript in the html page.
@@ -120,6 +122,14 @@
             .then(() => reloadAndRefreshTabs() )
             .then(() => refreshControls() )
             .then(() => pMonitorDataChange() )
+            .then(() => browser.windows.onCreated.addListener(windows_onCreated) )
+            .then(() => browser.windows.onRemoved.addListener(windows_onRemoved) )
+            .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
+            .then(() => browser.tabs.onAttached.addListener(tabs_onAttached) )
+            .then(() => browser.tabs.onDetached.addListener(tabs_onDetached) )
+            .then(() => browser.tabs.onMoved.addListener(tabs_onMoved) )
+            .then(() => browser.tabs.onRemoved.addListener(tabs_onRemoved) )
+            .then(() => browser.tabs.onUpdated.addListener(tabs_onUpdated) )
             .then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
@@ -178,6 +188,46 @@
             }
         });
     }
+
+    function windows_onCreated(win) {
+        log.info("windows_onCreated", win);
+    }
+
+    function windows_onRemoved(wid) {
+        log.info("windows_onRemoved", wid);
+    }
+
+    function tabs_onActivated(info) {
+        log.info("windows_onActivated", info.tabId, info.windowId);
+    }
+
+    function tabs_onAttached(tabId, info) {
+        log.info("tabs_onAttached ", tabId, info);
+    }
+
+    function tabs_onDetached(tabId, info) {
+        log.info("tabs_onDetached ", tabId, info);
+    }
+
+    function tabs_onMoved(tabId, info) {
+        log.info("tabs_onMoved ", tabId, info);
+    }
+
+    function tabs_onRemoved(tabId, info) {
+        log.info("tabs_onRemoved ", tabId, info);
+    }
+
+    function tabs_onUpdated(tabId, info, tab) {
+        // log.info("tabs_onUpdated ", tabId, info, tab);
+        if (info.status == "complete") {
+            log.info("tabs_onUpdated completed " + tabId);
+            if (!thumbnailsMap[tabId]) {
+                log.info("refreshThumbnail");
+                refreshThumbnail(tabId, true);
+            }
+        }
+    }
+
 
     function setupDOMListeners() {
         //log.info("setupDOMListeners");
@@ -386,37 +436,21 @@
             })
     }
 
+    // afterTid == -1 for adding to the end.
     function addTabAfter(newTab, afterTid) {
         let afterIndex;
         
         // Update tabs structures
         tabById[newTab.id] = newTab;
         afterIndex = tabIds.findIndex(tid => tid == afterTid);
-        if (afterIndex > -1)
-            tabIds.splice(afterIndex + 1, 0, newTab.id);
-        else
-            tabIds.push(newTab.id);
+        app.addAfter(tabIds, newTab.id, afterIndex);
 
         // Update windows structures
-        afterIndex = tabIdsByWid[newTab.windowId].findIndex(tid => tid == afterTid);
-        if (afterIndex > -1)
-            tabIdsByWid[newTab.windowId].splice(afterIndex + 1, 0, newTab.id);
-        else
-            tabIdsByWid[newTab.windowId].push(newTab.id);
-        
-        // let win = windows.find(w => w.id == newTab.windowId);
-        // afterIndex = win.tabs.findIndex(tab => tab.id == afterTid);
-        // if (afterIndex > -1)
-        //     win.tabs.splice(afterIndex + 1, 0, newTab);
-        // else
-        //     win.tabs.push(newTab);
         let win = windowById[newTab.windowId];
-        afterIndex = win.tabs.findIndex(tab => tab.id == afterTid);
-        if (afterIndex > -1)
-            win.tabs.splice(afterIndex + 1, 0, newTab);
-        else
-            win.tabs.push(newTab);
+        afterIndex = tabIdsByWid[newTab.windowId].findIndex(tid => tid == afterTid);
+        app.addAfter(tabIdsByWid[newTab.windowId], newTab.id, afterIndex);
 
+        updateEffectiveTabIds();
     }
 
     function pGetContainerInfo(cid) {
@@ -505,6 +539,7 @@
     }
 
     function refreshUIContent(forceRefreshImg, zoomOut) {
+        resetDragAndDrop();
         if (effectiveTabIds.length > 0) {
             redrawContentLayout();
             $("#empty-content").addClass("hidden");
@@ -520,7 +555,7 @@
                 $("#empty-msg1").text("");
             }
         }
-
+        setupDragAndDrop();
     }
 
     function zoomOutAnimation(tids) {
@@ -685,7 +720,6 @@
         if (zoomOut) {
             zoomOutAnimation(effectiveTabIds);
         }
-        setupDragAndDrop(effectiveTabIds, effectiveTabIds);
     }
 
     function updateRefreshOneWindow(wid, forceRefreshImg, zoomOut) {
@@ -696,7 +730,6 @@
         if (zoomOut) {
             zoomOutAnimation(effectiveTabIds);
         }
-        setupDragAndDrop(effectiveTabIds, effectiveTabIds);
     }
 
     function refreshWindowTabs(wid, tabsRenderedAsHidden) {
@@ -743,10 +776,10 @@
     function refreshContainerTabs(cid, tabsRenderedAsHidden) {
         let containerTabs = effectiveContainerTabs(cid);
         if (containerTabs.length > 0) {
-            let $conainer_tab_lane = $(".container-tab-lane[data-cid='" + cid + "']");
-            $conainer_tab_lane.removeClass("d-none");
+            let $container_tab_lane = $(".container-tab-lane[data-cid='" + cid + "']");
+            $container_tab_lane.removeClass("d-none");
             let html = renderTabGrid(containerTabs, tabsRenderedAsHidden);      // unsafe text are left out.
-            $conainer_tab_lane.find(".tab-grid").html(html);
+            $container_tab_lane.find(".tab-grid").html(html);
             fillTabText(containerTabs);                                         // fill in the unsafe text using escaped API.
         }
     }
@@ -762,11 +795,12 @@
 
     // Redraw the tab boxes, fill in the tab's text, and refresh their thumbnails.
     function refreshTabBoxes(tids, forceRefreshImg) {
+        resetDragAndDrop();
         let tabs = toTabs(tids);
         tabs.forEach( tab => $tabbox(tab.id).replaceWith(renderTabBox(tab, false)) );   // 1. Generate html, without the unsafe text rendered.
         fillTabText(tabs);                                                              // 2. Fill in the unsafe text.
         tids.forEach( tid => refreshThumbnail(tid, forceRefreshImg) );                  // 3. Render the thumbnail.
-        setupDragAndDrop(tids, effectiveTabIds);                                        // 4. Set up drag and drop.
+        setupDragAndDrop();                                                             // 4. Set up drag and drop.
     }
 
 
@@ -863,21 +897,21 @@
     const captureOpts = { format: "jpeg", quality: 50 };
 
     function refreshThumbnail(tid, forceRefreshImg) {
-        if (thumbnailsPending[tid])
+        if (thumbnailsCapturing[tid])
             return;
 
         if (thumbnailsMap[tid] && !forceRefreshImg) {
             renderThumbnail(tid, thumbnailsMap[tid]);
         } else {
-            thumbnailsPending[tid] = true;
+            thumbnailsCapturing[tid] = true;
             browser.tabs.captureTab(tid, captureOpts)
                 .then( thumbnail => {
                     thumbnailsMap[tid] = thumbnail;
-                    thumbnailsPending[tid] = false;
+                    thumbnailsCapturing[tid] = false;
                     renderThumbnail(tid, thumbnailsMap[tid]);
                 })
                 .catch( e => {
-                    thumbnailsPending[tid] = false;
+                    thumbnailsCapturing[tid] = false;
                 });
         }
     }
@@ -896,108 +930,136 @@
     function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .3rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
     function border_color_private(isPrivate)    { return isPrivate ? "border-color: " + COLOR_PRIVATE + ";" : "" }
     function css_display(showing)               { return showing  ? "d-block" : "d-none" }
-    function css_draggable()                    { return uiState.displayType == DT_BY_WINDOW ? "tab-draggable" : "" }
+    function css_draggable()                    { return uiState.displayType == DT_BY_WINDOW || uiState.displayType == DT_BY_CONTAINER ? "draggable-item" : "" }
     function css_droppable_private(isPrivate)   { return isPrivate ? "droppable-private" : "droppable-normal" }
-    
- 
-    function setupDragAndDrop(draggableTids, droppableTids) {
+
+    function canDropBeforeTab(draggingFromTid, droppingToTid) {
+        if (draggingFromTid) {
+            let isDraggablePrivate = is_firefox_private(tabById[draggingFromTid].cookieStoreId);
+            let isDroppablePrivate = is_firefox_private(tabById[droppingToTid].cookieStoreId);
+            return isDraggablePrivate == isDroppablePrivate;
+        }
+        return false;
+    }
+
+    function isDroppableToWin(draggingFromTid, droppingToWid) {
+        if (draggingFromTid) {
+            let isDraggablePrivate = is_firefox_private(tabById[draggingFromTid].cookieStoreId);
+            let isDroppablePrivate = windowById[droppingToWid].incognito;
+            return isDraggablePrivate == isDroppablePrivate;
+        }
+        return false;
+    }
+
+    function resetDragAndDrop() {
+        $(".draggabled-item").draggable("destroy").removeClass("draggabled-item");
+    }
+
+    function setupDragAndDrop() {
+        resetDragAndDrop();
+
         switch (uiState.displayType) {
         case DT_ALL_TABS:
             break;
         case DT_BY_WINDOW:
-            draggableTids.forEach( tid => {
-                let $elem = $tabbox(tid).draggable({
-                    revert:         "invalid",
-                    revertDuration: 200,
-                    zIndex:         100,
-                    handle:         ".tab-draggable",
-                    containment:    "#main-content",
-                    start:          function(event, ui){
-                        enableOverlay = false;
-                        addDropTabZones(tid, droppableTids);
-                        addDropEndZones(tid);
-                        $(".drop-tab-zone").droppable({
-                            accept:     function(draggableUI){
-                                let draggableTid = $(draggableUI).data("tid");
-                                if (draggableTid) {
-                                    let droppableTid = $(this).data("tid");
-                                    let isDraggablePrivate = is_firefox_private(tabById[draggableTid].cookieStoreId);
-                                    let isDroppablePrivate = is_firefox_private(tabById[droppableTid].cookieStoreId);
-                                    return isDraggablePrivate == isDroppablePrivate;
-                                }
-                                return false;
-                            },
-                            classes:    { "ui-droppable-hover": "drop-hover-gap" },
-                            drop:       function(event, ui){ dropInFrontOfTab($(this), ui) },
-                        });
-                        $(".drop-end-zone").droppable({
-                            accept:     function(draggableUI){
-                                let draggableTid = $(draggableUI).data("tid");
-                                if (draggableTid) {
-                                    let droppableWid = $(this).data("wid");
-                                    let isDraggablePrivate = is_firefox_private(tabById[draggableTid].cookieStoreId);
-                                    let isDroppablePrivate = windowById[droppableWid].incognito;
-                                    return isDraggablePrivate == isDroppablePrivate;
-                                }
-                                return false;
-                            },
-                            classes:    { "ui-droppable-hover": "drop-hover-endzone" },
-                            drop:       function(event, ui){ dropAtTheEnd($(this), ui) },
-                        });
-                    },
-                    stop:           function(event, ui){
-                        delayEnableOverlay(4000);
-                        removeDropTabZones();
-                        removeDropEndZones();
-                    },
-                });
-            });
-
-            
-            droppableTids.forEach( tid => {
-                let isPrivate = is_firefox_private(tabById[tid].cookieStoreId);
-                $tabbox(tid).droppable({
-                    accept:     ".tab-box." + css_droppable_private(isPrivate),
-                    classes:    { "ui-droppable-hover": "drop-hover-border" },
-                    greedy:     true,
-                    drop:       function(event, ui){ dropInFrontOfTab($(this), ui) },
-                });
-            });
-
+            setupDragAndDropForDTWindow();
             break;
         case DT_BY_CONTAINER:
+            setupDragAndDropForDTContainer();
             break;
         case DT_ALL_WINDOWS:
             break;
         }
     }
 
-    function addDropTabZones(draggedTid, droppableTids) {
+    function setupDragAndDropForDTWindow() {
+        effectiveTabIds.forEach( tid => {
+            $tabbox(tid).draggable({
+                revert:         "invalid",
+                revertDuration: 200,
+                zIndex:         100,
+                handle:         ".draggable-item",
+                containment:    "#main-content",
+                create:         function(event, ui){ $(this).addClass("draggabled-item") },
+                start:          function(event, ui){
+                    enableOverlay = false;
+                    addDropTabGapZonesForWindows(tid, effectiveTabIds);
+                    $(".drop-tab-gap-zone").droppable({
+                        accept:     function(draggableUI){  return canDropBeforeTab($(draggableUI).data("tid"), $(this).data("tid"))    },
+                        classes:    { "ui-droppable-hover": "onhover-drop-tab-gap" },
+                        drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), ui) },
+                    });
+                    
+                    addDropEndZonesForWindows(tid);
+                    $(".drop-end-zone").droppable({
+                        accept:     function(draggableUI){  return isDroppableToWin($(draggableUI).data("tid"), $(this).data("wid"))    },
+                        classes:    { "ui-droppable-hover": "onhover-move-to-end-zone" },
+                        drop:       function(event, ui){ dropAtTheEndInWindow($(this), ui) },
+                    });
+
+                    $(".tab-box").droppable({
+                        accept:     function(draggableUI){  return canDropBeforeTab($(draggableUI).data("tid"), $(this).data("tid"))    },
+                        classes:    { "ui-droppable-hover": "onhover-drop-tab-border" },
+                        greedy:     true,
+                        drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), ui) },
+                    });
+                },
+                stop:           function(event, ui){
+                    enableOverlayAfterDelay(4000);
+                    $(".drop-tab-gap-zone, .drop-end-zone").droppable("destroy").remove();
+                    $(".tab-box").droppable("destroy");
+                },
+            });
+        });
+    }
+    
+    function setupDragAndDropForDTContainer() {
+        effectiveTabIds.forEach( tid => {
+            $tabbox(tid).draggable({
+                revert:         true,
+                revertDuration: 200,
+                zIndex:         100,
+                handle:         ".draggable-item",
+                containment:    "#main-content",
+                create:         function(event, ui){ $(this).addClass("draggabled-item") },
+                start:          function(event, ui){
+                    enableOverlay = false;
+                    addDropEndZonesForContainer(tid);
+                    $(".drop-end-zone").droppable({
+                        accept:     ".tab-box",
+                        classes:    { "ui-droppable-hover": "onhover-copy-to-container" },
+                        drop:       function(event, ui){ dropAtTheContainer($(this), ui) },
+                    });
+                },
+                stop:           function(event, ui){
+                    enableOverlayAfterDelay(4000);
+                    $(".drop-end-zone").droppable("destroy").remove();
+                },
+            });
+        });
+    }
+    
+    function addDropTabGapZonesForWindows(draggedTid, droppableTids) {
         let isDraggedPrivate = is_firefox_private(tabById[draggedTid].cookieStoreId);
         let tabBoxMargin = remToPixels(0.6);        // see .tab-box style
 
         droppableTids.forEach( tid => {
             if (draggedTid == tid)
                 return;
-            log.info("droppableTids tid " + tid);
             let isPrivate   = is_firefox_private(tabById[tid].cookieStoreId);
             if (isDraggedPrivate != isPrivate)      // prevent dragging across private and normal windows.
                 return;
             let $thumbnail  = $tabbox(tid).find(".tab-thumbnail");
-            let $tabzone    = $("<div class='drop-tab-zone' data-tid='" + tid + "'></div>");
+            let $tabzone    = $("<div class='drop-tab-gap-zone' data-tid='" + tid + "'></div>");
             $tabzone.offset({ top: $thumbnail.offset().top,  left: $thumbnail.offset().left - tabBoxMargin*2 + 1 })
                 .width( tabBoxMargin*2 - 2 )
                 .height( $thumbnail.outerHeight() );
-            $(".drop-tab-zone[data-tid='" + tid  + "']").remove();
+            $(".drop-tab-gap-zone[data-tid='" + tid  + "']").remove();
             $(document.body).append($tabzone);
         });
     }
 
-    function removeDropTabZones() {
-        $(".drop-tab-zone").remove();
-    }
-
-    function addDropEndZones(draggedTid) {
+    function addDropEndZonesForWindows(draggedTid) {
         let isDraggedPrivate = is_firefox_private(tabById[draggedTid].cookieStoreId);
 
         windowIds.map( wid => windowById[wid] ).forEach( w => {
@@ -1017,11 +1079,26 @@
         });
     }
 
-    function removeDropEndZones() {
-        $(".drop-end-zone").remove();
+    function addDropEndZonesForContainer(draggedTid) {
+        let draggedTab = tabById[draggedTid];
+        containerIds.map( cid => containerById[cid] ).forEach( c => {
+            if (draggedTab.cookieStoreId == c.cookieStoreId)
+                return;     // skip dropping to self's container.
+            let $container  = $(".container-tab-lane[data-cid='" + c.cookieStoreId + "']");
+            let $lastTab    = $container.find(".tab-thumbnail").last();
+            if ($lastTab.length == 0)
+                return;
+            let $endzone    = $("<div class='drop-end-zone' data-cid='" + c.cookieStoreId + "'></div>");
+            let endzoneLeft = $lastTab.offset().left + $lastTab.outerWidth() + 2;
+            $endzone.offset({ top: $lastTab.offset().top,  left: endzoneLeft })
+                .width($container.offset().left + $container.width() - endzoneLeft - 1)
+                .height($lastTab.outerHeight());
+            $(".drop-end-zone[data-cid='" + c.cookieStoreId  + "']").remove();
+            $(document.body).append($endzone);
+        });
     }
 
-    function dropInFrontOfTab($dest, ui) {
+    function dropInFrontOfTabInWindow($dest, ui) {
         // Move the tab in front of the destination tab.
         let srcTab  = tabById[ui.draggable.data("tid")];
         let destTab = tabById[$dest.data("tid")];
@@ -1046,7 +1123,7 @@
             });
     }                                   
 
-    function dropAtTheEnd($dest, ui) {
+    function dropAtTheEndInWindow($dest, ui) {
         let srcTab  = tabById[ui.draggable.data("tid")];
         let destWid = $dest.data("wid");  // data-wid on .drop-end-zone.
         browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( () => {
@@ -1069,6 +1146,24 @@
                 $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
             }
         });
+    }
+
+    // Need to do blocking wait until tabs.create() finish before finishing up the drop operation.
+    async function dropAtTheContainer($dest, ui) {
+        let srcTab  = tabById[ui.draggable.data("tid")];
+        let destCid = $dest.data("cid");  // data-cid on .drop-end-zone.
+        let newTab  = await browser.tabs.create({
+            active:         srcTab.active,
+            cookieStoreId:  destCid,
+            pinned:         srcTab.pinned,
+            url:            srcTab.url,
+            windowId:       srcTab.windowId
+        });
+
+        addTabAfter(newTab, -1);
+        thumbnailsMap[newTab.id] = null;
+        refreshContainerTabs(destCid, false);
+        effectiveContainerTabs(destCid).map( tab => tab.id ).forEach( tid => refreshThumbnail(tid, false) );
     }
 
     function selectDisplayType(displayType) {
@@ -1155,12 +1250,12 @@
     }
 
     function closeTab(tid) {
+        resetDragAndDrop();
         cleanupTab(tid);
         $tabbox(tid).css({ visibility: "hidden" }).animate({ width: 0 }, 500, function(){ $(this).detach() });
         browser.tabs.remove(tid);
-
         // Reset the draggable tabboxes after deleted a tab.
-        setupDragAndDrop(effectiveTabIds, effectiveTabIds);
+        setupDragAndDrop();
     }
 
     function closeOtherTabs(tid, whichSide) {
@@ -1168,6 +1263,7 @@
         browser.windows.get(tab.windowId, {
             populate:   true
         }).then( win => {
+            resetDragAndDrop();
             let index = win.tabs.findIndex(tab => tab.id == tid);
             let tabs = whichSide == "all" ? win.tabs : whichSide == "left" ? win.tabs.slice(0, index) : win.tabs.slice(index + 1);
             let tabIdsToClose = tabs.filter( tab => tab.id != tid && !is_tiptaburl(tab.url) ).map( tab => tab.id );
@@ -1175,9 +1271,9 @@
                 cleanupTab(tid);
                 $tabbox(tid).animate({ width: 0 }, 500, function(){ $(this).detach() });
             });
-            // Reset the draggable tabboxes after deleted the tabs.
-            setupDragAndDrop(effectiveTabIds, effectiveTabIds);
             browser.tabs.remove(tabIdsToClose);
+            // Reset the draggable tabboxes after deleted the tabs.
+            setupDragAndDrop();
         });
     }
 
@@ -1188,11 +1284,12 @@
             tabIdsByWid[wid] = tabIdsByWid[wid].filter( tabId => tabId != tid );
         }
         delete thumbnailsMap[tid];
-        delete thumbnailsPending[tid];
+        delete thumbnailsCapturing[tid];
         if (thumbnailFocusTid == tid)
             thumbnailFocusTid = null;
         if (overlayShownTid == tid)
             overlayShownTid = null;
+        updateEffectiveTabIds();
     }
 
     function undoCloseTab() {
@@ -1320,7 +1417,7 @@
         $(".overlay-img").attr("src", "#");
     }
 
-    function delayEnableOverlay(delayMS) {
+    function enableOverlayAfterDelay(delayMS) {
         clearTimeout(enableOverlayDelayTimer);
         enableOverlayDelayTimer = setTimeout(function(){
             enableOverlay = true;

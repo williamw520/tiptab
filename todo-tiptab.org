@@ -45,8 +45,8 @@
 ** DONE Keyboard navigation with the Tab key to select a tab box and Enter to activate it.
 ** DONE Custom key binding for invocation hot key.
 ** DONE New extension icon.
-** TODO Drag and drop to copy tab between normal and private window.
-** TODO Drag and drop to copy tab between containers.
+** DONE Drag and drop to copy tab between containers.
+** TODO Monitor tab events and refresh tab info/UI.
 ** TODO Bookmark a tab.
 ** TODO Bookmark all tabs of a window.
 ** TODO Show bookmarks as tab box, with saved thumbnails shown.
