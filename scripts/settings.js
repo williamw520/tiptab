@@ -56,14 +56,20 @@
 
         _newVersion1(capacity) {
             this.thumbnailPopup = true;
+            this.showEmptyWindows = false;
+            this.showEmptyContainers = true;
+            this.realtimeUpdateThumbnail = true;
             this.enableHotKey = true;
             this.appHotKey = "";
         }
 
         _fromVersion1(jsonObj) {
-            this.thumbnailPopup = jsonObj.thumbnailPopup;
-            this.enableHotKey   = jsonObj.hasOwnProperty("enableHotKey") ? jsonObj.enableHotKey : true;
-            this.appHotKey      = jsonObj.appHotKey || "";
+            this.thumbnailPopup         = jsonObj.hasOwnProperty("thumbnailPopup") ? jsonObj.thumbnailPopup : true;
+            this.showEmptyWindows       = jsonObj.hasOwnProperty("showEmptyWindows") ? jsonObj.showEmptyWindows : false;
+            this.showEmptyContainers    = jsonObj.hasOwnProperty("showEmptyContainers") ? jsonObj.showEmptyContainers : true;
+            this.realtimeUpdateThumbnail= jsonObj.hasOwnProperty("realtimeUpdateThumbnail") ? jsonObj.realtimeUpdateThumbnail : true;
+            this.enableHotKey           = jsonObj.hasOwnProperty("enableHotKey") ? jsonObj.enableHotKey : true;
+            this.appHotKey              = jsonObj.appHotKey || "";
             return this._validate();
         }
 

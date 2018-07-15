@@ -46,7 +46,11 @@
 ** DONE Custom key binding for invocation hot key.
 ** DONE New extension icon.
 ** DONE Drag and drop to copy tab between containers.
-** TODO Monitor tab events and refresh tab info/UI.
+** TODO Show containers, even if they are empty, for drop and drag tabs into them.
+   Need to consider search and filter-by-window/filter-by-container.
+** DONE Monitor tab events and refresh tab info/UI.
+** TODO Global menu, for Options page.
+** TODO Global menu, for commands on all tabs or on all windows.
 ** TODO Bookmark a tab.
 ** TODO Bookmark all tabs of a window.
 ** TODO Show bookmarks as tab box, with saved thumbnails shown.

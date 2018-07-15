@@ -74,6 +74,9 @@
 
     function refreshSettings() {
         $("#thumbnailPopup").prop("checked", ttSettings.thumbnailPopup);
+        $("#showEmptyWindows").prop("checked", ttSettings.showEmptyWindows);
+        $("#showEmptyContainers").prop("checked", ttSettings.showEmptyContainers);
+        $("#realtimeUpdateThumbnail").prop("checked", ttSettings.realtimeUpdateThumbnail);
         $("#enableHotKey").prop("checked", ttSettings.enableHotKey);
         $("#appHotKey").val(ttSettings.appHotKey);
         $(".is-error").removeClass("is-error");
@@ -81,22 +84,14 @@
 
     function setupDOMListeners() {
         // Input handlers
-        $("#thumbnailPopup").on("change", function(){
-            ttSettings.thumbnailPopup = this.checked;
-            updateChanges();
-        });
+        $("#thumbnailPopup").on("change",           function(){ ttSettings.thumbnailPopup = this.checked; updateChanges() });
+        $("#showEmptyWindows").on("change",         function(){ ttSettings.showEmptyWindows = this.checked; updateChanges() });
+        $("#showEmptyContainers").on("change",      function(){ ttSettings.showEmptyContainers = this.checked; updateChanges() });
+        $("#realtimeUpdateThumbnail").on("change",  function(){ ttSettings.realtimeUpdateThumbnail = this.checked; updateChanges() });
+        $("#enableHotKey").on("change",             function(){ ttSettings.enableHotKey = this.checked; updateChanges() });
+        $("#appHotKey").on("input",                 function(){ getHotKeyInput(); updateChanges() });
 
-        $("#enableHotKey").on("change", function(){
-            ttSettings.enableHotKey = this.checked;
-            updateChanges();
-        });
-
-        $("#appHotKey").on("input", function(){
-            getHotKeyInput();
-            updateChanges();
-        });
-
-        let $keyPressing = $("#keyPressing");
+        // Special handling for hotkey input by keypressing.
         let keyPressingHandler = function(e) {
             let ks = wwhotkey.ofKeyboardEvent(e);
             $("#appHotKey").val(ks.toString());
@@ -104,17 +99,17 @@
             updateChanges();
             return stopEvent(e);
         };
-        $keyPressing.on("click", function(e){
-            $keyPressing.text("Click Again to End");
+        let $keyPressingBtn = $("#keyPressing");
+        $keyPressingBtn.on("click", function(e){
+            $keyPressingBtn.text("Click Again to End");
             $(document).on("keydown", keyPressingHandler);
             $(".keypress-cover").removeClass("d-none").on("click", function(e){
                 $(this).addClass("d-none").off();
-                $keyPressing.text("Enter by Key Press");
+                $keyPressingBtn.text("Enter by Key Press");
                 $(document).off("keydown", keyPressingHandler);
             });
             return stopEvent(e);
         });
-                        
 
         // Button handlers
         $("#saveChanges").on("click", function(){
