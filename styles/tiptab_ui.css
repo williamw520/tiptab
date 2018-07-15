@@ -414,14 +414,12 @@ a.disabled {
 .header-bar {
     position:       fixed;
     height:         var(--header-height);
-    margin-left:    0;
-    padding-left:   0;
-    padding-right:  0;
+    width:          100%;
     background:     #fdfdfd;
     border-bottom:  0.02rem solid #b0b0b0;
-    z-index:        10;
+    z-index:        1000;
     
-    display:        flex;
+    display:        flex;   /* place all children in the h and v center */
 }
 
 .footer-bar {
@@ -457,6 +455,7 @@ a.disabled {
 
 .v-container {
     height:         100vh;
+    width:          100%;
     display:        flex;
     flex-direction: column;
 }
@@ -465,7 +464,7 @@ a.disabled {
 
     display:        flex;       /* start the inner h-container */
     flex-direction: row;
-    padding-top:    2.2rem;
+    padding-top:    var(--header-height);
 }
 .h-container .mid-pane {
     flex:           1;
@@ -640,6 +639,10 @@ a.disabled {
     outline:            none;
 }
 
+.tabbox_dummy {
+    visibility:         hidden;
+}
+
 .status-private {
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
@@ -772,7 +775,21 @@ a.disabled {
     opacity:            1;              /* Make menu opaque when shown. */
     visibility:         visible;        /* Show menu. */
 }
-.menu .menu-item > a {
+
+.global-cmd-menu .menu .menu-item > a {
+    margin:             0 -.4rem;
+    padding:            .1rem .4rem .2rem .4rem;
+}
+.global-cmd-menu .menu .divider {
+    margin:             .3rem 0;
+}
+
+.tab-topbar-menu .menu .menu-item > a {
+    font-size:          85%;
+    margin:             0 -.4rem;
+    padding:            .4rem .4rem .5rem .4rem;
+}
+.window-topbar-menu .menu .menu-item > a {
     font-size:          85%;
     margin:             0 -.4rem;
     padding:            .4rem .4rem .5rem .4rem;

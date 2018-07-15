@@ -18,6 +18,7 @@
 */
 
 // logger module, for lightweight logging.
+// With prefix on app name and module name for easier filtering when viewing the log.
 (function(scope, modulename) {
     "use strict";
 
@@ -56,14 +57,14 @@
         log(...a)       { if (this._logLog)   console.log(this._fmt(a))      };
         dump()          { return this._fmtarr(Array.prototype.slice.call(arguments)) }     // dump the arguments to string/json
 
+        // With prefix on app name and module name for easier filtering when viewing the log.
         _fmt(a)         { return this.app + ":" + this.module + " - " + this._fmtarr(a) }
         _fmtarr(a)      { return !a || !a.length ? "" : a.length == 1 ? this._fmtobj(a[0]) : "[" + [].map.call(a, o => this._fmtobj(o) + "\r\n").join(", ") + "]" }
-        _fmtobj(obj)    { return json(obj instanceof Error ? this._fromerr(obj) : obj) }
+        _fmtobj(obj)    { return this._json(obj instanceof Error ? this._fromerr(obj) : obj) }
         _fromerr(e)     { return {error: e.name, msg: e.message, file: e.fileName || "", line: e.lineNumber || "", stack: e.stack ? e.stack.split("\n") : "" } }
+        _json(obj)      { return JSON.stringify(obj, null, 4) };
     }
 
-    function json(obj)  { return JSON.stringify(obj, null, 4) };
-    function isStr(obj) { return (typeof obj == "string" || obj instanceof String) };
 
     // Module export
     logger.NONE = NONE;
@@ -111,5 +112,9 @@ if (_RUNTEST_LOGGER) {
     log.warn("warn shown");
     log.info("info shown");
     log.log("log shown");
+
+    console.log(log.dump(1, 2, 3));
+    console.log(log.dump({ foo: 'a', bar: 'b', baz: [1, 2, 3] }));
+
 }
 

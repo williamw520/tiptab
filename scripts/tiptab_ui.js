@@ -62,6 +62,16 @@
     function is_firefox_private(id) { return id == CT_FIREFOX_PRIVATE }
     function is_real_container(id)  { return !is_firefox_default(id) && !is_firefox_private(id) }
 
+    // Special tab
+    const DUMMY_TAB_ID = -1;
+    const DUMMY_TAB = {
+        id:             DUMMY_TAB_ID,
+        name:           "",
+        url:            "",
+        cookieStoreId:  CT_FIREFOX_DEFAULT,
+        _is_dummy:      true,
+    };
+
     // Colors
     //const COLOR_DEFAULT = "#c7c9cd";
     const COLOR_DEFAULT = "#97999d";
@@ -83,7 +93,6 @@
 
     let uiState = {};
     let tabById = {};               // the only map holding the Tab objects.
-    let tabIds = [];                // track the order of the tabs, id only.
     let windowById = {};            // the only map holding the Window objects.  note that the tabs member is not loaded; use tabIdsByWid instead.
     let windowIds = [];             // track the order of the windows, id only.
     let tabIdsByWid = {};           // track the list of tab ids by window id.
@@ -125,9 +134,6 @@
             .then(() => browser.windows.onCreated.addListener(windows_onCreated) )
             .then(() => browser.windows.onRemoved.addListener(windows_onRemoved) )
             .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
-            .then(() => browser.tabs.onAttached.addListener(tabs_onAttached) )
-            .then(() => browser.tabs.onDetached.addListener(tabs_onDetached) )
-            .then(() => browser.tabs.onMoved.addListener(tabs_onMoved) )
             .then(() => browser.tabs.onRemoved.addListener(tabs_onRemoved) )
             .then(() => browser.tabs.onUpdated.addListener(tabs_onUpdated) )
             .then(() => log.info("Page initialization done") )
@@ -191,38 +197,53 @@
 
     function windows_onCreated(win) {
         log.info("windows_onCreated", win);
+        windowIds.push(win.id);
+        windowById[win.id] = win;
+        tabIdsByWid[win.id] = [];
+        addWindowLane(win);
     }
 
+    // This should be called after tabs_onRemoved on all the tabs in the window.
     function windows_onRemoved(wid) {
-        log.info("windows_onRemoved", wid);
+        // log.info("windows_onRemoved", wid);
+        removeWindowLane(wid);
+        windowIds = windowIds.filter( id => id != wid );
+        delete windowById[wid];
+        delete tabIdsByWid[wid];
     }
 
     function tabs_onActivated(info) {
-        log.info("windows_onActivated", info.tabId, info.windowId);
+        tabById[info.tabId].active = true;
+        let oldId = tabIdsByWid[info.windowId].find( tid => tabById[tid].active );
+        if (oldId) {
+            tabById[oldId].active = false;
+            refreshTabBoxes([oldId, info.tabId], false);
+        } else {
+            refreshTabBoxes([info.tabId], false);
+        }
     }
 
-    function tabs_onAttached(tabId, info) {
-        log.info("tabs_onAttached ", tabId, info);
-    }
-
-    function tabs_onDetached(tabId, info) {
-        log.info("tabs_onDetached ", tabId, info);
-    }
-
-    function tabs_onMoved(tabId, info) {
-        log.info("tabs_onMoved ", tabId, info);
-    }
-
+    // This is called before windows_onRemoved() when the window and its tabs are removed.
     function tabs_onRemoved(tabId, info) {
-        log.info("tabs_onRemoved ", tabId, info);
+        if (tabById[tabId]) {
+            // log.info("tabs_onRemoved.  Still has tab ", tabId, info);
+            removeTabBoxes([tabId]);
+        } else {
+            // log.info("tabs_onRemoved.  Tab has already been cleaned up " + tabId);
+        }
     }
 
     function tabs_onUpdated(tabId, info, tab) {
         // log.info("tabs_onUpdated ", tabId, info, tab);
-        if (info.status == "complete") {
+        if (info.hasOwnProperty("status") && info.status == "complete") {
             log.info("tabs_onUpdated completed " + tabId);
-            if (!thumbnailsMap[tabId]) {
-                log.info("refreshThumbnail");
+
+            if (!tabById[tabId]) {
+                // New tab has just been created.
+                log.info("tabs_onUpdated new tab");
+                addTabData(tab);
+            }
+            if (ttSettings.realtimeUpdateThumbnail || !thumbnailsMap[tabId]) {
                 refreshThumbnail(tabId, true);
             }
         }
@@ -236,19 +257,14 @@
         dlg.setupDlg("#about-dlg", true);
 
         // Global menu at the top navbar
-        $("#global-cmds").on("click", ".cmd-refresh",   reloadAndRefreshTabs);
-        $("#global-cmds").on("click", ".cmd-close-ui",  function(){ pSendCmd({ cmd: "close-ui" }) });
-        $(".logo").on("click", function() {
-            let manifest = browser.runtime.getManifest();
-            dlg.openDlg("#about-dlg",
-                        {
-                            ".app-name":    manifest.name,
-                            ".app-version": manifest.version,
-                            ".app-author":  manifest.author,
-                        },
-                        {},
-                        ".modal-submit");
-        });
+        $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage() });
+        $("#global-cmds").on("click", ".cmd-refresh",           reloadAndRefreshTabs);
+        $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()          });
+        $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(null, true)    });
+        $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(null, false)   });
+        $("#global-cmds").on("click", ".cmd-close-ui",          function(){ pSendCmd({ cmd: "close-ui" }) });
+        $("#global-cmds").on("click", ".cmd-about",             showAboutDlg);
+        $(".logo").on("click",                                  showAboutDlg);
 
         // Commands on v-btn-bar
         $(".v-btn-bar").on("click", ".cmd-all-tabs",            function(){ selectDisplayType(DT_ALL_TABS)      });
@@ -260,13 +276,13 @@
         $(".v-btn-bar").on("click", ".cmd-large-size",          function(){ setThumbnailSize(2)                 });
 
         // Window command handlers
-        $("#main-content").on("click", ".cmd-reload-tabs",      function(){ reloadWindowTabs($(this).closest(".window-lane").data("wid"))           });
-        $("#main-content").on("click", ".cmd-copy-titles-urls", function(){ copyWindowTabTitleUrls($(this).closest(".window-lane").data("wid"))     });
+        $("#main-content").on("click", ".cmd-reload-w-tabs",    function(){ reloadWindowTabs($(this).closest(".window-lane").data("wid"))           });
+        $("#main-content").on("click", ".cmd-copy-w-title-url", function(){ copyWindowTabTitleUrls($(this).closest(".window-lane").data("wid"))     });
         $("#main-content").on("click", ".cmd-undo-close",       function(){ undoCloseTab()                                                          });
-        $("#main-content").on("click", ".cmd-mute-all",         function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), true)       });
-        $("#main-content").on("click", ".cmd-unmute-all",       function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), false)      });
-        $("#main-content").on("click", ".cmd-pin-all",          function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), true)        });
-        $("#main-content").on("click", ".cmd-unpin-all",        function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), false)       });
+        $("#main-content").on("click", ".cmd-mute-w-all",       function(){ muteTabs($(this).closest(".window-lane").data("wid"), true)             });
+        $("#main-content").on("click", ".cmd-unmute-w-all",     function(){ muteTabs($(this).closest(".window-lane").data("wid"), false)            });
+        $("#main-content").on("click", ".cmd-pin-w-all",        function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), true)        });
+        $("#main-content").on("click", ".cmd-unpin-w-all",      function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), false)       });
 
         // Tab command handlers
         $("#main-content").on("click", ".cmd-close-tab",        function(){ closeTab($(this).closest(".tab-box").data("tid"))                       });
@@ -411,7 +427,6 @@
         return browser.tabs.query({})
             .then( tabs => {
                 tabs            = tabs.filter( tab => !is_tiptaburl(tab.url) );     // get rid of the TipTab tab.
-                tabIds          = tabs.map( tab => tab.id );
                 tabById         = tabs.reduce( (map, tab) => { map[tab.id] = tab; return map }, {} );
                 return tabs;
             }).then( tabs => {
@@ -423,54 +438,98 @@
             }).then( windows => {
                 windowById      = windows.reduce((map, win) => { map[win.id] = win; return map }, {});
                 windowIds       = windows.map( w => w.id );
-            }).then( () => {
-                let tabs        = tabIds.map( tid => tabById[tid] );
-                let uniqueIds   = new Set(tabs.map( tab => tab.cookieStoreId ));
-                let conIds      = [...uniqueIds];
-                return Promise.all( conIds.map( cid => pGetContainerInfo(cid) ));
-            }).then( contextualIdentities => {
-                containerById   = contextualIdentities.reduce( (map, c) => { map[c.cookieStoreId] = c; return map }, {} );
+            }).then( () => pGetContainerInfos() )               // get the containers defined in the system.
+            .then( contextualIdentities => {
                 containerIds    = contextualIdentities.map( c => c.cookieStoreId );
+                containerById   = contextualIdentities.reduce( (map, c) => { map[c.cookieStoreId] = c; return map }, {} );
+            }).then( () => {
+                let uniqueCids  = new Set( Object.values(tabById).map( tab => tab.cookieStoreId ));   // get containerIds from tabs.
+                let cids        = [...uniqueCids];
+                return Promise.all( cids.map( cid => pGetContainerInfo(cid) ));
+            }).then( contextualIdentitiesFromTabs => {
+                let extraCids   = contextualIdentitiesFromTabs.map( ci => ci.cookieStoreId ).filter( cid => !containerById.hasOwnProperty(cid) );
+                containerIds.push(...extraCids);
+                let extraCtners = contextualIdentitiesFromTabs.reduce( (map, c) => { map[c.cookieStoreId] = c; return map }, {} );
+                containerById   = Object.assign(extraCtners, containerById);
             }).then( () => {
                 updateEffectiveTabIds();
             })
     }
 
-    // afterTid == -1 for adding to the end.
-    function addTabAfter(newTab, afterTid) {
-        let afterIndex;
-        
-        // Update tabs structures
+    function addTabData(newTab) {
         tabById[newTab.id] = newTab;
-        afterIndex = tabIds.findIndex(tid => tid == afterTid);
-        app.addAfter(tabIds, newTab.id, afterIndex);
+        app.addAt(tabIdsByWid[newTab.windowId], newTab.id, newTab.index);
+        updateEffectiveTabIds();
+        thumbnailsMap[newTab.id] = null;
+        thumbnailsCapturing[newTab.id] = null;
 
-        // Update windows structures
-        let win = windowById[newTab.windowId];
-        afterIndex = tabIdsByWid[newTab.windowId].findIndex(tid => tid == afterTid);
-        app.addAfter(tabIdsByWid[newTab.windowId], newTab.id, afterIndex);
+        resetDragAndDrop();
+        switch (uiState.displayType) {
+        case DT_ALL_TABS:
+            refreshAllTabsContent(false, false);
+            break;
+        case DT_BY_WINDOW:
+            refreshWindowTabs(newTab.windowId);
+            break;
+        case DT_BY_CONTAINER:
+            refreshContainerTabs(newTab.cookieStoreId, false);
+            effectiveContainerTabs(newTab.cookieStoreId).map( tab => tab.id ).forEach( tid => refreshThumbnail(tid, false) );
+            break;
+        }
+        setupDragAndDrop();
+    }
 
+    function deleteTabData(tid) {
+        delete tabById[tid];
+        for (var wid in tabIdsByWid) {
+            tabIdsByWid[wid] = tabIdsByWid[wid].filter( tabId => tabId != tid );
+        }
+        delete thumbnailsMap[tid];
+        delete thumbnailsCapturing[tid];
+        if (thumbnailFocusTid == tid)
+            thumbnailFocusTid = null;
+        if (overlayShownTid == tid)
+            overlayShownTid = null;
         updateEffectiveTabIds();
     }
 
+    function pGetContainerInfos() {
+        return browser.contextualIdentities.query({})
+            .then( contextualIdentities => {
+                contextualIdentities.unshift({
+                        cookieStoreId:  CT_FIREFOX_PRIVATE,
+                        name:           "Private Browsing",
+                        colorCode:      COLOR_PRIVATE,
+                        iconUrl:        "",
+                });
+                contextualIdentities.unshift({
+                        cookieStoreId:  CT_FIREFOX_DEFAULT,
+                        name:           "General Tabs",
+                        colorCode:      COLOR_DEFAULT,
+                        iconUrl:        "",
+                });
+                return contextualIdentities;
+            });
+    }
+    
     function pGetContainerInfo(cid) {
         // Get the container info.  Return a fake one in case not found.
         return browser.contextualIdentities.get(cid)
             .catch( e => {
                 //log.error("cid not found " + cid, e);
                 switch (cid) {
-                case CT_FIREFOX_DEFAULT:
-                    return {
-                        cookieStoreId:  cid,
-                        name:           "General Tabs",
-                        colorCode:      COLOR_DEFAULT,
-                        iconUrl:        "",
-                    };
                 case CT_FIREFOX_PRIVATE:
                     return {
-                        cookieStoreId:  cid,
+                        cookieStoreId:  CT_FIREFOX_PRIVATE,
                         name:           "Private Browsing",
                         colorCode:      COLOR_PRIVATE,
+                        iconUrl:        "",
+                    };
+                case CT_FIREFOX_DEFAULT:
+                    return {
+                        cookieStoreId:  CT_FIREFOX_DEFAULT,
+                        name:           "General Tabs",
+                        colorCode:      COLOR_DEFAULT,
                         iconUrl:        "",
                     };
                 default:
@@ -486,6 +545,14 @@
 
     function wasTabActive(tab) {
         return (tab.windowId == currentWid && tab.id == currentLastActiveTabId) ? true : tab.active;
+    }
+
+    function countTabs() {
+        return Object.keys(tabById).length;
+    }
+
+    function getTabIds() {
+        return [].concat.apply([], Object.values(tabIdsByWid));     // join all the tabId arrays from tabIdsByWid.
     }
 
     function toTabs(tids) {
@@ -516,7 +583,7 @@
 
     function filterTabs() {
         let filterTokens = app.toLower(uiState.searchTerms);
-        return toTabs(tabIds).filter( tab => filterTab(tab, filterTokens) );
+        return toTabs(getTabIds()).filter( tab => filterTab(tab, filterTokens) );
     }
 
     function updateEffectiveTabIds() {
@@ -549,7 +616,7 @@
             $("#main-content").html("");
             $("#main-content").addClass("hidden");
             $("#empty-content").removeClass("hidden");
-            if (tabIds.length > 0) {
+            if (countTabs() > 0) {
                 $("#empty-msg1").text("Tabs are hidden due to filtering by search or by window selection at the footer.");
             } else {
                 $("#empty-msg1").text("");
@@ -629,9 +696,8 @@
     }
 
     function refreshAllTabsContent(forceRefreshImg, zoomOut) {
-        let tabsRenderedAsHidden = zoomOut == true;                         // the animation later will show the tab boxes
         let tabs = toTabs(effectiveTabIds);
-        let html = renderTabGrid(tabs, tabsRenderedAsHidden);               // unsafe text are left out.
+        let html = renderTabGrid(tabs);                                     // unsafe text are left out.
         $(".all-tab-lane .tab-grid").html(html);
         fillTabText(tabs);                                                  // fill in the unsafe text using escaped API.
 
@@ -644,30 +710,51 @@
     function renderWindowLanes() {
         return `
             <div class="content-title">tabs by window</div>
-            ${ windowIds.map( wid => windowById[wid] ).map( w => `
-                <div class="window-lane d-none" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
-                  <div class="window-topbar" title="Window">
-                    <div class="window-title" title="Window">WINDOW-TITLE</div>
-                    <div class="dropdown dropdown-right window-topbar-menu" >
-                      <div class="btn-group" style="margin:0">
-                        <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
-                        <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
-                          <li class="menu-item"> <a href="#" class="cmd-reload-tabs nowrap">Reload All Tabs</a> </li>
-                          <li class="menu-item"> <a href="#" class="cmd-undo-close nowrap">Undo Close Tab</a> </li>
-                          <li class="menu-item"> <a href="#" class="cmd-copy-titles-urls nowrap">Copy All Titles & Urls</a> </li>
-                          <li class="divider"></li>
-                          <li class="menu-item"> <a href="#" class="cmd-mute-all nowrap">Mute All Tabs</a> </li>
-                          <li class="menu-item"> <a href="#" class="cmd-unmute-all nowrap">Unmute All Tabs</a> </li>
-                          <li class="menu-item"> <a href="#" class="cmd-pin-all nowrap">Pin All Tabs</a> </li>
-                          <li class="menu-item"> <a href="#" class="cmd-unpin-all nowrap">Unpin All Tabs</a> </li>
-                        </ul>
-                      </div>
+            ${ windowIds.map( wid => windowById[wid] ).map( w => renderWindowLane(w) ).join("\n") }
+        `;
+    }
+
+    function renderWindowLane(w) {
+        return `
+              <div class="window-lane d-none" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
+                <div class="window-topbar" title="Window">
+                  <div class="window-title" title="Window">WINDOW-TITLE</div>
+                  <div class="dropdown dropdown-right window-topbar-menu" >
+                    <div class="btn-group" style="margin:0">
+                      <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
+                      <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
+                        <li class="menu-item" title="Reload tabs in window"> <a href="#" class="cmd-reload-w-tabs nowrap">Reload Tabs</a> </li>
+                        <li class="menu-item" title="Undo the last close tab"> <a href="#" class="cmd-undo-close nowrap">Undo Close Tab</a> </li>
+                        <li class="menu-item" title="Copy titles and Urls of tabs in window"> <a href="#" class="cmd-copy-w-title-url nowrap">Copy Titles & Urls</a> </li>
+                        <li class="divider"></li>
+                        <li class="menu-item" title="Mute tabs in window"> <a href="#" class="cmd-mute-w-all nowrap">Mute Tabs</a> </li>
+                        <li class="menu-item" title="Unmute tabs in window"> <a href="#" class="cmd-unmute-w-all nowrap">Unmute Tabs</a> </li>
+                        <li class="menu-item" title="Pin tabs in window"> <a href="#" class="cmd-pin-w-all nowrap">Pin Tabs</a> </li>
+                        <li class="menu-item" title="Unpin tabs in window"> <a href="#" class="cmd-unpin-w-all nowrap">Unpin Tabs</a> </li>
+                      </ul>
                     </div>
                   </div>
-                  <div class="tab-grid"></div>
                 </div>
-            ` ).join("\n") }
-        `;
+                <div class="tab-grid"></div>
+              </div>
+            `;
+    }
+
+    function addWindowLane(win) {
+        if (uiState.displayType == DT_BY_WINDOW) {
+            log.info("addWindowLane", win);
+            let $mainContent = $("#main-content");
+            $mainContent.append(renderWindowLane(win));     // render without the unsafe text.
+            fillWindowText([win.id]);                       // fill in the unsafe text of the objects using html-escaped API.
+            let $window_lane = $(".window-lane[data-wid='" + win.id + "']");
+            $window_lane.removeClass("d-none");
+            redrawWindowFooterBtns();
+            refreshWindowFooterBtns();
+        }
+    }
+
+    function removeWindowLane(wid) {
+        $(".window-lane[data-wid='" + wid + "']").css({ visibility: "hidden" }).animate({ height: 0 }, 600, function(){ $(this).remove() });
     }
 
     function redrawWindowFooterBtns() {
@@ -713,8 +800,7 @@
     }
 
     function refreshWindowsContent(forceRefreshImg, zoomOut) {
-        let tabsRenderedAsHidden = zoomOut == true;                         // the animation later will show the tab boxes
-        windowIds.forEach( wid => refreshWindowTabs(wid, tabsRenderedAsHidden) );
+        windowIds.forEach( wid => refreshWindowTabs(wid) );
 
         effectiveTabIds.forEach( tid => refreshThumbnail(tid, forceRefreshImg) );
         if (zoomOut) {
@@ -723,8 +809,7 @@
     }
 
     function updateRefreshOneWindow(wid, forceRefreshImg, zoomOut) {
-        let tabsRenderedAsHidden = zoomOut == true;                         // the animation later will show the tab boxes
-        refreshWindowTabs(wid, tabsRenderedAsHidden);
+        refreshWindowTabs(wid);
 
         effectiveTabIds.forEach( tid => refreshThumbnail(tid, forceRefreshImg) );
         if (zoomOut) {
@@ -732,12 +817,12 @@
         }
     }
 
-    function refreshWindowTabs(wid, tabsRenderedAsHidden) {
+    function refreshWindowTabs(wid) {
         let windowTabs = effectiveWindowTabs(wid);
         if (windowTabs.length > 0) {
             let $window_lane = $(".window-lane[data-wid='" + wid + "']");
+            let html = renderTabGrid(windowTabs);                           // unsafe text are left out.
             $window_lane.removeClass("d-none");
-            let html = renderTabGrid(windowTabs, tabsRenderedAsHidden);     // unsafe text are left out.
             $window_lane.find(".tab-grid").html(html);
             fillTabText(windowTabs);                                        // fill in the unsafe text using escaped API.
         }
@@ -764,8 +849,7 @@
     }
 
     function refreshContainersContent(forceRefreshImg, zoomOut) {
-        let tabsRenderedAsHidden = zoomOut == true;                         // the animation later will show the tab boxes
-        containerIds.forEach( cid => refreshContainerTabs(cid, tabsRenderedAsHidden) );
+        containerIds.forEach( cid => refreshContainerTabs(cid) );
 
         effectiveTabIds.forEach( tid => refreshThumbnail(tid, forceRefreshImg) );
         if (zoomOut) {
@@ -773,14 +857,19 @@
         }
     }
 
-    function refreshContainerTabs(cid, tabsRenderedAsHidden) {
+    function refreshContainerTabs(cid) {
         let containerTabs = effectiveContainerTabs(cid);
-        if (containerTabs.length > 0) {
-            let $container_tab_lane = $(".container-tab-lane[data-cid='" + cid + "']");
+        let $container_tab_lane = $(".container-tab-lane[data-cid='" + cid + "']");
+        if (ttSettings.showEmptyContainers || containerTabs.length > 0) {
             $container_tab_lane.removeClass("d-none");
-            let html = renderTabGrid(containerTabs, tabsRenderedAsHidden);      // unsafe text are left out.
+        }
+        if (containerTabs.length > 0) {
+            let html = renderTabGrid(containerTabs);                            // unsafe text are left out.
             $container_tab_lane.find(".tab-grid").html(html);
             fillTabText(containerTabs);                                         // fill in the unsafe text using escaped API.
+        } else {
+            let html = renderTabGrid([DUMMY_TAB]);
+            $container_tab_lane.find(".tab-grid").html(html);
         }
     }
 
@@ -804,19 +893,19 @@
     }
 
 
-    function renderTabGrid(tabs, tabsRenderedAsHidden) {
-        return ` ${ tabs.map( tab => renderTabBox(tab, tabsRenderedAsHidden) ).join("\n") } `;
+    function renderTabGrid(tabs) {
+        return ` ${ tabs.map( tab => renderTabBox(tab) ).join("\n") } `;
     }
 
     // Unsafe text of the tab are not rendered.  Caller needs to call fillTabText() later to fill in the unsafe text.
-    function renderTabBox(tab, tabsRenderedAsHidden) {
+    function renderTabBox(tab) {
         let c = containerById[tab.cookieStoreId];
         let isPrivate = is_firefox_private(tab.cookieStoreId);
         let isContainer = is_real_container(tab.cookieStoreId);
 
         // Note that the unsafe text of a tab's url are left out, and will be filled in later, in below.
         return `
-            <div class="tab-box ${css_droppable_private(isPrivate)} ${tabsRenderedAsHidden ? 'd-invisible' : ''}" id="tid-${tab.id}" data-tid="${tab.id}" tabindex="0">
+            <div class="tab-box ${css_tabbox(tab._is_dummy, isPrivate)}" id="tid-${tab.id}" data-tid="${tab.id}" tabindex="0">
 
               <div class="tab-topbar ${css_draggable()}" title="Drag the top bar to start drag and drop on the thumbnail.">
                 <div class="tab-title" title="TAB-TITLE">TAB-TITLE</div>
@@ -932,6 +1021,7 @@
     function css_display(showing)               { return showing  ? "d-block" : "d-none" }
     function css_draggable()                    { return uiState.displayType == DT_BY_WINDOW || uiState.displayType == DT_BY_CONTAINER ? "draggable-item" : "" }
     function css_droppable_private(isPrivate)   { return isPrivate ? "droppable-private" : "droppable-normal" }
+    function css_tabbox(dummy, isPrivate)       { return (dummy ? " tabbox_dummy " : "") + (isPrivate ? " droppable-private " : " droppable-normal ") }
 
     function canDropBeforeTab(draggingFromTid, droppingToTid) {
         if (draggingFromTid) {
@@ -1150,21 +1240,57 @@
 
     // Need to do blocking wait until tabs.create() finish before finishing up the drop operation.
     async function dropAtTheContainer($dest, ui) {
+        log.info("dropAtTheContainer");
         let srcTab  = tabById[ui.draggable.data("tid")];
         let destCid = $dest.data("cid");  // data-cid on .drop-end-zone.
-        let newTab  = await browser.tabs.create({
-            active:         srcTab.active,
-            cookieStoreId:  destCid,
-            pinned:         srcTab.pinned,
-            url:            srcTab.url,
-            windowId:       srcTab.windowId
-        });
 
-        addTabAfter(newTab, -1);
-        thumbnailsMap[newTab.id] = null;
-        refreshContainerTabs(destCid, false);
-        effectiveContainerTabs(destCid).map( tab => tab.id ).forEach( tid => refreshThumbnail(tid, false) );
+        if (is_firefox_private(destCid)) {
+            openInPrivateWindow(srcTab, null);
+        } else {
+            let newTab = await browser.tabs.create({
+                active:         true,
+                cookieStoreId:  destCid,
+                pinned:         srcTab.pinned,
+                url:            srcTab.url,
+                windowId:       srcTab.windowId
+            });
+            addTabData(newTab);
+            // log.info("dropAtTheContainer done");
+        }
     }
+
+    async function openInPrivateWindow(tab, targetWid) {
+        if (!targetWid) {
+            let privateWindow = await pFindOrCreatePrivateWindow();
+            targetWid = privateWindow.id;
+        }
+        let newTab = await browser.tabs.create({
+            active:         true,
+            pinned:         tab.pinned,
+            url:            tab.url,
+            windowId:       targetWid,
+        });
+        addTabData(newTab);
+    }
+
+    function pFindOrCreatePrivateWindow() {
+        return browser.windows.getAll()
+            .then( windows => windows.find( w => w.incognito ) )
+            .then( privateWindow => privateWindow ? privateWindow : browser.windows.create({ incognito: true }) );
+    }
+        
+    // Command handlers
+    function showAboutDlg() {
+        let manifest = browser.runtime.getManifest();
+        dlg.openDlg("#about-dlg",
+                    {
+                        ".app-name":    manifest.name,
+                        ".app-version": manifest.version,
+                        ".app-author":  manifest.author,
+                    },
+                    {},
+                    ".modal-submit");
+    }           
 
     function selectDisplayType(displayType) {
         uiState.displayType = displayType;
@@ -1210,13 +1336,13 @@
         document.execCommand("copy");
     }
 
-    function muteWindowTabs(wid, isMuting) {
-        let tabs = effectiveWindowTabs(wid);
+    function muteTabs(wid, isMuting) {
+        let tabs = wid ? effectiveWindowTabs(wid) : toTabs(effectiveTabIds);    // tabs of a window or all tabs.
         Promise.all( tabs.map( tab => browser.tabs.update(tab.id, { muted: isMuting }) ) )
             .then( updatedTabs => updatedTabs.forEach( tab => tabById[tab.id].mutedInfo = tab.mutedInfo ) )
             .then( () => refreshTabBoxes(toTabIds(tabs), false) )
     }
-
+                     
     function pinWindowTabs(wid, isPinning) {
         let tabs = effectiveWindowTabs(wid);
         Promise.all( tabs.map( tab => browser.tabs.update(tab.id, { pinned: isPinning }) ) )
@@ -1249,13 +1375,19 @@
 		setTimeout(function(){ a.ownerDocument.body.removeChild(a) }, 200);
     }
 
-    function closeTab(tid) {
+    function removeTabBoxes(tids) {
         resetDragAndDrop();
-        cleanupTab(tid);
-        $tabbox(tid).css({ visibility: "hidden" }).animate({ width: 0 }, 500, function(){ $(this).detach() });
-        browser.tabs.remove(tid);
-        // Reset the draggable tabboxes after deleted a tab.
+        tids.forEach( tid => {
+            deleteTabData(tid);
+            $tabbox(tid).animate({ width: 0 }, 500, function(){ $(this).remove() });
+            //$tabbox(tid).css({ visibility: "hidden" }).animate({ width: 0 }, 500, function(){ $(this).remove() });
+        });
         setupDragAndDrop();
+    }
+ 
+    function closeTab(tid) {
+        removeTabBoxes([tid]);
+        browser.tabs.remove(tid);
     }
 
     function closeOtherTabs(tid, whichSide) {
@@ -1263,33 +1395,12 @@
         browser.windows.get(tab.windowId, {
             populate:   true
         }).then( win => {
-            resetDragAndDrop();
             let index = win.tabs.findIndex(tab => tab.id == tid);
             let tabs = whichSide == "all" ? win.tabs : whichSide == "left" ? win.tabs.slice(0, index) : win.tabs.slice(index + 1);
             let tabIdsToClose = tabs.filter( tab => tab.id != tid && !is_tiptaburl(tab.url) ).map( tab => tab.id );
-            tabIdsToClose.forEach( tid => {
-                cleanupTab(tid);
-                $tabbox(tid).animate({ width: 0 }, 500, function(){ $(this).detach() });
-            });
+            removeTabBoxes(tabIdsToClose);
             browser.tabs.remove(tabIdsToClose);
-            // Reset the draggable tabboxes after deleted the tabs.
-            setupDragAndDrop();
         });
-    }
-
-    function cleanupTab(tid) {
-        tabIds = tabIds.filter( id => id != tid );
-        delete tabById[tid];
-        for (var wid in tabIdsByWid) {
-            tabIdsByWid[wid] = tabIdsByWid[wid].filter( tabId => tabId != tid );
-        }
-        delete thumbnailsMap[tid];
-        delete thumbnailsCapturing[tid];
-        if (thumbnailFocusTid == tid)
-            thumbnailFocusTid = null;
-        if (overlayShownTid == tid)
-            overlayShownTid = null;
-        updateEffectiveTabIds();
     }
 
     function undoCloseTab() {
@@ -1351,7 +1462,7 @@
         return browser.runtime.sendMessage(msg);    // response is returned in .then( response => ... ).
     }
 
-    function $tabbox(tid) { return $("#tid-" + tid) }
+    function $tabbox(tid) { return $("#tid-" + tid) }   // using lookup by id is faster.
 
     function getFontSizeRem() {
         return parseFloat(getComputedStyle(document.documentElement).fontSize);
