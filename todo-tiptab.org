@@ -46,6 +46,7 @@
 ** DONE Custom key binding for invocation hot key.
 ** DONE New extension icon.
 ** DONE Drag and drop to copy tab between containers.
+** DONE Use MacCtrl+Shift+F for app hotkey on Mac.
 ** TODO Show containers, even if they are empty, for drop and drag tabs into them.
    Need to consider search and filter-by-window/filter-by-container.
 ** DONE Monitor tab events and refresh tab info/UI.
