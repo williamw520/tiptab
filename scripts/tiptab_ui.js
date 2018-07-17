@@ -608,6 +608,10 @@
         return tabs.map( tab => tab.id );
     }
 
+    function orderTabIndex(wid) {
+        tabIdsByWid[wid].forEach( (tid, index) => tabById[tid].index = index );
+    }
+
     function isHidden(tab) {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
@@ -1276,13 +1280,17 @@
         let destTab = tabById[$dest.data("tid")];
         let srcIdx  = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
         let destIdx = tabIdsByWid[destTab.windowId].findIndex( tid => tid == destTab.id );
-        if (srcTab.windowId == destTab.windowId && srcIdx < destIdx) {
+        let sameWin = srcTab.windowId == destTab.windowId;
+        if (sameWin && srcIdx < destIdx) {
             destIdx--;      // Src and dest tabs on the same window, and src tab is before dest, decrement index by 1 since the src tab will be removed.
         }
-        browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx})
-            .then( () => {
-                tabIdsByWid[srcTab.windowId].splice(srcIdx, srcIdx);            // remove the moved tabId from source array
+        browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx}).then( movedTabs => {
+            if (movedTabs && movedTabs.length > 0 && (!sameWin || srcIdx != movedTabs[0].index)) {
+                tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);                 // remove the moved tabId from source array
                 tabIdsByWid[destTab.windowId].splice(destIdx, 0, srcTab.id);    // add the moved tabId to the destination array
+                orderTabIndex(srcTab.windowId);
+                if (destTab.windowId != srcTab.windowId)
+                    orderTabIndex(destTab.windowId);
                 srcTab.windowId = destTab.windowId;
 
                 let $srcTabBox  = $tabbox(srcTab.id);
@@ -1291,31 +1299,45 @@
                 $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
                 $srcTabBox.insertBefore($destTabBox);
                 let toWidth = $srcTabBox.width();
-                $srcTabBox.width(0).animate({ width: toWidth }, 500);
-            });
+                $srcTabBox.width(0).animate({ width: toWidth }, 500).effect( "bounce", {times:2, distance:5}, 200 );
+            } else {
+                let $srcTabBox  = $tabbox(srcTab.id);
+                $srcTabBox.removeAttr("style");
+            }
+        });
     }                                   
 
     function dropAtTheEndInWindow($dest, event, ui) {
         let srcTab  = tabById[ui.draggable.data("tid")];
         let destWid = $dest.data("wid");  // data-wid on .drop-end-zone.
-        browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( () => {
-            // Move the tab to the end of the window lane.
-            let srcIdx = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
-            tabIdsByWid[srcTab.windowId].splice(srcIdx, srcIdx);
-            tabIdsByWid[destWid].push(srcTab.id);
-            srcTab.windowId = destWid;
-            let $tabBox = $tabbox(srcTab.id);
-            $tabBox.css({ top:"", left:"" });   // reset the dragging position
-            if (!$tabBox.is(":last-child")) {
-                $tabBox.detach();
-                $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
-                    .effect( "bounce", {times:2, distance:5}, 200 );
+        let sameWin = srcTab.windowId == destWid;
+        browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( movedTabs => {
+            if (movedTabs && movedTabs.length > 0 && (!sameWin || srcTab.index != movedTabs[0].index)) {
+                // Move the tab to the end of the window lane.
+                let srcIdx = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
+                tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);
+                tabIdsByWid[destWid].push(srcTab.id);
+                orderTabIndex(srcTab.windowId);
+                if (destWid != srcTab.windowId)
+                    orderTabIndex(destWid);
+                
+                srcTab.windowId = destWid;
+                let $tabBox = $tabbox(srcTab.id);
+                $tabBox.css({ top:"", left:"" });   // reset the dragging position
+                if (!$tabBox.is(":last-child")) {
+                    $tabBox.detach();
+                    $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                    $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
+                        .effect( "bounce", {times:2, distance:5}, 200 );
+                } else {
+                    $tabBox.detach();
+                    $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                    $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
+                        .effect( "bounce", {times:2, distance:5}, 200 );
+                }
             } else {
-                $tabBox.detach();
-                $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
-                    .effect( "bounce", {times:2, distance:5}, 200 );
+                let $srcTabBox  = $tabbox(srcTab.id);
+                $srcTabBox.removeAttr("style");
             }
         });
     }
