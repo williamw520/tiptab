@@ -47,11 +47,15 @@
 ** DONE New extension icon.
 ** DONE Drag and drop to copy tab between containers.
 ** DONE Use MacCtrl+Shift+F for app hotkey on Mac.
-** TODO Show containers, even if they are empty, for drop and drag tabs into them.
-   Need to consider search and filter-by-window/filter-by-container.
 ** DONE Monitor tab events and refresh tab info/UI.
-** TODO Global menu, for Options page.
-** TODO Global menu, for commands on all tabs or on all windows.
+** DONE Monitor window events and refresh window info/UI.
+** DONE Global menu, for Options page.
+** DONE Global menu, for commands on all tabs or on all windows.
+** DONE Show containers, even if they are empty, for drop and drag tabs into them.
+** TODO Monitor container events and refresh container info/UI.
+** TODO Bug: drag and drop new tab into container doesn't initialize the tab menu handlers.
+** TODO Bug: empty search text is not saved.  Refreshing the TipTab page gets back the old search text.
+** TODO Drop and drop from private window to normal
 ** TODO Bookmark a tab.
 ** TODO Bookmark all tabs of a window.
 ** TODO Show bookmarks as tab box, with saved thumbnails shown.

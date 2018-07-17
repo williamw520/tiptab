@@ -38,13 +38,13 @@
 
     // Display types
     const DT_ALL_TABS = "all-tabs";
-    const DT_BY_WINDOW = "by-window";
-    const DT_BY_CONTAINER = "by-container";
+    const DT_WINDOW = "by-window";
+    const DT_CONTAINER = "by-container";
     const DT_ALL_WINDOWS = "all-windows"
-    const displayTypes = [DT_ALL_TABS, DT_BY_WINDOW, DT_BY_CONTAINER, DT_ALL_WINDOWS];
+    const displayTypes = [DT_ALL_TABS, DT_WINDOW, DT_CONTAINER, DT_ALL_WINDOWS];
     function is_all_tabs()      { return uiState.displayType == DT_ALL_TABS }
-    function is_by_window()     { return uiState.displayType == DT_BY_WINDOW }
-    function is_by_container()  { return uiState.displayType == DT_BY_CONTAINER }
+    function is_by_window()     { return uiState.displayType == DT_WINDOW }
+    function is_by_container()  { return uiState.displayType == DT_CONTAINER }
     function is_all_windows()   { return uiState.displayType == DT_ALL_WINDOWS }
 
     // Overlay animation parameters
@@ -98,6 +98,7 @@
     let tabIdsByWid = {};           // track the list of tab ids by window id.
     let containerById = {};         // the only map holding the Container objects
     let containerIds = [];          // track the order of the containers, id only.
+    let tabIdsByCid = {};           // track the list of tab ids by container id.
 
     let effectiveTabIds = [];       // list of tab ids after filtering.
     let effectiveTidSet = new Set();
@@ -128,8 +129,8 @@
             .then(() => pLoadUiState() )
             .then(() => refreshStaticUI() )     // for the UI that need to be set up before setting up the DOM listeners.
             .then(() => setupDOMListeners() )
-            .then(() => reloadAndRefreshTabs() )
-            .then(() => refreshControls() )
+            .then(() => pReloadRedrawRefreshContent() )
+            .then(() => redrawRefreshControls() )
             .then(() => pMonitorDataChange() )
             .then(() => browser.windows.onCreated.addListener(windows_onCreated) )
             .then(() => browser.windows.onRemoved.addListener(windows_onRemoved) )
@@ -180,8 +181,8 @@
         uiState.displayType = state.displayType || DT_ALL_TABS;
         uiState.searchTerms = state.searchTerms || [];
         uiState.thumbnailSize = state.thumbnailSize || 0;
-        uiState.windowFooterBtns = state.windowFooterBtns || {};            // a flag means the window is deselected.
-        uiState.containerFooterBtns = state.containerFooterBtns || {};      // a flag means the container is deselected.
+        uiState.windowsHiddenByUser = state.windowsHiddenByUser || {};          // a flag means the window is deselected.
+        uiState.containersHiddenByUser = state.containersHiddenByUser || {};    // a flag means the container is deselected.
 
         return uiState;
     }
@@ -213,13 +214,20 @@
     }
 
     function tabs_onActivated(info) {
-        tabById[info.tabId].active = true;
-        let oldId = tabIdsByWid[info.windowId].find( tid => tabById[tid].active );
-        if (oldId) {
-            tabById[oldId].active = false;
-            refreshTabBoxes([oldId, info.tabId], false);
+        log.info("tabs_onActivated", info);
+        if (tabById.hasOwnProperty(info.tabId))
+            transitionActiveTabs(info.tabId);
+    }
+
+    function transitionActiveTabs(newActiveTid) {
+        let oldActiveId = tabIdsByWid[tabById[newActiveTid].windowId].find( tid => tabById[tid].active );
+        if (oldActiveId) {
+            tabById[newActiveTid].active = true;
+            tabById[oldActiveId].active = false;
+            refreshTabBoxes([oldActiveId, newActiveTid], false);
         } else {
-            refreshTabBoxes([info.tabId], false);
+            tabById[newActiveTid].active = true;
+            refreshTabBoxes([newActiveTid], false);
         }
     }
 
@@ -236,11 +244,10 @@
     function tabs_onUpdated(tabId, info, tab) {
         // log.info("tabs_onUpdated ", tabId, info, tab);
         if (info.hasOwnProperty("status") && info.status == "complete") {
-            log.info("tabs_onUpdated completed " + tabId);
-
+            // log.info("tabs_onUpdated completed " + tabId);
             if (!tabById[tabId]) {
                 // New tab has just been created.
-                log.info("tabs_onUpdated new tab");
+                // log.info("tabs_onUpdated new tab");
                 addTabData(tab);
             }
             if (ttSettings.realtimeUpdateThumbnail || !thumbnailsMap[tabId]) {
@@ -258,7 +265,7 @@
 
         // Global menu at the top navbar
         $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage() });
-        $("#global-cmds").on("click", ".cmd-refresh",           reloadAndRefreshTabs);
+        $("#global-cmds").on("click", ".cmd-refresh",           pReloadRedrawRefreshContent);
         $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()          });
         $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(null, true)    });
         $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(null, false)   });
@@ -268,8 +275,8 @@
 
         // Commands on v-btn-bar
         $(".v-btn-bar").on("click", ".cmd-all-tabs",            function(){ selectDisplayType(DT_ALL_TABS)      });
-        $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_BY_WINDOW)     });
-        $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_BY_CONTAINER)  });
+        $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_WINDOW)     });
+        $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_CONTAINER)  });
         $(".v-btn-bar").on("click", ".cmd-all-windows",         function(){ selectDisplayType(DT_ALL_WINDOWS)   });
         $(".v-btn-bar").on("click", ".cmd-small-size",          function(){ setThumbnailSize(0)                 });
         $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                 });
@@ -402,9 +409,16 @@
         $(".cmd-search").val(uiState.searchTerms.join(" ")).focus().select();
     }
     
-    function refreshControls() {
-        //log.info("refreshControls");
+    function redrawRefreshControls() {
+        // VBar buttons are always visible and no need to redraw.
         refreshVBtnBarControls();
+        redrawFooterControls();     // footer controls are dynamic and need redrawing based on current state of the data.
+        refreshFooterControls();
+    }
+
+    function refreshControls() {
+        refreshVBtnBarControls();
+        refreshFooterControls();
     }
 
     function refreshVBtnBarControls() {
@@ -419,8 +433,33 @@
         if (uiState.thumbnailSize == 2) {   $(".cmd-large-size").addClass("active")     }
     }
 
-    function reloadAndRefreshTabs() {
-        pReloadTabsAndWindows().then( () => refreshUIContent(true, true) );
+    function redrawFooterControls() {
+        switch (uiState.displayType) {
+        case DT_ALL_TABS:
+        case DT_WINDOW:
+            redrawWindowFooterBtns();
+            break;
+        case DT_CONTAINER:
+            redrawContainerFooterBtns();
+            break;
+        }
+    }
+
+    function refreshFooterControls() {
+        switch (uiState.displayType) {
+        case DT_ALL_TABS:
+        case DT_WINDOW:
+            refreshWindowFooterBtns();
+            break;
+        case DT_CONTAINER:
+            refreshContainerFooterBtns();
+            break;
+        }
+    }
+
+
+    function pReloadRedrawRefreshContent() {
+        return pReloadTabsAndWindows().then( () => redrawRefreshUIContent(true, true) );
     }
 
     function pReloadTabsAndWindows() {
@@ -451,6 +490,8 @@
                 containerIds.push(...extraCids);
                 let extraCtners = contextualIdentitiesFromTabs.reduce( (map, c) => { map[c.cookieStoreId] = c; return map }, {} );
                 containerById   = Object.assign(extraCtners, containerById);
+                tabIdsByCid     = containerIds.reduce( (map, cid) => { map[cid] = []; return map }, {} );
+                Object.values(tabById).forEach( tab => tabIdsByCid[tab.cookieStoreId].push(tab.id) );
             }).then( () => {
                 updateEffectiveTabIds();
             })
@@ -459,6 +500,7 @@
     function addTabData(newTab) {
         tabById[newTab.id] = newTab;
         app.addAt(tabIdsByWid[newTab.windowId], newTab.id, newTab.index);
+        app.addAt(tabIdsByCid[newTab.cookieStoreId], newTab.id, newTab.index);
         updateEffectiveTabIds();
         thumbnailsMap[newTab.id] = null;
         thumbnailsCapturing[newTab.id] = null;
@@ -468,10 +510,10 @@
         case DT_ALL_TABS:
             refreshAllTabsContent(false, false);
             break;
-        case DT_BY_WINDOW:
+        case DT_WINDOW:
             refreshWindowTabs(newTab.windowId);
             break;
-        case DT_BY_CONTAINER:
+        case DT_CONTAINER:
             refreshContainerTabs(newTab.cookieStoreId, false);
             effectiveContainerTabs(newTab.cookieStoreId).map( tab => tab.id ).forEach( tid => refreshThumbnail(tid, false) );
             break;
@@ -483,6 +525,9 @@
         delete tabById[tid];
         for (var wid in tabIdsByWid) {
             tabIdsByWid[wid] = tabIdsByWid[wid].filter( tabId => tabId != tid );
+        }
+        for (var cid in tabIdsByCid) {
+            tabIdsByCid[cid] = tabIdsByCid[cid].filter( tabId => tabId != tid );
         }
         delete thumbnailsMap[tid];
         delete thumbnailsCapturing[tid];
@@ -544,7 +589,7 @@
     }
 
     function wasTabActive(tab) {
-        return (tab.windowId == currentWid && tab.id == currentLastActiveTabId) ? true : tab.active;
+        return (tab.hasOwnProperty("windowId") && tab.windowId == currentWid && tab.id == currentLastActiveTabId) ? true : tab.active;
     }
 
     function countTabs() {
@@ -563,22 +608,21 @@
         return tabs.map( tab => tab.id );
     }
 
+    function isHidden(tab) {
+        switch (uiState.displayType) {
+        case DT_ALL_TABS:
+        case DT_WINDOW:
+            return uiState.windowsHiddenByUser[tab.windowId];
+        case DT_CONTAINER:
+            return uiState.containersHiddenByUser[tab.cookieStoreId];
+        }
+        return false;
+    }
+
     function filterTab(tab, filterTokens) {
         let titleMatched = app.hasAll(tab.title, filterTokens, true);
         let urlMatched = app.hasAll(tab.url, filterTokens, true);
-        
-        let isHidden = false;
-        switch (uiState.displayType) {
-        case DT_ALL_TABS:
-        case DT_BY_WINDOW:
-            isHidden = uiState.windowFooterBtns[tab.windowId];
-            break;
-        case DT_BY_CONTAINER:
-            isHidden = uiState.containerFooterBtns[tab.cookieStoreId];
-            break;
-        }
-
-        return (titleMatched || urlMatched) && !isHidden;
+        return (titleMatched || urlMatched) && !isHidden(tab);
     }
 
     function filterTabs() {
@@ -591,21 +635,28 @@
         effectiveTidSet = new Set(effectiveTabIds);
     }
 
+    function effectiveWindowTids(wid) {
+        return tabIdsByWid[wid].filter( tid => effectiveTidSet.has(tid) );
+    }
+
     function effectiveWindowTabs(wid) {
-        return toTabs(tabIdsByWid[wid].filter( tid => effectiveTidSet.has(tid) ));
+        return toTabs(effectiveWindowTids(wid));
+    }
+
+    function effectiveContainerTids(cid) {
+        return tabIdsByCid[cid].filter( tid => effectiveTidSet.has(tid) );
     }
 
     function effectiveContainerTabs(cid) {
-        // TODO: get tabIds from container's tab array.
-        return toTabs(effectiveTabIds).filter( tab => tab.cookieStoreId == cid );
+        return toTabs(effectiveContainerTids(cid));
     }
 
-    function refreshOnSearch() {
+    function redrawRefreshContentOnFiltering() {
         updateEffectiveTabIds();
-        refreshUIContent(false, false);
+        redrawRefreshUIContent(false, false);
     }
 
-    function refreshUIContent(forceRefreshImg, zoomOut) {
+    function redrawRefreshUIContent(forceRefreshImg, zoomOut) {
         resetDragAndDrop();
         if (effectiveTabIds.length > 0) {
             redrawContentLayout();
@@ -617,7 +668,7 @@
             $("#main-content").addClass("hidden");
             $("#empty-content").removeClass("hidden");
             if (countTabs() > 0) {
-                $("#empty-msg1").text("Tabs are hidden due to filtering by search or by window selection at the footer.");
+                $("#empty-msg1").text("Tabs are hidden due to filtering by search, or by window or container selection at footer.");
             } else {
                 $("#empty-msg1").text("");
             }
@@ -645,20 +696,16 @@
         switch (uiState.displayType) {
         case DT_ALL_TABS:
             $mainContent.html(renderAllTabLane());
-            redrawWindowFooterBtns();
-            refreshWindowFooterBtns();
             break;
-        case DT_BY_WINDOW:
-            $mainContent.html(renderWindowLanes());
+        case DT_WINDOW:
+            $mainContent.html(renderWindowLanes());         // unsafe text are left out.
             fillWindowText(windowIds);                      // fill in the unsafe text of the objects using html-escaped API.
-            redrawWindowFooterBtns();
-            refreshWindowFooterBtns();
+            showHideWindowLanes();
             break;
-        case DT_BY_CONTAINER:
-            $mainContent.html(renderContainerLanes());
+        case DT_CONTAINER:
+            $mainContent.html(renderContainerLanes());      // unsafe text are left out.
             fillContainerText(containerIds);                // fill in the unsafe text of the objects using html-escaped API.
-            redrawContainerFooterBtns();
-            refreshContainerFooterBtns();
+            showHideContainerLanes();
             break;
         case DT_ALL_WINDOWS:
             renderAllWindows();
@@ -674,10 +721,10 @@
         case DT_ALL_TABS:
             refreshAllTabsContent(forceRefreshImg, zoomOut);
             break;
-        case DT_BY_WINDOW:
+        case DT_WINDOW:
             refreshWindowsContent(forceRefreshImg, zoomOut);
             break;
-        case DT_BY_CONTAINER:
+        case DT_CONTAINER:
             refreshContainersContent(forceRefreshImg, zoomOut);
             break;
         case DT_ALL_WINDOWS:
@@ -707,6 +754,7 @@
         }
     }
 
+    // unsafe text are left out.
     function renderWindowLanes() {
         return `
             <div class="content-title">tabs by window</div>
@@ -714,6 +762,7 @@
         `;
     }
 
+    // unsafe text are left out.
     function renderWindowLane(w) {
         return `
               <div class="window-lane d-none" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
@@ -740,21 +789,40 @@
             `;
     }
 
+    // Use html-escaped API to fill in unsafe text.
+    function fillWindowText(windowIds) {
+        windowIds.map( wid => windowById[wid] ).forEach( w => $(".window-lane[data-wid='" + w.id + "'] .window-title").text(w.title) );
+    }
+
+    function showHideWindowLanes() {
+        windowIds.forEach( wid => showHideWindowLane(wid) );
+    }
+
+    function showHideWindowLane(wid) {
+        let windowTids = effectiveWindowTids(wid);
+        let isVisible = !uiState.windowsHiddenByUser[wid] && (ttSettings.showEmptyWindows || windowTids.length > 0);
+        let $window_lane = $(".window-lane[data-wid='" + wid + "']");
+        if (isVisible)
+            $window_lane.removeClass("d-none");
+        else
+            $window_lane.removeClass("d-none").addClass("d-none");
+    }
+
+
     function addWindowLane(win) {
-        if (uiState.displayType == DT_BY_WINDOW) {
-            log.info("addWindowLane", win);
+        if (uiState.displayType == DT_WINDOW) {
             let $mainContent = $("#main-content");
             $mainContent.append(renderWindowLane(win));     // render without the unsafe text.
             fillWindowText([win.id]);                       // fill in the unsafe text of the objects using html-escaped API.
             let $window_lane = $(".window-lane[data-wid='" + win.id + "']");
             $window_lane.removeClass("d-none");
-            redrawWindowFooterBtns();
-            refreshWindowFooterBtns();
+            redrawFooterControls();
+            refreshFooterControls();
         }
     }
 
     function removeWindowLane(wid) {
-        $(".window-lane[data-wid='" + wid + "']").css({ visibility: "hidden" }).animate({ height: 0 }, 600, function(){ $(this).remove() });
+        $(".window-lane[data-wid='" + wid + "']").animate({ height: 0 }, 600, function(){ $(this).remove() });
     }
 
     function redrawWindowFooterBtns() {
@@ -769,7 +837,7 @@
         windowIds.map( wid => windowById[wid] ).forEach( w => {
             $(".footer-btn[data-wid='" + w.id + "']")
                 .attr("title", "Window: " + w.title).text(titleLetter(w.title))
-                .removeClass("deselected").addClass(uiState.windowFooterBtns[w.id] ? "deselected" : "");
+                .removeClass("deselected").addClass(uiState.windowsHiddenByUser[w.id] ? "deselected" : "");
         });
     }
 
@@ -785,7 +853,7 @@
         containerIds.map( cid => containerById[cid] ).forEach( c => {
             $(".footer-btn[data-cid='" + c.cookieStoreId + "']")
                 .attr("title", "Container: " + c.name).text(titleLetter(c.name))
-                .removeClass("deselected").addClass(uiState.containerFooterBtns[c.cookieStoreId] ? "deselected" : "");
+                .removeClass("deselected").addClass(uiState.containersHiddenByUser[c.cookieStoreId] ? "deselected" : "");
         });
     }
 
@@ -793,11 +861,6 @@
         return title.length ? title.substring(0, 1) : defaultLetter;
     }
 
-
-    // Use html-escaped API to fill in unsafe text.
-    function fillWindowText(windowIds) {
-        windowIds.map( wid => windowById[wid] ).forEach( w => $(".window-lane[data-wid='" + w.id + "'] .window-title").text(w.title) );
-    }
 
     function refreshWindowsContent(forceRefreshImg, zoomOut) {
         windowIds.forEach( wid => refreshWindowTabs(wid) );
@@ -819,20 +882,23 @@
 
     function refreshWindowTabs(wid) {
         let windowTabs = effectiveWindowTabs(wid);
+        let $window_lane = $(".window-lane[data-wid='" + wid + "']");
         if (windowTabs.length > 0) {
-            let $window_lane = $(".window-lane[data-wid='" + wid + "']");
             let html = renderTabGrid(windowTabs);                           // unsafe text are left out.
-            $window_lane.removeClass("d-none");
             $window_lane.find(".tab-grid").html(html);
             fillTabText(windowTabs);                                        // fill in the unsafe text using escaped API.
+        } else {
+            // let html = renderTabGrid([DUMMY_TAB]);
+            // $window_lane.find(".tab-grid").html(html);
         }
     }
 
+    // unsafe text are left out.
     function renderContainerLanes() {
         return `
             <div class="content-title">tabs by container</div>
             ${ containerIds.map( cid => containerById[cid] ).map( c => `
-                <div class="container-tab-lane d-none" data-cid="${c.cookieStoreId}" style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(is_firefox_private(c.cookieStoreId))}">
+                <div class="container-lane d-none" data-cid="${c.cookieStoreId}" style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(is_firefox_private(c.cookieStoreId))}">
                   <div class="container-tab-title" title="${is_firefox_default(c.cookieStoreId) ? '' : 'Container'}">
                     <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${is_firefox_default(c.cookieStoreId) ? 'hidden' : 'visible'};">
                     <span class="container-name" style="color: ${c.colorCode}">CONTAINER-NAME</span>
@@ -845,7 +911,21 @@
 
     // Use html-escaped API to fill in unsafe text.
     function fillContainerText(containerIds) {
-        containerIds.map( cid => containerById[cid] ).forEach( c => $(".container-tab-lane[data-cid='" + c.cookieStoreId + "'] .container-name").text(c.name) );
+        containerIds.map( cid => containerById[cid] ).forEach( c => $(".container-lane[data-cid='" + c.cookieStoreId + "'] .container-name").text(c.name) );
+    }
+
+    function showHideContainerLanes() {
+        containerIds.forEach( cid => showHideContainerLane(cid) );
+    }
+
+    function showHideContainerLane(cid) {
+        let containerTids = effectiveContainerTids(cid);
+        let isVisible = !uiState.containersHiddenByUser[cid] && (ttSettings.showEmptyContainers || containerTids.length > 0);
+        let $container_lane = $(".container-lane[data-cid='" + cid + "']");
+        if (isVisible)
+            $container_lane.removeClass("d-none");
+        else
+            $container_lane.removeClass("d-none").addClass("d-none");
     }
 
     function refreshContainersContent(forceRefreshImg, zoomOut) {
@@ -859,17 +939,14 @@
 
     function refreshContainerTabs(cid) {
         let containerTabs = effectiveContainerTabs(cid);
-        let $container_tab_lane = $(".container-tab-lane[data-cid='" + cid + "']");
-        if (ttSettings.showEmptyContainers || containerTabs.length > 0) {
-            $container_tab_lane.removeClass("d-none");
-        }
+        let $container_lane = $(".container-lane[data-cid='" + cid + "']");
         if (containerTabs.length > 0) {
             let html = renderTabGrid(containerTabs);                            // unsafe text are left out.
-            $container_tab_lane.find(".tab-grid").html(html);
+            $container_lane.find(".tab-grid").html(html);
             fillTabText(containerTabs);                                         // fill in the unsafe text using escaped API.
         } else {
-            let html = renderTabGrid([DUMMY_TAB]);
-            $container_tab_lane.find(".tab-grid").html(html);
+            // let html = renderTabGrid([DUMMY_TAB]);
+            // $container_lane.find(".tab-grid").html(html);
         }
     }
 
@@ -1016,10 +1093,10 @@
  
     function stopEvent(e)                       { e.preventDefault(); return false }
     function box_shadow_private(isPrivate)      { return isPrivate ? "box-shadow: 0 0 .4rem -.02rem rgba(0, 0, 0, 0.75);" : "" }
-    function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .3rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
+    function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .4rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
     function border_color_private(isPrivate)    { return isPrivate ? "border-color: " + COLOR_PRIVATE + ";" : "" }
     function css_display(showing)               { return showing  ? "d-block" : "d-none" }
-    function css_draggable()                    { return uiState.displayType == DT_BY_WINDOW || uiState.displayType == DT_BY_CONTAINER ? "draggable-item" : "" }
+    function css_draggable()                    { return uiState.displayType == DT_WINDOW || uiState.displayType == DT_CONTAINER ? "draggable-item" : "" }
     function css_droppable_private(isPrivate)   { return isPrivate ? "droppable-private" : "droppable-normal" }
     function css_tabbox(dummy, isPrivate)       { return (dummy ? " tabbox_dummy " : "") + (isPrivate ? " droppable-private " : " droppable-normal ") }
 
@@ -1051,18 +1128,18 @@
         switch (uiState.displayType) {
         case DT_ALL_TABS:
             break;
-        case DT_BY_WINDOW:
-            setupDragAndDropForDTWindow();
+        case DT_WINDOW:
+            setupDragAndDropForDT_Window();
             break;
-        case DT_BY_CONTAINER:
-            setupDragAndDropForDTContainer();
+        case DT_CONTAINER:
+            setupDragAndDropForDT_Container();
             break;
         case DT_ALL_WINDOWS:
             break;
         }
     }
 
-    function setupDragAndDropForDTWindow() {
+    function setupDragAndDropForDT_Window() {
         effectiveTabIds.forEach( tid => {
             $tabbox(tid).draggable({
                 revert:         "invalid",
@@ -1077,21 +1154,21 @@
                     $(".drop-tab-gap-zone").droppable({
                         accept:     function(draggableUI){  return canDropBeforeTab($(draggableUI).data("tid"), $(this).data("tid"))    },
                         classes:    { "ui-droppable-hover": "onhover-drop-tab-gap" },
-                        drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), ui) },
+                        drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), event, ui) },
                     });
                     
                     addDropEndZonesForWindows(tid);
                     $(".drop-end-zone").droppable({
                         accept:     function(draggableUI){  return isDroppableToWin($(draggableUI).data("tid"), $(this).data("wid"))    },
                         classes:    { "ui-droppable-hover": "onhover-move-to-end-zone" },
-                        drop:       function(event, ui){ dropAtTheEndInWindow($(this), ui) },
+                        drop:       function(event, ui){ dropAtTheEndInWindow($(this), event, ui) },
                     });
 
                     $(".tab-box").droppable({
                         accept:     function(draggableUI){  return canDropBeforeTab($(draggableUI).data("tid"), $(this).data("tid"))    },
                         classes:    { "ui-droppable-hover": "onhover-drop-tab-border" },
                         greedy:     true,
-                        drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), ui) },
+                        drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), event, ui) },
                     });
                 },
                 stop:           function(event, ui){
@@ -1103,7 +1180,7 @@
         });
     }
     
-    function setupDragAndDropForDTContainer() {
+    function setupDragAndDropForDT_Container() {
         effectiveTabIds.forEach( tid => {
             $tabbox(tid).draggable({
                 revert:         true,
@@ -1118,7 +1195,7 @@
                     $(".drop-end-zone").droppable({
                         accept:     ".tab-box",
                         classes:    { "ui-droppable-hover": "onhover-copy-to-container" },
-                        drop:       function(event, ui){ dropAtTheContainer($(this), ui) },
+                        drop:       function(event, ui){ dropAtTheContainer($(this), event, ui) },
                     });
                 },
                 stop:           function(event, ui){
@@ -1134,7 +1211,7 @@
         let tabBoxMargin = remToPixels(0.6);        // see .tab-box style
 
         droppableTids.forEach( tid => {
-            if (draggedTid == tid)
+            if (tid == draggedTid)
                 return;
             let isPrivate   = is_firefox_private(tabById[tid].cookieStoreId);
             if (isDraggedPrivate != isPrivate)      // prevent dragging across private and normal windows.
@@ -1153,18 +1230,23 @@
         let isDraggedPrivate = is_firefox_private(tabById[draggedTid].cookieStoreId);
 
         windowIds.map( wid => windowById[wid] ).forEach( w => {
-            let $winLane    = $(".window-lane[data-wid='" + w.id + "']");
-            let $lastTab    = $winLane.find(".tab-thumbnail").last();
-            if ($lastTab.length == 0)
+            if (w.incognito != isDraggedPrivate)    // prevent dragging across private and normal windows. TODO: do a copy rather than move across normal-private
                 return;
-            if (w.incognito != isDraggedPrivate)    // prevent dragging across private and normal windows.
-                return;
-            let $endzone    = $("<div class='drop-end-zone' data-wid='" + w.id + "'></div>");
-            let endzoneLeft = $lastTab.offset().left + $lastTab.outerWidth() + 2;
-            $endzone.offset({ top: $lastTab.offset().top,  left: endzoneLeft })
-                .width($winLane.offset().left + $winLane.width() - endzoneLeft - 1)
-                .height($lastTab.outerHeight());
             $(".drop-end-zone[data-wid='" + w.id  + "']").remove();
+            let $winLane    = $(".window-lane[data-wid='" + w.id + "']");
+            let $endzone    = $("<div class='drop-end-zone' data-wid='" + w.id + "'></div>");
+            let $lastTab    = $winLane.find(".tab-thumbnail").last();
+            if ($lastTab.length) {
+                let endzoneLeft = $lastTab.offset().left + $lastTab.outerWidth() + 2;
+                $endzone.offset({ top: $lastTab.offset().top,  left: endzoneLeft })
+                    .width($winLane.offset().left + $winLane.width() - endzoneLeft - 2)
+                    .height($lastTab.outerHeight());
+            } else {
+                let $tab_grid = $winLane.find(".tab-grid");
+                $endzone.offset({ top: $tab_grid.offset().top,  left: $tab_grid.offset().left + 4 })
+                    .width($winLane.offset().left + $winLane.width() - ($tab_grid.offset().left + 4) - 2)
+                    .height($tab_grid.outerHeight() - 12);
+            }
             $(document.body).append($endzone);
         });
     }
@@ -1174,7 +1256,7 @@
         containerIds.map( cid => containerById[cid] ).forEach( c => {
             if (draggedTab.cookieStoreId == c.cookieStoreId)
                 return;     // skip dropping to self's container.
-            let $container  = $(".container-tab-lane[data-cid='" + c.cookieStoreId + "']");
+            let $container  = $(".container-lane[data-cid='" + c.cookieStoreId + "']");
             let $lastTab    = $container.find(".tab-thumbnail").last();
             if ($lastTab.length == 0)
                 return;
@@ -1188,7 +1270,7 @@
         });
     }
 
-    function dropInFrontOfTabInWindow($dest, ui) {
+    function dropInFrontOfTabInWindow($dest, event, ui) {
         // Move the tab in front of the destination tab.
         let srcTab  = tabById[ui.draggable.data("tid")];
         let destTab = tabById[$dest.data("tid")];
@@ -1209,11 +1291,11 @@
                 $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
                 $srcTabBox.insertBefore($destTabBox);
                 let toWidth = $srcTabBox.width();
-                $srcTabBox.width(0).animate({ width: toWidth }, 400);
+                $srcTabBox.width(0).animate({ width: toWidth }, 500);
             });
     }                                   
 
-    function dropAtTheEndInWindow($dest, ui) {
+    function dropAtTheEndInWindow($dest, event, ui) {
         let srcTab  = tabById[ui.draggable.data("tid")];
         let destWid = $dest.data("wid");  // data-wid on .drop-end-zone.
         browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( () => {
@@ -1225,22 +1307,21 @@
             let $tabBox = $tabbox(srcTab.id);
             $tabBox.css({ top:"", left:"" });   // reset the dragging position
             if (!$tabBox.is(":last-child")) {
-                let tabWidth = $tabBox.width();
-                $tabBox.css({ visibility: "hidden" }).animate({ width: 0 }, 400, function(){
-                    $tabBox.detach();
-                    $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                    $tabBox.width(tabWidth).css({ visibility: "visible" });
-                });
+                $tabBox.detach();
+                $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
+                    .effect( "bounce", {times:2, distance:5}, 200 );
             } else {
                 $tabBox.detach();
                 $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
+                    .effect( "bounce", {times:2, distance:5}, 200 );
             }
         });
     }
 
     // Need to do blocking wait until tabs.create() finish before finishing up the drop operation.
-    async function dropAtTheContainer($dest, ui) {
-        log.info("dropAtTheContainer");
+    async function dropAtTheContainer($dest, event, ui) {
         let srcTab  = tabById[ui.draggable.data("tid")];
         let destCid = $dest.data("cid");  // data-cid on .drop-end-zone.
 
@@ -1255,6 +1336,7 @@
                 windowId:       srcTab.windowId
             });
             addTabData(newTab);
+            transitionActiveTabs(newTab.id);        // tabs.onActivated will be called on the newTab before tabs.create() return.  Cannot rely on it to update the active states.
             // log.info("dropAtTheContainer done");
         }
     }
@@ -1271,6 +1353,7 @@
             windowId:       targetWid,
         });
         addTabData(newTab);
+        transitionActiveTabs(newTab.id);        // tabs.onActivated will be called on the newTab before tabs.create() return.  Cannot rely on it to update the active states.
     }
 
     function pFindOrCreatePrivateWindow() {
@@ -1295,7 +1378,7 @@
     function selectDisplayType(displayType) {
         uiState.displayType = displayType;
         refreshVBtnBarControls();
-        refreshUIContent(false, false);
+        redrawRefreshUIContent(false, false);
         saveUiStateNow();
     }
 
@@ -1309,7 +1392,7 @@
     function resizeThumbnails() {
         setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
         refreshVBtnBarControls();
-        refreshUIContent(false, false);
+        redrawRefreshUIContent(false, false);
     }
 
     function duplicateTab(tid) {
@@ -1447,15 +1530,15 @@
 
     function toggleFooterBtn(wid, cid) {
         if (wid) {
-            uiState.windowFooterBtns[wid] = !uiState.windowFooterBtns[wid];
-            refreshWindowFooterBtns();
+            uiState.windowsHiddenByUser[wid] = !uiState.windowsHiddenByUser[wid];
+            refreshFooterControls();
         }
         if (cid) {
-            uiState.containerFooterBtns[cid] = !uiState.containerFooterBtns[cid];
-            refreshContainerFooterBtns();
+            uiState.containersHiddenByUser[cid] = !uiState.containersHiddenByUser[cid];
+            refreshFooterControls();
         }
         dSaveUiState();
-        refreshOnSearch();
+        redrawRefreshContentOnFiltering();
     }
 
     function pSendCmd(msg) {
@@ -1518,7 +1601,7 @@
     function searchTabs(searchText) {
         uiState.searchTerms = searchText.split(" ");
         dSaveUiState();
-        refreshOnSearch();
+        redrawRefreshContentOnFiltering();
     }
 
     function closeOverlay() {
