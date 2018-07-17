@@ -539,7 +539,7 @@ a.disabled {
     padding:            0;
 }
 
-.container-tab-lane {
+.container-lane {
     margin:             1rem;
     background:         #fbfbfb;
     border:             var(--img-border) solid #b0b0b0;
@@ -570,6 +570,7 @@ a.disabled {
     flex-wrap:          wrap;
     margin:             0 var(--tab-gap) 0 var(--tab-gap);
     padding:            0 0 var(--tab-gap) 0;
+    min-height:         var(--thumbnail-height);
 }
 .tab-grid .tab-box {
     flex:               0 0 auto;
