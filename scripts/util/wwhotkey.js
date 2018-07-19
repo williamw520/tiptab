@@ -39,14 +39,14 @@
     const VK_COMMAND    = 224;        // Command key on Mac (on Firefox it's 224).
 
     const MODIFIERS = [
-        { id: "shift",      name: "Shift",      vk_code: VK_SHIFT },
-        { id: "control",    name: "Control",    vk_code: VK_CTRL },
-        { id: "ctrl",       name: "Ctrl",       vk_code: VK_CTRL },
-        { id: "alt",        name: "Alt",        vk_code: VK_ALT },
-        { id: "meta",       name: "Meta",       vk_code: VK_META },
-        { id: "windows",    name: "Windows",    vk_code: VK_WINDOWS },
-        { id: "option",     name: "Option",     vk_code: VK_OPTION },
-        { id: "command",    name: "Command",    vk_code: VK_COMMAND },
+        {   id: "shift",        name: "Shift",      vk_code: VK_SHIFT },
+        {   id: "control",      name: "Control",    vk_code: VK_CTRL },
+        {   id: "ctrl",         name: "Ctrl",       vk_code: VK_CTRL },
+        {   id: "alt",          name: "Alt",        vk_code: VK_ALT },
+        {   id: "meta",         name: "Meta",       vk_code: VK_META },
+        {   id: "windows",      name: "Windows",    vk_code: VK_WINDOWS },
+        {   id: "option",       name: "Option",     vk_code: VK_OPTION },
+        {   id: "command",      name: "Command",    vk_code: VK_COMMAND },
     ];
     const MODIFIER_ID_TO_VKCODE     = MODIFIERS.reduce( (map, item) => { map[item.id] = item.vk_code; return map; }, {});
     const VKCODE_TO_MODIFIER_NAME   = MODIFIERS.reduce( (map, item) => { map[item.vk_code] = item.name; return map; }, {});
@@ -54,66 +54,60 @@
 
     // See definition in https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
     const UNPRINTABLE_KEYS = [
-        { id: "backspace",  name: "Backspace",  vk_code: 0x08 },
-        { id: "tab",        name: "Tab",        vk_code: 0x09 },
-        { id: "enter",      name: "Enter",      vk_code: 0x0D },
-        { id: "escape",     name: "Escape",     vk_code: 0x1B },
-        { id: "space",      name: "Space",      vk_code: 0x20 },
-        { id: "pageup",     name: "PageUp",     vk_code: 0x21 },
-        { id: "pagedown",   name: "PageDown",   vk_code: 0x22 },
-        { id: "end",        name: "End",        vk_code: 0x23 },
-        { id: "home",       name: "Home",       vk_code: 0x24 },
-        { id: "arrowleft",  name: "ArrowLeft",  vk_code: 0x25 },
-        { id: "arrowup",    name: "ArrowUp",    vk_code: 0x26 },
-        { id: "arrowright", name: "ArrowRight", vk_code: 0x27 },
-        { id: "arrowdown",  name: "ArrowDown",  vk_code: 0x28 },
-        { id: "printscreen",name: "PrintScreen",vk_code: 0x2C },
-        { id: "insert",     name: "Insert",     vk_code: 0x2D },
-        { id: "delete",     name: "Delete",     vk_code: 0x2E },
+        {   id: "backspace",    name: "Backspace",  vk_code: 0x08 },
+        {   id: "tab",          name: "Tab",        vk_code: 0x09 },
+        {   id: "enter",        name: "Enter",      vk_code: 0x0D },
+        {   id: "escape",       name: "Escape",     vk_code: 0x1B },
+        {   id: "space",        name: "Space",      vk_code: 0x20 },
+        {   id: "pageup",       name: "PageUp",     vk_code: 0x21 },
+        {   id: "pagedown",     name: "PageDown",   vk_code: 0x22 },
+        {   id: "end",          name: "End",        vk_code: 0x23 },
+        {   id: "home",         name: "Home",       vk_code: 0x24 },
+        {   id: "arrowleft",    name: "ArrowLeft",  vk_code: 0x25 },
+        {   id: "arrowup",      name: "ArrowUp",    vk_code: 0x26 },
+        {   id: "arrowright",   name: "ArrowRight", vk_code: 0x27 },
+        {   id: "arrowdown",    name: "ArrowDown",  vk_code: 0x28 },
+        {   id: "printscreen",  name: "PrintScreen",vk_code: 0x2C },
+        {   id: "insert",       name: "Insert",     vk_code: 0x2D },
+        {   id: "delete",       name: "Delete",     vk_code: 0x2E },
     ];
 
     const NON_ALPHABET_KEYS = [
-        { id: ";",          name: ";",          vk_code: 0x3B },
-        { id: "=",          name: "=",          vk_code: 0x3D },
-        { id: "-",          name: "-",          vk_code: 0xAD },
-        { id: ",",          name: ",",          vk_code: 0xBC },
-        { id: ".",          name: ".",          vk_code: 0xBE },
-        { id: "/",          name: "/",          vk_code: 0xBF },
-        { id: "`",          name: "`",          vk_code: 0xC0 },
-        { id: "\\",         name: "\\",         vk_code: 0xDC },
-        { id: "[",          name: "[",          vk_code: 0xDB },
-        { id: "]",          name: "]",          vk_code: 0xD3 },
-        { id: "'",          name: "'",          vk_code: 0xDE },
+        {   id: ";",            name: ";",          vk_code: 0x3B },
+        {   id: "=",            name: "=",          vk_code: 0x3D },
+        {   id: "-",            name: "-",          vk_code: 0xAD },
+        {   id: ",",            name: ",",          vk_code: 0xBC },
+        {   id: ".",            name: ".",          vk_code: 0xBE },
+        {   id: "/",            name: "/",          vk_code: 0xBF },
+        {   id: "`",            name: "`",          vk_code: 0xC0 },
+        {   id: "\\",           name: "\\",         vk_code: 0xDC },
+        {   id: "[",            name: "[",          vk_code: 0xDB },
+        {   id: "]",            name: "]",          vk_code: 0xD3 },
+        {   id: "'",            name: "'",          vk_code: 0xDE },
     ]
 
     const DIGIT_KEYS = [];
     for (let i = 0; i < 10; i++) {
         DIGIT_KEYS.push({
-            id:         String.fromCharCode(48 + i),                // '0' to '9'
-            name:       String.fromCharCode(48 + i),
-            vk_code:    48 + i
+            id: String.fromCharCode(48 + i),    name: String.fromCharCode(48 + i),  vk_code: 48 + i
         });
     }
     
     const ALPHABET_KEYS = [];
     for (let i = 0; i < 26; i++) {
         ALPHABET_KEYS.push({
-            id:         String.fromCharCode(97 + i),                // lower case 'a' to 'z'
-            name:       String.fromCharCode(65 + i),                // upper case 'A' to 'Z'
-            vk_code:    65 + i
+            id: String.fromCharCode(97 + i),    name: String.fromCharCode(65 + i),  vk_code: 65 + i
         });
     }
 
     const FN_KEYS = [];
     for (let i = 1; i < 13; i++) {
         FN_KEYS.push({
-            id:         `f${i}`,                                    // f1 to f12
-            name:       `F${i}`,
-            vk_code:    111 + i
+            id: `f${i}`,        name: `F${i}`,      vk_code: 111 + i
         });
     }
     
-    const KEYS = [].concat.apply([], [ UNPRINTABLE_KEYS, DIGIT_KEYS, ALPHABET_KEYS, FN_KEYS, NON_ALPHABET_KEYS ]);
+    const KEYS                  = [].concat.apply([], [ UNPRINTABLE_KEYS, DIGIT_KEYS, ALPHABET_KEYS, FN_KEYS, NON_ALPHABET_KEYS ]);
     const KEY_ID_TO_VKCODE      = KEYS.reduce( (map, item) => { map[item.id] = item.vk_code; return map; }, {});
     const VKCODE_TO_KEY_NAME    = KEYS.reduce( (map, item) => { map[item.vk_code] = item.name; return map; }, {});
     const KEY_NAME_TO_ID        = KEYS.reduce( (map, item) => { map[item.name] = item.id; return map; }, {});
@@ -121,21 +115,21 @@
 
     class ModifierKey {
         constructor(modifierIds) {
-            this.modCodes = {};        // Track which modifier keycodes are on.
+            this.modVKCodes = {};       // Track which modifier keycodes are on.
             this.clear();
             if (modifierIds) {
-                modifierIds.map( id => MODIFIER_ID_TO_VKCODE[id] ).forEach( vkCode => this.modCodes[vkCode] = true );
+                modifierIds.map( id => MODIFIER_ID_TO_VKCODE[id] ).forEach( vkCode => this.modVKCodes[vkCode] = true );
             }
         }
 
-        set shift(flag) { this.modCodes[VK_SHIFT]  = flag   }
-        set ctrl(flag)  { this.modCodes[VK_CTRL]   = flag   }
-        set alt(flag)   { this.modCodes[VK_ALT]    = flag   }
-        set meta(flag)  { this.modCodes[VK_META]   = flag   }
-        get shift()     { return this.modCodes[VK_SHIFT]    }
-        get ctrl()      { return this.modCodes[VK_CTRL]     }
-        get alt()       { return this.modCodes[VK_ALT]      }
-        get meta()      { return this.modCodes[VK_META]     }
+        set shift(flag) { this.modVKCodes[VK_SHIFT] = flag  }
+        set ctrl(flag)  { this.modVKCodes[VK_CTRL]  = flag  }
+        set alt(flag)   { this.modVKCodes[VK_ALT]   = flag  }
+        set meta(flag)  { this.modVKCodes[VK_META]  = flag  }
+        get shift()     { return this.modVKCodes[VK_SHIFT]  }
+        get ctrl()      { return this.modVKCodes[VK_CTRL]   }
+        get alt()       { return this.modVKCodes[VK_ALT]    }
+        get meta()      { return this.modVKCodes[VK_META]   }
 
         fromEvent(event) {
             this.shift = event.shiftKey;
@@ -191,8 +185,8 @@
         // Create from a keydown event.
         static ofKeyboardEvent(event) {
             let ks = new KeySeq();
-            ks.modKeys.fromEvent(event);
             let keyId = event.key.toLowerCase();
+            ks.modKeys.fromEvent(event);
             ks.keyCode = KEY_ID_TO_VKCODE[keyId];
             return ks;
         }

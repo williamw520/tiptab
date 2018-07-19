@@ -77,7 +77,7 @@
         $("#showEmptyWindows").prop("checked", ttSettings.showEmptyWindows);
         $("#showEmptyContainers").prop("checked", ttSettings.showEmptyContainers);
         $("#realtimeUpdateThumbnail").prop("checked", ttSettings.realtimeUpdateThumbnail);
-        $("#enableHotKey").prop("checked", ttSettings.enableHotKey);
+        $("#enableCustomHotKey").prop("checked", ttSettings.enableCustomHotKey);
         $("#appHotKey").val(ttSettings.appHotKey);
         $(".is-error").removeClass("is-error");
     }
@@ -88,7 +88,7 @@
         $("#showEmptyWindows").on("change",         function(){ ttSettings.showEmptyWindows = this.checked; updateChanges() });
         $("#showEmptyContainers").on("change",      function(){ ttSettings.showEmptyContainers = this.checked; updateChanges() });
         $("#realtimeUpdateThumbnail").on("change",  function(){ ttSettings.realtimeUpdateThumbnail = this.checked; updateChanges() });
-        $("#enableHotKey").on("change",             function(){ ttSettings.enableHotKey = this.checked; updateChanges() });
+        $("#enableCustomHotKey").on("change",             function(){ ttSettings.enableCustomHotKey = this.checked; updateChanges() });
         $("#appHotKey").on("input",                 function(){ getHotKeyInput(); updateChanges() });
 
         // Special handling for hotkey input by keypressing.
