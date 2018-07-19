@@ -25,6 +25,8 @@
     // import appcfg
     // import app
     // import dlg
+    // import wwhotkey
+    // TODO: handle wwhotkey
     let TipTabSettings = settings.TipTabSettings;
 
     let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
@@ -62,16 +64,6 @@
     function is_firefox_private(id) { return id == CT_FIREFOX_PRIVATE }
     function is_real_container(id)  { return !is_firefox_default(id) && !is_firefox_private(id) }
 
-    // Special tab
-    const DUMMY_TAB_ID = -1;
-    const DUMMY_TAB = {
-        id:             DUMMY_TAB_ID,
-        name:           "",
-        url:            "",
-        cookieStoreId:  CT_FIREFOX_DEFAULT,
-        _is_dummy:      true,
-    };
-
     // Colors
     //const COLOR_DEFAULT = "#c7c9cd";
     const COLOR_DEFAULT = "#97999d";
@@ -86,6 +78,9 @@
 
     // Module variables.
     let ttSettings = new TipTabSettings();
+    let defaultSeq;
+    let settingSeq;
+    let currentSeq = wwhotkey.ofKeySeq();
     let pixels_per_rem = 16;
     let currentWid;
     let currentTid;
@@ -129,9 +124,10 @@
             .then(() => pLoadUiState() )
             .then(() => refreshStaticUI() )     // for the UI that need to be set up before setting up the DOM listeners.
             .then(() => setupDOMListeners() )
+            .then(() => setupKeyboardListeners() )
             .then(() => pReloadRedrawRefreshContent() )
             .then(() => redrawRefreshControls() )
-            .then(() => pMonitorDataChange() )
+            .then(() => browser.storage.onChanged.addListener(storage_onChanged) )
             .then(() => browser.windows.onCreated.addListener(windows_onCreated) )
             .then(() => browser.windows.onRemoved.addListener(windows_onRemoved) )
             .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
@@ -140,7 +136,6 @@
             .then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
-
 
     function pGetCurrnetTab() {
         return browser.tabs.getCurrent().then( tab => {
@@ -187,13 +182,14 @@
         return uiState;
     }
 
-    function pMonitorDataChange() {
+    function storage_onChanged(storageChange) {
         // Monitor settings storage change.
-        return browser.storage.onChanged.addListener(storageChange => {
-            if (app.has(storageChange, "tipTabSettings")) {
-                ttSettings = new TipTabSettings(storageChange.tipTabSettings.newValue);
-            }
-        });
+        if (app.has(storageChange, "tipTabSettings")) {
+            ttSettings = new TipTabSettings(storageChange.tipTabSettings.newValue);
+            setupKeyboardListeners();
+            redrawRefreshContentOnFiltering();
+            redrawRefreshControls();
+        }
     }
 
     function windows_onCreated(win) {
@@ -312,7 +308,6 @@
 
         // Events on tab thumbnails
         $("#main-content").on("click", ".tab-thumbnail",        function(e){ activateTid($(this).closest(".tab-box").data("tid")); return stopEvent(e) });
-        $("#main-content").on("keyup", ".tab-box",              onTabBoxEnterKey);
 
         // Events on the window lane
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
@@ -398,6 +393,50 @@
 
     }
 
+    function setupKeyboardListeners() {
+        $("#main-content").off("keyup", ".tab-box", onTabBoxEnterKey).on("keyup", ".tab-box", onTabBoxEnterKey);
+
+        document.removeEventListener("keydown", hotKeydownHandler, false);
+        document.removeEventListener("keyup", hotKeyupHandler, false);
+        defaultSeq = wwhotkey.ofKeySeq(getDefaultHotKey());
+        settingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.appHotKey : "");
+        document.addEventListener("keydown", hotKeydownHandler, false);
+        document.addEventListener("keyup", hotKeyupHandler, false);
+    }
+    
+    function getDefaultHotKey() {
+        try {
+            let manifest = browser.runtime.getManifest();
+            return manifest.commands._execute_browser_action.suggested_key.default;
+        } catch (err) {
+            return "Ctrl-Shift-F";
+        }
+    }
+
+    function hotKeydownHandler(e) {
+        if (ttSettings.enableCustomHotKey) {
+            currentSeq.fromEvent(e);
+            if (defaultSeq.equals(currentSeq) || settingSeq.equals(currentSeq)) {
+                focusNextTabbox();
+            }
+        }
+    }
+
+    function hotKeyupHandler(e) {
+        currentSeq.clear();
+    }
+
+    function focusNextTabbox() {
+        if (document.activeElement) {
+            let $tabbables = $("[tabindex]:not([disabled]):not([tabindex='-1'])");
+            let activeIndex = $tabbables.index($(document.activeElement));
+            if (activeIndex >= 0) {
+                $tabbables[ (activeIndex + 1) % $tabbables.length ].focus();
+            }
+        }
+    }    
+
+
     function generateUILayout() {
     }
 
@@ -434,6 +473,8 @@
     }
 
     function redrawFooterControls() {
+        return;
+        
         switch (uiState.displayType) {
         case DT_ALL_TABS:
         case DT_WINDOW:
@@ -891,9 +932,6 @@
             let html = renderTabGrid(windowTabs);                           // unsafe text are left out.
             $window_lane.find(".tab-grid").html(html);
             fillTabText(windowTabs);                                        // fill in the unsafe text using escaped API.
-        } else {
-            // let html = renderTabGrid([DUMMY_TAB]);
-            // $window_lane.find(".tab-grid").html(html);
         }
     }
 
@@ -948,9 +986,6 @@
             let html = renderTabGrid(containerTabs);                            // unsafe text are left out.
             $container_lane.find(".tab-grid").html(html);
             fillTabText(containerTabs);                                         // fill in the unsafe text using escaped API.
-        } else {
-            // let html = renderTabGrid([DUMMY_TAB]);
-            // $container_lane.find(".tab-grid").html(html);
         }
     }
 
@@ -986,7 +1021,7 @@
 
         // Note that the unsafe text of a tab's url are left out, and will be filled in later, in below.
         return `
-            <div class="tab-box ${css_tabbox(tab._is_dummy, isPrivate)}" id="tid-${tab.id}" data-tid="${tab.id}" tabindex="0">
+            <div class="tab-box ${css_tabbox(isPrivate)}" id="tid-${tab.id}" data-tid="${tab.id}" tabindex="2">
 
               <div class="tab-topbar ${css_draggable()}" title="Drag the top bar to start drag and drop on the thumbnail.">
                 <div class="tab-title" title="TAB-TITLE">TAB-TITLE</div>
@@ -1101,8 +1136,7 @@
     function border_color_private(isPrivate)    { return isPrivate ? "border-color: " + COLOR_PRIVATE + ";" : "" }
     function css_display(showing)               { return showing  ? "d-block" : "d-none" }
     function css_draggable()                    { return uiState.displayType == DT_WINDOW || uiState.displayType == DT_CONTAINER ? "draggable-item" : "" }
-    function css_droppable_private(isPrivate)   { return isPrivate ? "droppable-private" : "droppable-normal" }
-    function css_tabbox(dummy, isPrivate)       { return (dummy ? " tabbox_dummy " : "") + (isPrivate ? " droppable-private " : " droppable-normal ") }
+    function css_tabbox(isPrivate)              { return isPrivate ? " droppable-private " : " droppable-normal " }
 
     function canDropBeforeTab(draggingFromTid, droppingToTid) {
         if (draggingFromTid) {
@@ -1395,7 +1429,7 @@
                     },
                     {},
                     ".modal-submit");
-    }           
+    }
 
     function selectDisplayType(displayType) {
         uiState.displayType = displayType;
@@ -1621,8 +1655,14 @@
     }
 
     function searchTabs(searchText) {
+        searchText = searchText.trim();
+        let isEmpty = searchText.length == 0;
         uiState.searchTerms = searchText.split(" ");
-        dSaveUiState();
+        if (isEmpty) {
+            saveUiStateNow();   // cleared search text needs to be saved now to have a better user experience.
+        } else {
+            dSaveUiState();
+        }
         redrawRefreshContentOnFiltering();
     }
 

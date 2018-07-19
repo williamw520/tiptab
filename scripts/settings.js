@@ -59,7 +59,7 @@
             this.showEmptyWindows = false;
             this.showEmptyContainers = true;
             this.realtimeUpdateThumbnail = true;
-            this.enableHotKey = true;
+            this.enableCustomHotKey = true;
             this.appHotKey = "";
         }
 
@@ -68,7 +68,7 @@
             this.showEmptyWindows       = jsonObj.hasOwnProperty("showEmptyWindows") ? jsonObj.showEmptyWindows : false;
             this.showEmptyContainers    = jsonObj.hasOwnProperty("showEmptyContainers") ? jsonObj.showEmptyContainers : true;
             this.realtimeUpdateThumbnail= jsonObj.hasOwnProperty("realtimeUpdateThumbnail") ? jsonObj.realtimeUpdateThumbnail : true;
-            this.enableHotKey           = jsonObj.hasOwnProperty("enableHotKey") ? jsonObj.enableHotKey : true;
+            this.enableCustomHotKey     = jsonObj.hasOwnProperty("enableCustomHotKey") ? jsonObj.enableCustomHotKey : true;
             this.appHotKey              = jsonObj.appHotKey || "";
             return this._validate();
         }
