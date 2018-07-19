@@ -26,7 +26,6 @@
     // import app
     // import dlg
     // import wwhotkey
-    // TODO: handle wwhotkey
     let TipTabSettings = settings.TipTabSettings;
 
     let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
