@@ -50,7 +50,7 @@
             <div class="input-group">
               <div id="searchbar" class="has-icon-left"  style="flex-grow: 1;">
                 <i class="form-icon icon icon-search" style="z-index: 9;"></i>
-                <input type="search" class="cmd-search form-input input-sm rounded" placeholder="search tabs" >
+                <input type="search" class="cmd-search form-input input-sm rounded" placeholder="search tabs" tabindex="1" >
               </div>
               <!-- 
               <button class="cmd-search-save btn btn-sm ml-4" title="Save search"><i class="icon icon-plus"></i></button>
@@ -126,7 +126,7 @@
 
     <!-- off screen input used for copying to clipboard -->
     <div style="overflow: hidden; position: relative;">
-      <textarea id="copy-to-clipboard" style="position: absolute; top: -50px;">
+      <textarea id="copy-to-clipboard" style="position: absolute; top: -50px;" tabindex="-1">
       </textarea>
     </div>
 
@@ -265,6 +265,7 @@
     <script src="/scripts/util/app.js"></script>
     <script src="/scripts/util/dlg.js"></script>
     <script src="/scripts/util/ringbuf.js"></script>
+    <script src="/scripts/util/wwhotkey.js"></script>
     <script src="/scripts/settings.js"></script>
     <script src="/scripts/tiptab_ui.js"></script>
   </body>

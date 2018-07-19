@@ -60,34 +60,30 @@
     }
 
     function setupKeyboardListeners() {
-        document.removeEventListener("keydown", keydownHandler, false);
-        document.removeEventListener("keyup", keyupHandler, false);
-        if (ttSettings.enableHotKey) {
+        document.removeEventListener("keydown", hotKeydownHandler, false);
+        document.removeEventListener("keyup", hotKeyupHandler, false);
+        if (ttSettings.enableCustomHotKey) {
             settingSeq = wwhotkey.ofKeySeq(ttSettings.appHotKey);
-            document.addEventListener("keydown", keydownHandler, false);
-            document.addEventListener("keyup", keyupHandler, false);
+            document.addEventListener("keydown", hotKeydownHandler, false);
+            document.addEventListener("keyup", hotKeyupHandler, false);
         } else {
             settingSeq = wwhotkey.ofKeySeq();
         }
     }
 
-    function keydownHandler(e) {
-        if (ttSettings.enableHotKey) {
+    function hotKeydownHandler(e) {
+        if (ttSettings.enableCustomHotKey) {
             currentSeq.fromEvent(e);
             if (settingSeq.equals(currentSeq)) {
                 browser.runtime.sendMessage({ cmd: "open-ui" });
-                return stopEvent(e);
+                e.preventDefault();
+                return false;
             }
         }
     }
 
-    function keyupHandler(e) {
+    function hotKeyupHandler(e) {
         currentSeq.clear();
-    }
-
-    function stopEvent(e) {
-        e.preventDefault();
-        return false;
     }
 
     init();
