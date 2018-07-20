@@ -57,7 +57,8 @@
     app.defObjVal   = function(o, k, dfVal) { return app.has(o, k) ? app.ensureVal(o[k], dfVal) : dfVal };     // return default if val is undefined or null.
     app.setObjVal   = function(o, k, val)   { o[k] = val; return o }
     app.defer       = function(obj, fn)     { let args = AP.slice.call(arguments, 2); setTimeout(function() { fn.apply(obj, args) }, 0); };
-    
+    app.boolVal     = function(o, k)        { return app.has(o, k) ? o[k] : false }
+
     // enhance String
     if (typeof SP.ltrim != "function")      SP.ltrim = function() { return this.replace(/^\s+/,'') };
     if (typeof SP.rtrim != "function")      SP.rtrim = function() { return this.replace(/\s+$/,'') };

@@ -865,7 +865,7 @@ a.disabled {
     border:             var(--img-border) solid #ff9900;
     z-index:            1;
     padding-left:       0.4rem;
-    content:            "move in front gap";
+    content:            "move in front";
 }
 
 .tab-box.onhover-drop-tab-border::after {
@@ -879,5 +879,5 @@ a.disabled {
     box-sizing:         border-box;
     border:             var(--img-border) solid #ff9900;
     padding-left:       0.4rem;
-    content:            "move in front border";
+    content:            "move in front";
 }
