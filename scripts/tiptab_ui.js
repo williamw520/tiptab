@@ -238,8 +238,11 @@
 
     function tabs_onUpdated(tabId, info, tab) {
         // log.info("tabs_onUpdated ", tabId, info, tab);
-        if (!tabById.hasOwnProperty(tabId))
-            createTabData(tab);
+
+        // if (tab && tab.hasOwnProperty("url") && is_tiptaburl(tab.url))  // skip the TipTab tab itself.
+        //     return;
+
+        createTabData(tab);
         if (info.hasOwnProperty("url"))
             tabById[tabId].url = info.url;
         if (info.hasOwnProperty("title"))
@@ -327,6 +330,7 @@
             $(".cmd-search").focus().select();
         });
         $(window).blur(function(){
+            //log.info("tiptabWindow shutdown");
             tiptabWindowActive = false;
             saveUiStateNow();
         });
@@ -507,7 +511,7 @@
     function pReloadTabsAndWindows() {
         return browser.tabs.query({})
             .then( tabs => {
-                tabs            = tabs.filter( tab => !is_tiptaburl(tab.url) );     // get rid of the TipTab tab.
+                // tabs            = tabs.filter( tab => !is_tiptaburl(tab.url) );     // get rid of the TipTab tab.
                 tabById         = tabs.reduce( (map, tab) => { map[tab.id] = tab; return map }, {} );
                 return tabs;
             }).then( tabs => {
@@ -1207,30 +1211,13 @@
                 start:          function(event, ui){
                     enableOverlay = false;
                     addDropTabGapZonesForWindows(tid, effectiveTabIds);
-                    $(".drop-tab-gap-zone").droppable({
-                        accept:     function(draggableUI){  return canDropBeforeTab($(draggableUI).data("tid"), $(this).data("tid"))    },
-                        classes:    { "ui-droppable-hover": "onhover-drop-tab-gap" },
-                        drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), event, ui) },
-                    });
-                    
                     addDropEndZonesForWindows(tid);
-                    $(".drop-end-zone").droppable({
-                        accept:     function(draggableUI){  return isDroppableToWin($(draggableUI).data("tid"), $(this).data("wid"))    },
-                        classes:    { "ui-droppable-hover": "onhover-move-to-end-zone" },
-                        drop:       function(event, ui){ dropAtTheEndInWindow($(this), event, ui) },
-                    });
-
-                    $(".tab-box").droppable({
-                        accept:     function(draggableUI){  return canDropBeforeTab($(draggableUI).data("tid"), $(this).data("tid"))    },
-                        classes:    { "ui-droppable-hover": "onhover-drop-tab-border" },
-                        greedy:     true,
-                        drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), event, ui) },
-                    });
+                    setTabBoxDroppableForWindows(tid, effectiveTabIds);
                 },
                 stop:           function(event, ui){
-                    enableOverlayAfterDelay(4000);
                     $(".drop-tab-gap-zone, .drop-end-zone").droppable("destroy").remove();
-                    $(".tab-box").droppable("destroy");
+                    $(".tab-box.droppabled-item").droppable("destroy").removeClass("droppabled-item");
+                    enableOverlayAfterDelay(4000);
                 },
             });
         });
@@ -1248,73 +1235,109 @@
                 zIndex:         100,
                 handle:         ".draggable-item",
                 containment:    "#main-content",
+                helper:         "clone",
                 create:         function(event, ui){ $(this).addClass("draggabled-item") },
                 start:          function(event, ui){
                     enableOverlay = false;
                     addDropEndZonesForContainer(tid);
                     $(".drop-end-zone").droppable({
                         accept:     ".tab-box",
-                        classes:    { "ui-droppable-hover": "onhover-copy-to-container" },
+                        classes:    { "ui-droppable-hover": "onhover-copy-ondrop" },
+                        create:     function(event, ui){ $(this).addClass("droppabled-item") },
                         drop:       function(event, ui){ dropInTheContainer($(this), event, ui) },
                     });
                 },
                 stop:           function(event, ui){
-                    enableOverlayAfterDelay(4000);
                     $(".drop-end-zone").droppable("destroy").remove();
+                    enableOverlayAfterDelay(4000);
                 },
             });
         });
     }
-    
-    function addDropTabGapZonesForWindows(draggedTid, droppableTids) {
-        let isDraggedPrivate = is_firefox_private(tabById[draggedTid].cookieStoreId);
+
+    function addDropTabGapZonesForWindows(draggingTid, droppableTids) {
+        let isDraggingPrivate = is_firefox_private(tabById[draggingTid].cookieStoreId);
         let tabBoxMargin = remToPixels(0.6);        // see .tab-box style
 
-        droppableTids.forEach( tid => {
-            if (tid == draggedTid)
-                return;
-            let isPrivate   = is_firefox_private(tabById[tid].cookieStoreId);
-            if (isDraggedPrivate != isPrivate)      // prevent dragging across private and normal windows.
-                return;
+        droppableTids.filter(tid => tid != draggingTid).forEach( tid => {
+            let destPrivate = is_firefox_private(tabById[tid].cookieStoreId);
+            let sameDomain  = isDraggingPrivate == destPrivate;     // prevent dragging to move across private and normal windows.
             let $thumbnail  = $tabbox(tid).find(".tab-thumbnail");
-            let $tabzone    = $("<div class='drop-tab-gap-zone' data-tid='" + tid + "'></div>");
-            $tabzone.offset({ top: $thumbnail.offset().top,  left: $thumbnail.offset().left - tabBoxMargin*2 + 1 })
+            let $tabGapZone = $("<div class='drop-tab-gap-zone' data-tid='" + tid + "'></div>");
+            $tabGapZone.offset({
+                top:    $thumbnail.offset().top,
+                left:   $thumbnail.offset().left - tabBoxMargin*2 + 1 })
                 .width( tabBoxMargin*2 - 2 )
                 .height( $thumbnail.outerHeight() );
             $(".drop-tab-gap-zone[data-tid='" + tid  + "']").remove();
-            $(document.body).append($tabzone);
+            $(document.body).append($tabGapZone);
+
+            $(".drop-tab-gap-zone[data-tid='" + tid  + "']").droppable({
+                accept:     ".tab-box",
+                classes:    { "ui-droppable-hover": sameDomain ? "onhover-move-in-gap-ondrop" : "onhover-copy-in-gap-ondrop" },
+                create:     function(event, ui){ $(this).addClass("droppabled-item") },
+                drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), event, ui) },
+            });
+            
         });
     }
 
-    function addDropEndZonesForWindows(draggedTid) {
-        let isDraggedPrivate = is_firefox_private(tabById[draggedTid].cookieStoreId);
+    function setTabBoxDroppableForWindows(draggingTid, droppableTids) {
+        let isDraggingPrivate = is_firefox_private(tabById[draggingTid].cookieStoreId);
+
+        droppableTids.filter(tid => tid != draggingTid).forEach( tid => {
+            let destPrivate = is_firefox_private(tabById[tid].cookieStoreId);
+            let sameDomain  = isDraggingPrivate == destPrivate;     // prevent dragging to move across private and normal windows.
+            $tabbox(tid).droppable({
+                accept:     ".tab-box",
+                classes:    { "ui-droppable-hover": sameDomain ? "onhover-move-in-border-ondrop" : "onhover-copy-in-border-ondrop" },
+                create:     function(event, ui){ $(this).addClass("droppabled-item") },
+                drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), event, ui) },
+            });
+        });
+    }
+
+    function addDropEndZonesForWindows(draggingTid) {
+        let isDraggingPrivate = is_firefox_private(tabById[draggingTid].cookieStoreId);
 
         windowIds.map( wid => windowById[wid] ).forEach( w => {
-            if (w.incognito != isDraggedPrivate)    // prevent dragging across private and normal windows. TODO: do a copy rather than move across normal-private
-                return;
-            $(".drop-end-zone[data-wid='" + w.id  + "']").remove();
+            let destPrivate = w.incognito;
+            let sameDomain  = isDraggingPrivate == destPrivate;     // prevent dragging to move across private and normal windows.
             let $winLane    = $(".window-lane[data-wid='" + w.id + "']");
             let $endzone    = $("<div class='drop-end-zone' data-wid='" + w.id + "'></div>");
             let $lastTab    = $winLane.find(".tab-thumbnail").last();
             if ($lastTab.length) {
                 let endzoneLeft = $lastTab.offset().left + $lastTab.outerWidth() + 2;
-                $endzone.offset({ top: $lastTab.offset().top,  left: endzoneLeft })
+                $endzone.offset({
+                    top:    $lastTab.offset().top,
+                    left:   endzoneLeft })
                     .width($winLane.offset().left + $winLane.width() - endzoneLeft - 2)
                     .height($lastTab.outerHeight());
             } else {
                 let $tab_grid = $winLane.find(".tab-grid");
-                $endzone.offset({ top: $tab_grid.offset().top,  left: $tab_grid.offset().left + 4 })
+                $endzone.offset({
+                    top:    $tab_grid.offset().top,
+                    left:   $tab_grid.offset().left + 4 })
                     .width($winLane.offset().left + $winLane.width() - ($tab_grid.offset().left + 4) - 2)
                     .height($tab_grid.outerHeight() - 12);
             }
+            $(".drop-end-zone[data-wid='" + w.id  + "']").remove();
             $(document.body).append($endzone);
+
+            $(".drop-end-zone[data-wid='" + w.id  + "']").droppable({
+                accept:     ".tab-box",
+                classes:    { "ui-droppable-hover": sameDomain ? "onhover-move-to-end-ondrop" : "onhover-copy-ondrop" },
+                create:     function(event, ui){ $(this).addClass("droppabled-item") },
+                drop:       function(event, ui){ dropAtTheEndInWindow($(this), event, ui) },
+            });
+            
         });
     }
 
-    function addDropEndZonesForContainer(draggedTid) {
-        let draggedTab = tabById[draggedTid];
+    function addDropEndZonesForContainer(draggingTid) {
+        let draggingTab = tabById[draggingTid];
         containerIds.map( cid => containerById[cid] ).forEach( c => {
-            if (draggedTab.cookieStoreId == c.cookieStoreId)
+            if (draggingTab.cookieStoreId == c.cookieStoreId)
                 return;     // skip dropping to self's container.
             $(".drop-end-zone[data-cid='" + c.cookieStoreId  + "']").remove();
             let $container  = $(".container-lane[data-cid='" + c.cookieStoreId + "']");
@@ -1336,71 +1359,92 @@
     }
 
     function dropInFrontOfTabInWindow($dest, event, ui) {
-        // Move the tab in front of the destination tab.
-        let srcTab  = tabById[ui.draggable.data("tid")];
-        let destTab = tabById[$dest.data("tid")];
-        let srcIdx  = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
-        let destIdx = tabIdsByWid[destTab.windowId].findIndex( tid => tid == destTab.id );
-        let sameWin = srcTab.windowId == destTab.windowId;
-        if (sameWin && srcIdx < destIdx) {
-            destIdx--;      // Src and dest tabs on the same window, and src tab is before dest, decrement index by 1 since the src tab will be removed.
-        }
-        browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx}).then( movedTabs => {
-            if (movedTabs && movedTabs.length > 0 && (!sameWin || srcIdx != movedTabs[0].index)) {
-                tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);                 // remove the moved tabId from source array
-                tabIdsByWid[destTab.windowId].splice(destIdx, 0, srcTab.id);    // add the moved tabId to the destination array
-                orderTabIndex(srcTab.windowId);
-                if (destTab.windowId != srcTab.windowId)
-                    orderTabIndex(destTab.windowId);
-                srcTab.windowId = destTab.windowId;
-
-                let $srcTabBox  = $tabbox(srcTab.id);
-                let $destTabBox = $tabbox(destTab.id);
-                $srcTabBox.detach();
-                $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
-                $srcTabBox.insertBefore($destTabBox);
-                let toWidth = $srcTabBox.width();
-                $srcTabBox.width(0).animate({ width: toWidth }, 500).effect( "bounce", {times:2, distance:5}, 200 );
-            } else {
-                let $srcTabBox  = $tabbox(srcTab.id);
-                $srcTabBox.removeAttr("style");
+        let srcTab      = tabById[ui.draggable.data("tid")];
+        let destTab     = tabById[$dest.data("tid")];
+        let srcIdx      = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
+        let destIdx     = tabIdsByWid[destTab.windowId].findIndex( tid => tid == destTab.id );
+        let srcPrivate  = is_firefox_private(tabById[srcTab.id].cookieStoreId);
+        let destPrivate = is_firefox_private(tabById[destTab.id].cookieStoreId);
+        let sameDomain  = srcPrivate == destPrivate;
+        if (sameDomain) {
+            // Move the tab in front of the destination tab.
+            let sameWin     = srcTab.windowId == destTab.windowId;
+            if (sameWin && srcIdx < destIdx) {
+                destIdx--;      // Src and dest tabs on the same window, and src tab is before dest, decrement index by 1 since the src tab will be removed.
             }
-        });
+            browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx}).then( movedTabs => {
+                if (movedTabs && movedTabs.length > 0 && (!sameWin || srcIdx != movedTabs[0].index)) {
+                    tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);                 // remove the moved tabId from source array
+                    tabIdsByWid[destTab.windowId].splice(destIdx, 0, srcTab.id);    // add the moved tabId to the destination array
+                    orderTabIndex(srcTab.windowId);
+                    if (destTab.windowId != srcTab.windowId)
+                        orderTabIndex(destTab.windowId);
+                    srcTab.windowId = destTab.windowId;
+
+                    let $srcTabBox  = $tabbox(srcTab.id);
+                    let $destTabBox = $tabbox(destTab.id);
+                    $srcTabBox.detach();
+                    $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
+                    $srcTabBox.insertBefore($destTabBox);
+                    let toWidth = $srcTabBox.width();
+                    $srcTabBox.width(0).animate({ width: toWidth }, 500).effect( "bounce", {times:2, distance:5}, 200 );
+                } else {
+                    let $srcTabBox  = $tabbox(srcTab.id);
+                    $srcTabBox.removeAttr("style");
+                }
+            });
+        } else {
+            // Copy the tab in front of the destination tab.
+            openInWindow(srcTab, destTab.windowId, destIdx);
+            let $srcTabBox  = $tabbox(srcTab.id);
+            $srcTabBox.removeAttr("style");
+        }
     }                                   
 
     function dropAtTheEndInWindow($dest, event, ui) {
-        let srcTab  = tabById[ui.draggable.data("tid")];
-        let destWid = $dest.data("wid");  // data-wid on .drop-end-zone.
-        let sameWin = srcTab.windowId == destWid;
-        browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( movedTabs => {
-            if (movedTabs && movedTabs.length > 0 && (!sameWin || srcTab.index != movedTabs[0].index)) {
-                // Move the tab to the end of the window lane.
-                let srcIdx = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
-                tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);
-                tabIdsByWid[destWid].push(srcTab.id);
-                orderTabIndex(srcTab.windowId);
-                if (destWid != srcTab.windowId)
-                    orderTabIndex(destWid);
-                
-                srcTab.windowId = destWid;
-                let $tabBox = $tabbox(srcTab.id);
-                $tabBox.css({ top:"", left:"" });   // reset the dragging position
-                if (!$tabBox.is(":last-child")) {
-                    $tabBox.detach();
-                    $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                    $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
-                        .effect( "bounce", {times:2, distance:5}, 200 );
+        let srcTab      = tabById[ui.draggable.data("tid")];
+        let destWid     = $dest.data("wid");  // data-wid on .drop-end-zone.
+        let sameWin     = srcTab.windowId == destWid;
+        let srcPrivate  = is_firefox_private(tabById[srcTab.id].cookieStoreId);
+        let destPrivate = windowById[destWid].incognito;
+        let sameDomain  = srcPrivate == destPrivate;
+        if (sameDomain) {
+            // Move the tab to the end of th window
+            browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( movedTabs => {
+                if (movedTabs && movedTabs.length > 0 && (!sameWin || srcTab.index != movedTabs[0].index)) {
+                    // Move the tab to the end of the window lane.
+                    let srcIdx = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
+                    tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);
+                    tabIdsByWid[destWid].push(srcTab.id);
+                    orderTabIndex(srcTab.windowId);
+                    if (destWid != srcTab.windowId)
+                        orderTabIndex(destWid);
+                    
+                    srcTab.windowId = destWid;
+                    let $tabBox = $tabbox(srcTab.id);
+                    $tabBox.css({ top:"", left:"" });   // reset the dragging position
+                    if (!$tabBox.is(":last-child")) {
+                        $tabBox.detach();
+                        $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                        $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
+                            .effect( "bounce", {times:2, distance:5}, 200 );
+                    } else {
+                        $tabBox.detach();
+                        $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
+                        $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
+                            .effect( "bounce", {times:2, distance:5}, 200 );
+                    }
                 } else {
-                    $tabBox.detach();
-                    $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                    $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
-                        .effect( "bounce", {times:2, distance:5}, 200 );
+                    let $srcTabBox  = $tabbox(srcTab.id);
+                    $srcTabBox.removeAttr("style");
                 }
-            } else {
-                let $srcTabBox  = $tabbox(srcTab.id);
-                $srcTabBox.removeAttr("style");
-            }
-        });
+            });
+        } else {
+            // Copy the tab to the end of th window
+            openInWindow(srcTab, destWid, null);
+            let $srcTabBox  = $tabbox(srcTab.id);
+            $srcTabBox.removeAttr("style");
+        }
     }
 
     // Need to do blocking wait until tabs.create() finish before finishing up the drop operation.
@@ -1433,6 +1477,23 @@
             windowId:       destWid,
             pinned:         srcTab.pinned,
             url:            srcTab.url,
+        });
+        // Rely on tabs.onUpdated to add the newly created tab when the tab.url and tab.title are completely filled in.
+    }
+
+    async function openInWindow(srcTab, destWid, destIndex) {
+        browser.tabs.create({
+            active:         true,
+            windowId:       destWid,
+            index:          destIndex,
+            pinned:         srcTab.pinned,
+            url:            srcTab.url,
+        }).then( newTab => {
+            createTabData(newTab);
+            refreshTabData(newTab);
+            let $newTabBox = $tabbox(newTab.id);
+            let toWidth = $newTabBox.width();
+            $tabbox(newTab.id).width(0).animate({ width: toWidth }, 500).effect( "bounce", {times:2, distance:5}, 200 );
         });
         // Rely on tabs.onUpdated to add the newly created tab when the tab.url and tab.title are completely filled in.
     }
