@@ -478,7 +478,9 @@ a.disabled {
 }
 
 .main-content {
-    padding:        0 0 7rem 0; /* give enough bottom padding for the dropdown menu on tab. */
+    padding:        0 0 0 0;
+    margin-bottom:  5rem;       /* give enough bottom room for the dropdown menu on tab. */
+    height:         100%;
 }
 
 .left-pane .v-btn-bar {
@@ -832,21 +834,21 @@ a.disabled {
     box-sizing:         border-box;
     border:             var(--img-border) solid #ff9900;
 }
-.drop-end-zone.onhover-move-to-end-zone {
+.drop-end-zone.onhover-move-to-end-ondrop {
     box-shadow:         1px 1px #dddddd;
     background-color:   var(--drag-bg);
 }
-.drop-end-zone.onhover-move-to-end-zone::after {
+.drop-end-zone.onhover-move-to-end-ondrop::after {
     padding-left:       0.4rem;
     content:            "move to the end";
 }
-.drop-end-zone.onhover-copy-to-container {
+.drop-end-zone.onhover-copy-ondrop {
     box-shadow:         1px 1px #dddddd;
     background-color:   var(--drag-bg);
 }
-.drop-end-zone.onhover-copy-to-container::after {
+.drop-end-zone.onhover-copy-ondrop::after {
     padding-left:       0.4rem;
-    content:            "copy URL to this container";
+    content:            "copy as new tab here";
 }
 
 .drop-tab-gap-zone {
@@ -854,7 +856,8 @@ a.disabled {
     box-sizing:         border-box;
     border:             var(--img-border) solid #ff9900;
 }
-.drop-tab-gap-zone.onhover-drop-tab-gap::after {
+
+.drop-tab-gap-zone.onhover-move-in-gap-ondrop::after {
     position:           absolute;
     left:               -1px;
     top:                -1px;
@@ -867,8 +870,21 @@ a.disabled {
     padding-left:       0.4rem;
     content:            "move in front";
 }
+.drop-tab-gap-zone.onhover-copy-in-gap-ondrop::after {
+    position:           absolute;
+    left:               -1px;
+    top:                -1px;
+    width:              calc(var(--tab-gap) + var(--tab-gap) + var(--img-width) + var(--img-border) + var(--img-border) - var(--px1));
+    height:             var(--thumbnail-height);
+    background-color:   var(--drag-bg);
+    box-sizing:         border-box;
+    border:             var(--img-border) solid #ff9900;
+    z-index:            1;
+    padding-left:       0.4rem;
+    content:            "copy in front";
+}
 
-.tab-box.onhover-drop-tab-border::after {
+.tab-box.onhover-move-in-border-ondrop::after {
     position:           absolute;
     left:               calc(var(--tab-gap) * -2 + var(--px1));
     top:                var(--topbar-height);
@@ -880,4 +896,17 @@ a.disabled {
     border:             var(--img-border) solid #ff9900;
     padding-left:       0.4rem;
     content:            "move in front";
+}
+.tab-box.onhover-copy-in-border-ondrop::after {
+    position:           absolute;
+    left:               calc(var(--tab-gap) * -2 + var(--px1));
+    top:                var(--topbar-height);
+    width:              calc(var(--tab-gap) + var(--tab-gap) + var(--img-width) + var(--img-border) + var(--img-border) - var(--px1));
+    height:             var(--thumbnail-height);
+    background-color:   var(--drag-bg);
+    z-index:            1;
+    box-sizing:         border-box;
+    border:             var(--img-border) solid #ff9900;
+    padding-left:       0.4rem;
+    content:            "copy as new tab in front";
 }
