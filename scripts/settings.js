@@ -80,11 +80,19 @@
     }
 
     function pLoad() {
-        return browser.storage.local.get("tipTabSettings").then( results => new module.TipTabSettings(results.tipTabSettings) );
+        return browser.storage.local.get("tipTabSettings")
+            .then( results => {
+                return results && results.hasOwnProperty("tipTabSettings") ?
+                    new module.TipTabSettings(results.tipTabSettings) : new module.TipTabSettings();
+            })
+            .catch( e => {
+                log.warn(e);
+                return new module.TipTabSettings();
+            })
     }
 
-    function pSave(tipTabSettings) {
-        return browser.storage.local.set({ "tipTabSettings": tipTabSettings });
+    function pSave(ttSettings) {
+        return browser.storage.local.set({ "tipTabSettings": ttSettings });
     }
 
     function pRemove() {
@@ -92,9 +100,9 @@
     }
 
     function pUpdate(property, value) {
-        return pLoad().then(tipTabSettings => {
-            tipTabSettings[property] = value;
-            return tipTabSettings;
+        return pLoad().then(ttSettings => {
+            ttSettings[property] = value;
+            return ttSettings;
         }).then(pSave)
     }
     
