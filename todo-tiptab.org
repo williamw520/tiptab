@@ -129,3 +129,62 @@ The following 3rd party libraries are used in this extension.  The versions and 
    https://github.com/picturepan2/spectre/releases
    https://github.com/picturepan2/spectre/archive/v0.4.7.zip, from the directory spectre-0.4.7/docs/dist/.
 
+
+* Description
+Tip Tab let you manage and navigate the open browser tabs visually, similar to the Exposé feature on Mac OS.
+
+
+<b>Feature Highlight:</b>
+<ul>
+  <li> Visual tab navigation with mouse.
+  <li> Visual tab navigation with keyboard (with tab/enter or hotkey).
+  <li> Tab preview on popup.
+  <li> Custom sizes of tab thumbnails.
+  <li> Showing tabs by all, by windows, or by containers.
+  <li> Search tabs.  Filter by search words in titles.
+  <li> Filter tabs by windows or by containers.
+  <li> Showing tab attributes with decoration, colors, and status icons.
+  <li> Tab commands: reload, mute, pin, copy, screenshot download, various flavors of close commands, etc.
+  <li> Window commands, applying to all the tabs in a window.
+  <li> Global commands, applying to all the tabs.
+  <li> Drag and drop to re-arrange tabs within a window or a container.
+  <li> Drag and drop to move tabs across windows and containers.
+  <li> Drag and drop to copy tabs across different domains (containers and private windows).
+  <li> Live sync of outside tab events and window events (create, move, close, etc).
+  <li> Live sync of website navigation on tab.
+  <li> Custom hot key.  Key configuration with example key-press.
+  <li> Options page.
+</ul>
+
+<b>Permissions Usage Disclosure:</b>
+(This extension requires the following permissions to function properly.)
+<ol>
+ <li>The "tabs" permission is needed to access the properties of the tabs.</li>
+ <li>The "storage" permission is needed to save settings.</li>
+ <li>The "cookies" permission is needed to get the "cookieStoreId" property in a tab, which is the tab's container Id.  (Note: the "cookies" permission will cause the display of the notice, "It requires permission to: Access your data for all websites," during installation.)</li>
+ <li>The "contextualIdentities" permission is required to retrieve the container information.</li>
+ <li>The "sessions" permission is used to undo closed tab.</li>
+ <li>The "downloads" permission is used to let user download the tab window screenshot.</li>
+</ol>
+
+<b>Information:</b>
+<ul>
+  <li>Shift-Ctrl-F is the default hotkey to bring up Tip Tab.</li>
+  <li>The custom extension hotkey can be used to bring up Tip Tab.</li>
+  <li>The hotkey (either one) can be used to cycle through the tabs.  Enter to select the tab.</li>
+  <li>The Options page can be brought up from Firefox's addon manager or from the dropdown menu at upper right hand side.</li>
+  <li>Reload the Tip Tab page to refresh all the tabs.</li>
+  <li>This extension requires Firefox 59 and up.</li>
+</ul>
+
+<b>Issues:</b>
+<ul>
+  <li>Custom hotkey would not work on special Firefox pages, 
+      such as about:newtab, about:addons, about:config, and other privileged pages.
+      For security reason, any custom key events are restricted by Firefox on those pages.</li>
+  <li>For keyboard navigation, the Tab key will cycle the focus through the tabs, plus onto the Firefox controls on the frame, such as the address bar, the search bar.
+      Cycling the focus to outside controls is part of the normal handling on the Tab key by Firefox and cannot be changed.
+      The custom hotkey will only cycle the focus through the tabs and Tip Tab's search bar.
+  </li>
+</ul>
+
