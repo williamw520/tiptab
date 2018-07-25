@@ -343,7 +343,12 @@ if (_RUNTEST_WWHOTKEY) {
         }
     });
     
-    try { wwhotkey.ofKeySeq("b"); console.error("Assert on expected exception.") } catch { };
+    try {
+        wwhotkey.ofKeySeq("b");
+        console.error("Assert on expected exception not coming.");
+    } catch (e) {
+        console.log("Expected exception " + e.toString() + ".  Passed.");
+    };
     
     console.assert( wwhotkey.ofKeySeq("").equals( wwhotkey.ofKeySeq("") ),  "Assert failed: equals" );
     console.assert( !wwhotkey.ofKeySeq("").equals( wwhotkey.ofKeySeq("shift-b") ), "Assert failed: equals" );
