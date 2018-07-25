@@ -1,5 +1,17 @@
 
 * Feature TODO
+** TODO In-app shortcut keys.  Custom in-app shortcut keys.
+** TODO Container cmd: Move all tabs of a container to its window.
+** TODO Refresh one tab onUpdated
+** TODO Monitor container events and refresh container info/UI.
+** TODO Bookmark a tab.
+** TODO Bookmark all tabs of a window.
+** TODO Show bookmarks as tab box, with saved thumbnails shown.
+** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
+** TODO Save all screenshots.  This needs zip support in Javascript.
+** TODO Sort tabs
+
+* Release 2.0 Feature
 ** DONE Color the tab thumbnail border according to container's color.
 ** DONE Color the tab thumbnail border according to tab's private window state.
 ** DONE Color the window border according to window's private state.
@@ -56,16 +68,7 @@
 ** DONE Bug: empty search text is not saved.  Refreshing the TipTab page gets back the old search text.
 ** DONE Bug: drag and drop new tab into container doesn't initialize the tab menu handlers.
 ** DONE Drop and drop from private window to normal
-** TODO Move all tabs of a container to its window.
-** TODO Refresh one tab onUpdated
-** TODO Monitor container events and refresh container info/UI.
 
-** TODO Bookmark a tab.
-** TODO Bookmark all tabs of a window.
-** TODO Show bookmarks as tab box, with saved thumbnails shown.
-** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
-** TODO Save all screenshots.  This needs zip support in Javascript.
-** TODO Sort tabs
 
 * Release 1.3 Feature
 ** DONE Initial zoom out of thumbnails.

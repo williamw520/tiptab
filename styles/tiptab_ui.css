@@ -36,7 +36,7 @@
     --thumbnail-width:      calc(var(--img-width)  + var(--img-border) + var(--img-border));
     --thumbnail-height:     calc(var(--img-height) + var(--img-border) + var(--img-border));
 
-    --tab-gap:              0.6rem;
+    --tab-gap:              0.5rem;
 
     --left-pane-width:      2.2rem;
     --right-pane-width:     8.0rem;

@@ -71,9 +71,9 @@
     // Chars
     const CHAR_CHECKMARK = "&#x2713;";
 
-    // Dimensions for thumbnailSize
-    const imgWidth  = ["8.0rem", "11.5rem", "15rem"];
-    const imgHeight = ["4.5rem", "6.46875rem",  "8.4375rem"];
+    // Dimensions for thumbnailSize.  See --img-width-base and --img-height-base in .css file.
+    const imgWidth  = ["8.0rem", "12rem", "17.77rem"];
+    const imgHeight = ["4.5rem", "6.75rem",  "10rem"];
 
     // Module variables.
     let ttSettings = new TipTabSettings();
@@ -268,17 +268,17 @@
         // Global menu at the top navbar
         $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage() });
         $("#global-cmds").on("click", ".cmd-refresh",           pReloadRedrawRefreshContent);
-        $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()          });
-        $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(null, true)    });
-        $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(null, false)   });
-        $("#global-cmds").on("click", ".cmd-close-ui",          function(){ pSendCmd({ cmd: "close-ui" }) });
+        $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                  });
+        $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(null, true)            });
+        $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(null, false)           });
+        $("#global-cmds").on("click", ".cmd-close-ui",          function(){ pSendCmd({ cmd: "close-ui" })   });
         $("#global-cmds").on("click", ".cmd-about",             showAboutDlg);
         $(".logo").on("click",                                  showAboutDlg);
 
         // Commands on v-btn-bar
         $(".v-btn-bar").on("click", ".cmd-all-tabs",            function(){ selectDisplayType(DT_ALL_TABS)      });
-        $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_WINDOW)     });
-        $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_CONTAINER)  });
+        $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_WINDOW)        });
+        $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_CONTAINER)     });
         $(".v-btn-bar").on("click", ".cmd-all-windows",         function(){ selectDisplayType(DT_ALL_WINDOWS)   });
         $(".v-btn-bar").on("click", ".cmd-small-size",          function(){ setThumbnailSize(0)                 });
         $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                 });
@@ -322,12 +322,12 @@
         $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private, .status-pin, .status-mute", function(e){ return stopEvent(e) });
 
         // Search handler
-        $(".cmd-search").on("click",                            function(){ $(this).select()                                                        });
-        $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())                                               });
+        $(".cmd-search").on("click",                            function(){ $(this).select()            });
+        $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())   });
 
         $(window).focus(function(){
             tiptabWindowActive = true;
-            $(".cmd-search").focus().select();
+            initialFocus().select();
         });
         $(window).blur(function(){
             //log.info("tiptabWindow shutdown");
@@ -1257,7 +1257,7 @@
 
     function addDropTabGapZonesForWindows(draggingTid, droppableTids) {
         let isDraggingPrivate = is_firefox_private(tabById[draggingTid].cookieStoreId);
-        let tabBoxMargin = remToPixels(0.6);        // see .tab-box style
+        let tabBoxMargin = remToPixels(0.5);        // see .tab-box style with --tab-gap.
 
         droppableTids.filter(tid => tid != draggingTid).forEach( tid => {
             let destPrivate = is_firefox_private(tabById[tid].cookieStoreId);
@@ -1494,7 +1494,7 @@
             let $newTabBox = $tabbox(newTab.id);
             let toWidth = $newTabBox.width();
             $tabbox(newTab.id).width(0).animate({ width: toWidth }, 500).effect( "bounce", {times:2, distance:5}, 200 );
-        });
+        }).then(() => browser.tabs.update(currentTid, { active: true }).then( () => browser.windows.update(currentWid, {focused: true}) ));
         // Rely on tabs.onUpdated to add the newly created tab when the tab.url and tab.title are completely filled in.
     }
 
@@ -1549,6 +1549,7 @@
         refreshVBtnBarControls();
         redrawRefreshUIContent(false, false);
         saveUiStateNow();
+        initialFocus();
     }
 
     // size: 0-2
@@ -1556,6 +1557,7 @@
         uiState.thumbnailSize = size;
         resizeThumbnails();
         saveUiStateNow();
+        initialFocus()
     }
 
     function resizeThumbnails() {
@@ -1709,6 +1711,11 @@
         }
         dSaveUiState();
         redrawRefreshContentOnFiltering();
+    }
+
+    function initialFocus() {
+        // Put the focus in the search field so that the custom hotkey can work.
+        return $(".cmd-search").focus();
     }
 
     function pSendCmd(msg) {
