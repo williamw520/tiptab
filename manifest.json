@@ -33,7 +33,7 @@
 
     "background": {
         "scripts": [
-            "/pkg/moment-with-locales.js",
+            "/pkg/moment-with-locales.min.js",
             "scripts/util/logger.js",
             "scripts/util/appcfg.js",
             "scripts/util/app.js",

@@ -116,14 +116,14 @@ The following 3rd party libraries are used in this extension.  The versions and 
 ** JQuery
    version 3.2.1
    https://code.jquery.com/jquery/
-   https://code.jquery.com/jquery-3.2.1.js
+   https://code.jquery.com/jquery-3.2.1.min.js
 ** JQuery UI
    version 1.12.1
    https://jqueryui.com/download/all/
-   https://jqueryui.com/resources/download/jquery-ui-1.12.1.zip
+   https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js
 ** Moment
    https://momentjs.com/
-   https://momentjs.com/downloads/moment-with-locales.js
+   https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js
 ** Spectre CSS
    version 0.4.7
    https://github.com/picturepan2/spectre/releases
