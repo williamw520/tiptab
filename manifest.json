@@ -9,7 +9,7 @@
     "applications": {
         "gecko": {
             "id": "tiptab@william.wong",
-            "strict_min_version": "59.0"
+            "strict_min_version": "61.0"
         }
     },
 
@@ -28,7 +28,8 @@
         "cookies",
         "contextualIdentities",
         "sessions",
-        "downloads"
+        "downloads",
+        "tabHide"
     ],
 
     "background": {

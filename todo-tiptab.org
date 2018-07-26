@@ -1,5 +1,7 @@
 
 * Feature TODO
+** DONE Hide/show tab, on Firefox 61+.  Hide/show tabs in window.
+** TODO Move focus back to Tip Tab after duplicating a tab.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Container cmd: Move all tabs of a container to its window.
 ** TODO Refresh one tab onUpdated
@@ -152,7 +154,7 @@ Tip Tab let you manage and navigate the open browser tabs visually, similar to t
   <li> Drag and drop to copy tabs across different domains (containers and private windows).
   <li> Live sync of outside tab events and window events (create, move, close, etc).
   <li> Live sync of website navigation on tab.
-  <li> Custom hot key.  Key configuration with example key-press.
+  <li> Custom hot key.
   <li> Options page.
 </ul>
 
@@ -171,10 +173,12 @@ Tip Tab let you manage and navigate the open browser tabs visually, similar to t
 <ul>
   <li>Shift-Ctrl-F is the default hotkey to bring up Tip Tab.</li>
   <li>The custom extension hotkey can be used to bring up Tip Tab.</li>
-  <li>The hotkey (either one) can be used to cycle through the tabs.  Enter to select the tab.</li>
-  <li>The Options page can be brought up from Firefox's addon manager or from the dropdown menu at upper right hand side.</li>
-  <li>Reload the Tip Tab page to refresh all the tabs.</li>
+  <li>The hotkey (either one) can be used to cycle through the tabs, with the Enter key to select a tab.</li>
+  <li>The Options page can be brought up from Firefox's addon manager or from the dropdown menu at upper right hand corner.</li>
+  <li>Reload the Tip Tab page (or the Refresh All command) to refresh all the tabs.</li>
   <li>This extension requires Firefox 59 and up.</li>
+  <li>Dragging and dropping tabs across security domains (containers and normal/private windows) would only copy the tab's url and open it as new.
+      The tab history and cookies are NOT copied, to maintain the security isolation of the tabs.</li>
 </ul>
 
 <b>Issues:</b>
