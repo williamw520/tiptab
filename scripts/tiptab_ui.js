@@ -290,6 +290,8 @@
         $("#main-content").on("click", ".cmd-undo-close",       function(){ undoCloseTab()                                                          });
         $("#main-content").on("click", ".cmd-mute-w-all",       function(){ muteTabs($(this).closest(".window-lane").data("wid"), true)             });
         $("#main-content").on("click", ".cmd-unmute-w-all",     function(){ muteTabs($(this).closest(".window-lane").data("wid"), false)            });
+        $("#main-content").on("click", ".cmd-show-w-all",       function(){ showTabs($(this).closest(".window-lane").data("wid"), true)             });
+        $("#main-content").on("click", ".cmd-hide-w-all",       function(){ hideTabs($(this).closest(".window-lane").data("wid"), false)            });
         $("#main-content").on("click", ".cmd-pin-w-all",        function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), true)        });
         $("#main-content").on("click", ".cmd-unpin-w-all",      function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), false)       });
 
@@ -303,8 +305,9 @@
         $("#main-content").on("click", ".cmd-close-others",     function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "all")          });
         $("#main-content").on("click", ".cmd-close-left",       function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "left")         });
         $("#main-content").on("click", ".cmd-close-right",      function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "right")        });
-        $("#main-content").on("click", ".cmd-toggle-pinned",    function(){ toggleTabPinned($(this).closest(".tab-box").data("tid"))                });
         $("#main-content").on("click", ".cmd-toggle-muted",     function(){ toggleTabMuted($(this).closest(".tab-box").data("tid"))                 });
+        $("#main-content").on("click", ".cmd-toggle-hidden",    function(){ toggleTabHidden($(this).closest(".tab-box").data("tid"))                });
+        $("#main-content").on("click", ".cmd-toggle-pinned",    function(){ toggleTabPinned($(this).closest(".tab-box").data("tid"))                });
 
         // Tab topbar event handlers
         $("#main-content").on("click", ".tab-topbar",           function(){ $(this).closest(".tab-box").focus()                                     });
@@ -319,7 +322,8 @@
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
 
         // Command containers stop event propagation
-        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private, .status-pin, .status-mute", function(e){ return stopEvent(e) });
+        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private, .status-pinned, .status-muted, status-hidden",
+                                                                function(e){ return stopEvent(e) });
 
         // Search handler
         $(".cmd-search").on("click",                            function(){ $(this).select()            });
@@ -505,10 +509,10 @@
 
 
     function pReloadRedrawRefreshContent() {
-        return pReloadTabsAndWindows().then( () => redrawRefreshUIContent(true, true) );
+        return pReloadTabsWindowsAndContainers().then( () => redrawRefreshUIContent(true, true) );
     }
 
-    function pReloadTabsAndWindows() {
+    function pReloadTabsWindowsAndContainers() {
         return browser.tabs.query({})
             .then( tabs => {
                 // tabs            = tabs.filter( tab => !is_tiptaburl(tab.url) );     // get rid of the TipTab tab.
@@ -673,21 +677,21 @@
         tabIdsByWid[wid].forEach( (tid, index) => tabById[tid].index = index );
     }
 
-    function isHidden(tab) {
+    function isTabVisibile(tab) {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
         case DT_WINDOW:
-            return app.boolVal(uiState.windowsHiddenByUser, tab.windowId);
+            return !app.boolVal(uiState.windowsHiddenByUser, tab.windowId);
         case DT_CONTAINER:
-            return app.boolVal(uiState.containersHiddenByUser, tab.cookieStoreId);
+            return !app.boolVal(uiState.containersHiddenByUser, tab.cookieStoreId);
         }
-        return false;
+        return true;
     }
 
     function filterTab(tab, filterTokens) {
         let titleMatched = app.hasAll(tab.title, filterTokens, true);
         let urlMatched = app.hasAll(tab.url, filterTokens, true);
-        return (titleMatched || urlMatched) && !isHidden(tab);
+        return (titleMatched || urlMatched) && isTabVisibile(tab);
     }
 
     function filterTabs() {
@@ -843,6 +847,8 @@
                         <li class="divider"></li>
                         <li class="menu-item" title="Mute tabs in window"> <a href="#" class="cmd-mute-w-all nowrap">Mute Tabs</a> </li>
                         <li class="menu-item" title="Unmute tabs in window"> <a href="#" class="cmd-unmute-w-all nowrap">Unmute Tabs</a> </li>
+                        <li class="menu-item" title="Show tabs in window"> <a href="#" class="cmd-show-w-all nowrap">Show Tabs</a> </li>
+                        <li class="menu-item" title="Hide tabs in window"> <a href="#" class="cmd-hide-w-all nowrap">Hide Tabs</a> </li>
                         <li class="menu-item" title="Pin tabs in window"> <a href="#" class="cmd-pin-w-all nowrap">Pin Tabs</a> </li>
                         <li class="menu-item" title="Unpin tabs in window"> <a href="#" class="cmd-unpin-w-all nowrap">Unpin Tabs</a> </li>
                       </ul>
@@ -1057,6 +1063,7 @@
                   <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                     <li class="menu-item"> <a href="#" class="cmd-reload-tab nowrap">Reload Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-toggle-muted nowrap">${isMuted(tab) ? "Unmute" : "Mute"} Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-hidden nowrap">${tab.hidden ? "Show" : "Hide"} Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">${tab.pinned ? "Unpin" : "Pin"} Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-duplicate-tab nowrap">Duplicate Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-move-tab-new nowrap">To New Window</a> </li>
@@ -1075,10 +1082,11 @@
               </div>
 
               <div class="tab-status-bar">
-                <a href="#" class="btn status-private   ${css_display(isPrivate)}"    tabindex="-1" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
-                <a href="#" class="btn status-container ${css_display(isContainer)}"  tabindex="-1" title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
-                <a href="#" class="btn status-pin       ${css_display(tab.pinned)}"   tabindex="-1" title="Tab is pinned"><img src="icons/pin.png" ></a>
-                <a href="#" class="btn status-mute      ${css_display(isMuted(tab))}" tabindex="-1" title="Tab is muted"><img src="icons/mute.png" ></a>
+                <a href="#" class="btn status-private   ${css_display(isPrivate)}"      tabindex="-1" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
+                <a href="#" class="btn status-container ${css_display(isContainer)}"    tabindex="-1" title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
+                <a href="#" class="btn status-pinned    ${css_display(tab.pinned)}"     tabindex="-1" title="Tab is pinned"><img src="icons/pin.png" ></a>
+                <a href="#" class="btn status-muted     ${css_display(isMuted(tab))}"   tabindex="-1" title="Tab is muted"><img src="icons/mute.png" ></a>
+                <a href="#" class="btn status-hidden    ${css_display(tab.hidden)}"     tabindex="-1" title="Tab is hidden"><img src="icons/hidden.png" ></a>
               </div>
             </div>   
         `;
@@ -1107,15 +1115,21 @@
         }
 
         if (tab.pinned) {
-            $statusbar.find(".status-pin").removeClass("d-none").addClass("d-block");
+            $statusbar.find(".status-pinned").removeClass("d-none").addClass("d-block");
         } else {
-            $statusbar.find(".status-pin").removeClass("d-block").addClass("d-none");
+            $statusbar.find(".status-pinned").removeClass("d-block").addClass("d-none");
         }
 
         if (isMuted(tab)) {
-            $statusbar.find(".status-mute").removeClass("d-none").addClass("d-block");
+            $statusbar.find(".status-muted").removeClass("d-none").addClass("d-block");
         } else {
-            $statusbar.find(".status-mute").removeClass("d-block").addClass("d-none");
+            $statusbar.find(".status-muted").removeClass("d-block").addClass("d-none");
+        }
+
+        if (tab.hidden) {
+            $statusbar.find(".status-hidden").removeClass("d-none").addClass("d-block");
+        } else {
+            $statusbar.find(".status-hidden").removeClass("d-block").addClass("d-none");
         }
     }
 
@@ -1597,6 +1611,22 @@
             .then( () => refreshTabBoxes(toTabIds(tabs), false) )
     }
                      
+    function showTabs(wid) {
+        let tids = effectiveWindowTids(wid);
+        browser.tabs.show(tids).then( () => {
+            toTabs(tids).forEach( tab => tab.hidden = false );
+            refreshTabBoxes(tids, false);
+        });
+    }
+
+    function hideTabs(wid) {
+        let tids = effectiveWindowTids(wid);
+        browser.tabs.hide(tids).then( () => {
+            toTabs(tids).forEach( tab => tab.hidden = true );
+            refreshTabBoxes(tids, false);
+        });
+    }
+
     function pinWindowTabs(wid, isPinning) {
         let tabs = effectiveWindowTabs(wid);
         Promise.all( tabs.map( tab => browser.tabs.update(tab.id, { pinned: isPinning }) ) )
@@ -1680,21 +1710,37 @@
         });
     }
 
-    function toggleTabPinned(tid) {
-        browser.tabs.get(tid).then( tab => {
-            browser.tabs.update(tab.id, { pinned: !tab.pinned }).then( tab => {
-                tabById[tid].pinned = tab.pinned;
-                refreshTabBoxes([ tid ], false);
-            });
-        });
-    }
-
     function toggleTabMuted(tid) {
         browser.tabs.get(tid).then( tab => {
             browser.tabs.update(tab.id, {
                 muted: !isMuted(tab)
             }).then( tab => {
                 tabById[tid].mutedInfo = tab.mutedInfo;
+                refreshTabBoxes([ tid ], false);
+            });
+        });
+    }
+
+    function toggleTabHidden(tid) {
+        browser.tabs.get(tid).then( tab => {
+            if (tab.hidden) {
+                browser.tabs.show(tab.id).then( tids => {
+                    tabById[tid].hidden = false;
+                    refreshTabBoxes([ tid ], false);
+                });
+            } else {
+                browser.tabs.hide(tab.id).then( tids => {
+                    tabById[tid].hidden = true;
+                    refreshTabBoxes([ tid ], false);
+                }).catch( e => console.error(e) );
+            }
+        });
+    }
+
+    function toggleTabPinned(tid) {
+        browser.tabs.get(tid).then( tab => {
+            browser.tabs.update(tab.id, { pinned: !tab.pinned }).then( tab => {
+                tabById[tid].pinned = tab.pinned;
                 refreshTabBoxes([ tid ], false);
             });
         });
