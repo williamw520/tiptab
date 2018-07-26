@@ -670,26 +670,38 @@ a.disabled {
     height:             10px;
 }
 
-.status-pin {
+.status-pinned {
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.05rem 0 0 0;
 }
-.status-pin img {
+.status-pinned img {
     width:              10px;
     height:             10px;
 }
 
-.status-mute {
+.status-muted {
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.05rem 0 0 0;
 }
-.status-mute img {
+.status-muted img {
+    width:              10px;
+    height:             10px;
+}
+
+.status-hidden {
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0 0.1rem 0 0.1rem;
+    padding:            0.05rem 0 0 0;
+}
+.status-hidden img {
     width:              10px;
     height:             10px;
 }
