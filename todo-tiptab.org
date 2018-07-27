@@ -3,8 +3,8 @@
 ** DONE Hide/show tab, on Firefox 61+.  Hide/show tabs in window.
 ** DONE Active tab cannot be hidden; disable menu item.  Likewise, activating a tab (clicking it) would show it.
 ** DONE Focus stays on Tip Tab page after duplicating a tab.
+** DONE Clicking on the status buttons of a tab changes the status.
 ** TODO Filter tab by status (muted, pinned, hidden, normal/private).  Tri-state: none, muted, unmuted.
-** TODO Clicking on the status buttons of a tab changes the status.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Container cmd: Move all tabs of a container to its window.
 ** TODO Refresh one tab onUpdated
