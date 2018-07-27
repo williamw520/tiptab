@@ -210,16 +210,19 @@
 
     function tabs_onActivated(info) {
         // log.info("tabs_onActivated", info);
-        if (tabById.hasOwnProperty(info.tabId))
-            transitionActiveTabs(info.tabId);
+        if (tabById.hasOwnProperty(info.tabId)) {
+            tabById[info.tabId].hidden = false;     // active tab cannot be hidden.
+            transitionActiveTabs(info.tabId);       // refresh tab's UI
+        }
     }
 
     function transitionActiveTabs(newActiveTid) {
-        let oldActiveId = tabIdsByWid[tabById[newActiveTid].windowId].find( tid => tabById[tid].active );
-        if (oldActiveId) {
+        let tibsOfNewWindow = tabIdsByWid[tabById[newActiveTid].windowId];
+        let existingActiveId = tibsOfNewWindow.find( tid => tabById[tid].active );
+        if (existingActiveId) {
+            tabById[existingActiveId].active = false;
             tabById[newActiveTid].active = true;
-            tabById[oldActiveId].active = false;
-            refreshTabBoxes([oldActiveId, newActiveTid], false);
+            refreshTabBoxes([existingActiveId, newActiveTid], false);
         } else {
             tabById[newActiveTid].active = true;
             refreshTabBoxes([newActiveTid], false);
@@ -288,10 +291,10 @@
         $("#main-content").on("click", ".cmd-reload-w-tabs",    function(){ reloadWindowTabs($(this).closest(".window-lane").data("wid"))           });
         $("#main-content").on("click", ".cmd-copy-w-title-url", function(){ copyWindowTabTitleUrls($(this).closest(".window-lane").data("wid"))     });
         $("#main-content").on("click", ".cmd-undo-close",       function(){ undoCloseTab()                                                          });
-        $("#main-content").on("click", ".cmd-mute-w-all",       function(){ muteTabs($(this).closest(".window-lane").data("wid"), true)             });
-        $("#main-content").on("click", ".cmd-unmute-w-all",     function(){ muteTabs($(this).closest(".window-lane").data("wid"), false)            });
-        $("#main-content").on("click", ".cmd-show-w-all",       function(){ showTabs($(this).closest(".window-lane").data("wid"), true)             });
-        $("#main-content").on("click", ".cmd-hide-w-all",       function(){ hideTabs($(this).closest(".window-lane").data("wid"), false)            });
+        $("#main-content").on("click", ".cmd-mute-w-all",       function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), true)       });
+        $("#main-content").on("click", ".cmd-unmute-w-all",     function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), false)      });
+        $("#main-content").on("click", ".cmd-show-w-all",       function(){ showWindowTabs($(this).closest(".window-lane").data("wid"), true)       });
+        $("#main-content").on("click", ".cmd-hide-w-all",       function(){ showWindowTabs($(this).closest(".window-lane").data("wid"), false)      });
         $("#main-content").on("click", ".cmd-pin-w-all",        function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), true)        });
         $("#main-content").on("click", ".cmd-unpin-w-all",      function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), false)       });
 
@@ -322,7 +325,7 @@
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
 
         // Command containers stop event propagation
-        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private, .status-pinned, .status-muted, status-hidden",
+        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private, .status-pinned, .status-muted, .status-hidden",
                                                                 function(e){ return stopEvent(e) });
 
         // Search handler
@@ -1063,8 +1066,9 @@
                   <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                     <li class="menu-item"> <a href="#" class="cmd-reload-tab nowrap">Reload Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-toggle-muted nowrap">${isMuted(tab) ? "Unmute" : "Mute"} Tab</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-toggle-hidden nowrap">${tab.hidden ? "Show" : "Hide"} Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-hidden nowrap ${css_disabled_active(tab.active)}">${tab.hidden ? "Show" : "Hide"} Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">${tab.pinned ? "Unpin" : "Pin"} Tab</a> </li>
+                    <li class="divider"></li>
                     <li class="menu-item"> <a href="#" class="cmd-duplicate-tab nowrap">Duplicate Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-move-tab-new nowrap">To New Window</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-copy-tab-url nowrap">Copy URL</a> </li>
@@ -1133,7 +1137,7 @@
         }
     }
 
-    const captureOpts = { format: "jpeg", quality: 50 };
+    const CAPTURE_OPTS = { format: "jpeg", quality: 50 };
 
     function refreshThumbnail(tid, forceRefreshImg) {
         if (thumbnailsCapturing[tid])
@@ -1143,7 +1147,7 @@
             renderThumbnail(tid, thumbnailsMap[tid]);
         } else {
             thumbnailsCapturing[tid] = true;
-            browser.tabs.captureTab(tid, captureOpts)
+            browser.tabs.captureTab(tid, CAPTURE_OPTS)
                 .then( thumbnail => {
                     thumbnailsMap[tid] = thumbnail;
                     thumbnailsCapturing[tid] = false;
@@ -1171,6 +1175,7 @@
     function css_display(showing)               { return showing  ? "d-block" : "d-none" }
     function css_draggable()                    { return uiState.displayType == DT_WINDOW || uiState.displayType == DT_CONTAINER ? "draggable-item" : "" }
     function css_tabbox(isPrivate)              { return isPrivate ? " droppable-private " : " droppable-normal " }
+    function css_disabled_active(isActive)      { return isActive ? " disabled " : "" }
 
     function canDropBeforeTab(draggingFromTid, droppingToTid) {
         if (draggingFromTid) {
@@ -1604,27 +1609,33 @@
         document.execCommand("copy");
     }
 
-    function muteTabs(wid, isMuting) {
+    function muteWindowTabs(wid, isMuting) {
         let tabs = wid ? effectiveWindowTabs(wid) : toTabs(effectiveTabIds);    // tabs of a window or all tabs.
         Promise.all( tabs.map( tab => browser.tabs.update(tab.id, { muted: isMuting }) ) )
             .then( updatedTabs => updatedTabs.forEach( tab => tabById[tab.id].mutedInfo = tab.mutedInfo ) )
             .then( () => refreshTabBoxes(toTabIds(tabs), false) )
     }
                      
-    function showTabs(wid) {
-        let tids = effectiveWindowTids(wid);
+    function showTabs(tids) {
         browser.tabs.show(tids).then( () => {
             toTabs(tids).forEach( tab => tab.hidden = false );
             refreshTabBoxes(tids, false);
         });
     }
 
-    function hideTabs(wid) {
-        let tids = effectiveWindowTids(wid);
+    function hideTabs(tids) {
+        tids = toTabs(tids).filter( tab => !tab.active ).map( tab => tab.id );  // active tab cannot be hidden; skip.
         browser.tabs.hide(tids).then( () => {
             toTabs(tids).forEach( tab => tab.hidden = true );
             refreshTabBoxes(tids, false);
         });
+    }
+
+    function showWindowTabs(wid, isShowing) {
+        if (isShowing)
+            showTabs(effectiveWindowTids(wid));
+        else
+            hideTabs(effectiveWindowTids(wid));
     }
 
     function pinWindowTabs(wid, isPinning) {
@@ -1724,15 +1735,9 @@
     function toggleTabHidden(tid) {
         browser.tabs.get(tid).then( tab => {
             if (tab.hidden) {
-                browser.tabs.show(tab.id).then( tids => {
-                    tabById[tid].hidden = false;
-                    refreshTabBoxes([ tid ], false);
-                });
+                showTabs([tab.id]);
             } else {
-                browser.tabs.hide(tab.id).then( tids => {
-                    tabById[tid].hidden = true;
-                    refreshTabBoxes([ tid ], false);
-                }).catch( e => console.error(e) );
+                hideTabs([tab.id]);
             }
         });
     }
