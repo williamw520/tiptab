@@ -11,6 +11,7 @@ cp -r pkg dist/pkg
 cp -r scripts dist/scripts
 cp -r styles dist/styles
 cp -r tiptab.html dist/.
+cp -r options.html dist/.
 
 cd dist
 web-ext build
