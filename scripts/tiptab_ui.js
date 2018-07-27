@@ -312,6 +312,11 @@
         $("#main-content").on("click", ".cmd-toggle-hidden",    function(){ toggleTabHidden($(this).closest(".tab-box").data("tid"))                });
         $("#main-content").on("click", ".cmd-toggle-pinned",    function(){ toggleTabPinned($(this).closest(".tab-box").data("tid"))                });
 
+        // Tab status click handlers
+        $("#main-content").on("click", ".status-pinned",        function(){ toggleTabPinned($(this).closest(".tab-box").data("tid")); return stopEvent(e)   });
+        $("#main-content").on("click", ".status-muted",         function(){ toggleTabMuted($(this).closest(".tab-box").data("tid")); return stopEvent(e)    });
+        $("#main-content").on("click", ".status-hidden",        function(){ toggleTabHidden($(this).closest(".tab-box").data("tid")); return stopEvent(e)   });
+
         // Tab topbar event handlers
         $("#main-content").on("click", ".tab-topbar",           function(){ $(this).closest(".tab-box").focus()                                     });
 
@@ -325,8 +330,7 @@
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
 
         // Command containers stop event propagation
-        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private, .status-pinned, .status-muted, .status-hidden",
-                                                                function(e){ return stopEvent(e) });
+        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private", function(e){ return stopEvent(e) });
 
         // Search handler
         $(".cmd-search").on("click",                            function(){ $(this).select()            });
