@@ -62,19 +62,24 @@
     function setupKeyboardListeners() {
         document.removeEventListener("keydown", hotKeydownHandler, false);
         document.removeEventListener("keyup", hotKeyupHandler, false);
-        if (ttSettings.enableCustomHotKey) {
-            settingSeq = wwhotkey.ofKeySeq(ttSettings.appHotKey);
-            document.addEventListener("keydown", hotKeydownHandler, false);
-            document.addEventListener("keyup", hotKeyupHandler, false);
-        } else {
-            settingSeq = wwhotkey.ofKeySeq();
+        if (ttSettings.enableCustomHotKey && ttSettings.appHotKey) {
+            try {
+                settingSeq = wwhotkey.ofKeySeq(ttSettings.appHotKey);
+                document.addEventListener("keydown", hotKeydownHandler, false);
+                document.addEventListener("keyup", hotKeyupHandler, false);
+                return;
+            } catch(e) {
+                console.error(e);
+            }
         }
+        settingSeq = wwhotkey.ofKeySeq();
     }
 
     function hotKeydownHandler(e) {
         if (ttSettings.enableCustomHotKey) {
             currentSeq.fromEvent(e);
-            if (settingSeq.equals(currentSeq)) {
+            if (settingSeq.hasKey() && settingSeq.equals(currentSeq)) {
+                // log.info("hotKeydownHandler match settingSeq: " + settingSeq.toString() + ", currentSeq: " + currentSeq.toString());
                 browser.runtime.sendMessage({ cmd: "open-ui" });
                 e.preventDefault();
                 return false;
