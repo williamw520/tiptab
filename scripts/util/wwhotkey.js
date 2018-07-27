@@ -152,6 +152,10 @@
             return this.shift == obj2.shift && this.ctrl == obj2.ctrl && this.alt == obj2.alt && this.meta == obj2.meta;
         }
 
+        hasKey() {
+            return this.shift || this.ctrl || this.alt || this.meta;
+        }
+
         toString() {
             let str = "";
             if (this.shift) str += "Shift-";
@@ -212,6 +216,10 @@
         
         equals(obj2) {
             return this.modKeys.equals(obj2.modKeys) && this.keyCode == obj2.keyCode;
+        }
+
+        hasKey() {
+            return this.modKeys.hasKey() || this.keyCode != 0;
         }
 
         toString() {

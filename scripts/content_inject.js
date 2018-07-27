@@ -74,7 +74,8 @@
     function hotKeydownHandler(e) {
         if (ttSettings.enableCustomHotKey) {
             currentSeq.fromEvent(e);
-            if (settingSeq.equals(currentSeq)) {
+            if (settingSeq.hasKey() && settingSeq.equals(currentSeq)) {
+                // log.info("hotKeydownHandler match settingSeq: " + settingSeq.toString() + ", currentSeq: " + currentSeq.toString());
                 browser.runtime.sendMessage({ cmd: "open-ui" });
                 e.preventDefault();
                 return false;
