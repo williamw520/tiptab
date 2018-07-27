@@ -1588,7 +1588,6 @@
     function duplicateTab(tid) {
         browser.tabs.duplicate(tid)
             .then( newTab => {
-                activateTab(newTab);
             }).catch( e => log.warn(e) );
     }
 
