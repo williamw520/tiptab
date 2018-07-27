@@ -1092,9 +1092,9 @@
               <div class="tab-status-bar">
                 <a href="#" class="btn status-private   ${css_display(isPrivate)}"      tabindex="-1" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
                 <a href="#" class="btn status-container ${css_display(isContainer)}"    tabindex="-1" title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
-                <a href="#" class="btn status-pinned    ${css_display(tab.pinned)}"     tabindex="-1" title="Tab is pinned"><img src="icons/pin.png" ></a>
-                <a href="#" class="btn status-muted     ${css_display(isMuted(tab))}"   tabindex="-1" title="Tab is muted"><img src="icons/mute.png" ></a>
-                <a href="#" class="btn status-hidden    ${css_display(tab.hidden)}"     tabindex="-1" title="Tab is hidden"><img src="icons/hidden.png" ></a>
+                <a href="#" class="btn status-pinned    ${css_display(tab.pinned)}"     tabindex="-1" title="Tab is pinned"><img src="icons/pin-unpinned.png" ></a>
+                <a href="#" class="btn status-muted     ${css_display(isMuted(tab))}"   tabindex="-1" title="Tab is muted" ><img src="icons/mute-muted.png" ></a>
+                <a href="#" class="btn status-hidden    ${css_display(tab.hidden)}"     tabindex="-1" title="Tab is hidden"><img src="icons/hide-hidden.png"></a>
               </div>
             </div>   
         `;
