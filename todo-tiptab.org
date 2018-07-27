@@ -11,6 +11,9 @@
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
 
+* Release 2.1 Feature
+** DONE Bug: When custom hotkey is not set, international key input might trigger the empty hotkey.
+
 * Release 2.0 Feature
 ** DONE Color the tab thumbnail border according to container's color.
 ** DONE Color the tab thumbnail border according to tab's private window state.
