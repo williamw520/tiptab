@@ -17,6 +17,9 @@
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
 
+* Release 2.1 Feature
+** DONE Bug: When custom hotkey is not set, international key input might trigger the empty hotkey.
+
 * Release 2.0 Feature
 ** DONE Color the tab thumbnail border according to container's color.
 ** DONE Color the tab thumbnail border according to tab's private window state.
@@ -119,19 +122,16 @@
 The following 3rd party libraries are used in this extension.  The versions and the source locations of where they were obtained are listed below.  Please use text diff when comparing the files in the extension against the file from the sources.  Binary diff might give false positive since the linefeed LF are converted to CRLF between different platforms.
 
 * 3rd Party Libraries
-** JQuery
-   version 3.2.1
+** JQuery, 3.2.1
    https://code.jquery.com/jquery/
    https://code.jquery.com/jquery-3.2.1.min.js
-** JQuery UI
-   version 1.12.1
+** JQuery UI, 1.12.1
    https://jqueryui.com/download/all/
    https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js
-** Moment
+** Moment, 2.22.2
    https://momentjs.com/
    https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js
-** Spectre CSS
-   version 0.4.7
+** Spectre CSS, 0.4.7
    https://github.com/picturepan2/spectre/releases
    https://github.com/picturepan2/spectre/archive/v0.4.7.zip, from the directory spectre-0.4.7/docs/dist/.
 
