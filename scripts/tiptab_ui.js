@@ -660,8 +660,12 @@
             });
     }
 
+    function isTabActive(tab) {
+        return tab.active || wasTabActive(tab);
+    }
+
     function wasTabActive(tab) {
-        return (tab.hasOwnProperty("windowId") && tab.windowId == currentWid && tab.id == currentLastActiveTabId) ? true : tab.active;
+        return tab.hasOwnProperty("windowId") && tab.windowId == currentWid && tab.id == currentLastActiveTabId;
     }
 
     function countTabs() {
@@ -1057,7 +1061,7 @@
             <div class="tab-box ${css_tabbox(isPrivate)}" id="tid-${tab.id}" data-tid="${tab.id}" tabindex="2">
 
               <div class="tab-topbar ${css_draggable()}" title="Drag the top bar to start drag and drop on the thumbnail.">
-                <div class="tab-title" title="TAB-TITLE">TAB-TITLE</div>
+                <div class="tab-title ${isTabActive(tab) ? 'bold' : ''}" title="TAB-TITLE">TAB-TITLE</div>
               </div>
 
               <div class="tab-topbar-cmds">
@@ -1085,7 +1089,7 @@
                 </div>
               </div>
 
-              <div class="tab-thumbnail" style="border-color: ${c.colorCode}; ${box_shadow_private(tab.incognito)}; ${box_shadow_active(wasTabActive(tab))}; ">
+              <div class="tab-thumbnail" style="border-color: ${c.colorCode}; ${box_shadow_private(tab.incognito)}; ">
                 <img class="tab-img">
               </div>
 
@@ -1366,7 +1370,7 @@
             let $container  = $(".container-lane[data-cid='" + c.cookieStoreId + "']");
             let $endzone    = $("<div class='drop-end-zone' data-cid='" + c.cookieStoreId + "'></div>");
             let $lastTab    = $container.find(".tab-thumbnail").last();
-            if ($lastTab.length) {
+            if ($lastTab.length) {
                 let endzoneLeft = $lastTab.offset().left + $lastTab.outerWidth() + 2;
                 $endzone.offset({ top: $lastTab.offset().top,  left: endzoneLeft })
                     .width($container.offset().left + $container.width() - endzoneLeft - 1)
