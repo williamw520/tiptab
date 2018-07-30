@@ -748,9 +748,13 @@
             $("#main-content").addClass("hidden");
             $("#empty-content").removeClass("hidden");
             if (countTabs() > 0) {
+                $("#empty-title").text("");
                 $("#empty-msg1").text("Tabs are hidden due to filtering by search, or by window or container selection at footer.");
+                $("#empty-msg2").text("");
             } else {
-                $("#empty-msg1").text("");
+                $("#empty-title").text("No tab.");
+                $("#empty-msg1").text("Reload the page to get the latest tab data.");
+                $("#empty-msg2").text("");
             }
         }
         setupDragAndDrop();
