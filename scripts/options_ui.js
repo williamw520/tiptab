@@ -126,7 +126,9 @@
 
         $("#resetToDefault").on("click", function(){
             ttSettings = new TipTabSettings();
-            settings.pRemove().then( () => refreshSettings() );
+            //settings.pRemove().then( () => refreshSettings() );
+            refreshSettings();
+            updateChanges();
         });
 
     }
