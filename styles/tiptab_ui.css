@@ -165,7 +165,8 @@ body {
 
 /* Modify the badge for footer-btn */
 .badge.footer-btn[data-badge]::after {
-    background:     #4f9fef;
+    /* background:     #4f9fef; */
+    background:     rgba(232, 86, 0, .9);
     font-size:      .5rem;
     min-width:      0.7rem;
     height:         0.7rem;
@@ -430,7 +431,7 @@ a.disabled {
     width:          100%;
     margin-left:    auto;
     margin-right:   auto;
-    padding-left:   0.8rem;
+    padding-left:   0.4rem;
 
     box-shadow:     0px -1px #ffffff;
     border-top:     0.02rem solid #c0c0c0;
@@ -440,17 +441,40 @@ a.disabled {
     display:        flex;
     align-items:    center;
 }
-.footer-bar .footer-btns {
+.footer-bar .window-filter-btns {
     display:        flex;
     flex-direction: row;
     align-items:    center;
 }
-.footer-btns .btn.footer-btn {
+.btn.footer-btn {
     height:         1.3rem;
     width:          1.4rem;
-    padding:        .05rem .05rem;
-    margin-right:   0.8rem;
+    padding:        0;
+    line-height:    0;
+    margin-left:    0.4rem;
+    margin-right:   0.4rem;
     margin-top:     0.2rem;
+}
+
+.footer-bar .status-filter-btns {
+    display:        flex;
+    flex-direction: row;
+    align-items:    center;
+}
+.cmd-filter-by-hidden img {
+    margin-top:     1px;
+    width:          14px;
+    height:         14px;
+}
+.cmd-filter-by-muted img {
+    margin-top:     0px;
+    width:          14px;
+    height:         14px;
+}
+.cmd-filter-by-pinned img {
+    margin-top:     1px;
+    width:          14px;
+    height:         14px;
 }
 
 .v-container {
