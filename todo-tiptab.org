@@ -19,8 +19,7 @@
 ** DONE Clicking on the status buttons of a tab changes the status.
 ** DONE Change the decoration of an active tab from highlighted border shadow to bold title.
 ** DONE More helpful message for empty view with no tab.
-** DONE Filter tab by status (muted, pinned, hidden, normal/private).  Tri-state: none, muted, unmuted.
-
+** DONE Filter tab by status (hidden, muted, pinned).  Tri-state: none, muted, unmuted.
 
 * Release 2.2 Feature
 ** DONE Bug: Missing Options page in packaging for some platforms.
@@ -149,6 +148,7 @@ The following 3rd party libraries are used in this extension.  The versions and 
 * Description
 Tip Tab let you manage and navigate the open browser tabs visually, similar to the Exposé feature on Mac OS.
 
+NOTE: Starting from version 2.3, Tip Tab requires Firefox 61, to support the hidden tab feature.
 
 <b>Feature Highlight:</b>
 <ul>
@@ -158,9 +158,9 @@ Tip Tab let you manage and navigate the open browser tabs visually, similar to t
   <li> Custom sizes of tab thumbnails.
   <li> Showing tabs by all, by windows, or by containers.
   <li> Search tabs.  Filter by search words in titles.
-  <li> Filter tabs by windows or by containers.
+  <li> Filter tabs by windows or by containers.  Filter by status (hidden, muted, pinned).
   <li> Showing tab attributes with decoration, colors, and status icons.
-  <li> Tab commands: reload, mute, pin, copy, screenshot download, various flavors of close commands, etc.
+  <li> Tab commands: reload, hide, mute, pin, copy, screenshot download, various flavors of close commands, etc.
   <li> Window commands, applying to all the tabs in a window.
   <li> Global commands, applying to all the tabs.
   <li> Drag and drop to re-arrange tabs within a window or a container.
@@ -181,6 +181,7 @@ Tip Tab let you manage and navigate the open browser tabs visually, similar to t
  <li>The "contextualIdentities" permission is required to retrieve the container information.</li>
  <li>The "sessions" permission is used to undo closed tab.</li>
  <li>The "downloads" permission is used to let user download the tab window screenshot.</li>
+ <li>The "tabHide" permission is used to hide and show tabs.</li>
 </ol>
 
 <b>Information:</b>
