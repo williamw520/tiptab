@@ -5,6 +5,7 @@
 ** DONE Focus stays on Tip Tab page after duplicating a tab.
 ** DONE Clicking on the status buttons of a tab changes the status.
 ** DONE Change the decoration of an active tab from highlighted border shadow to bold title.
+** DONE More helpful message for empty view with no tab.
 ** TODO Filter tab by status (muted, pinned, hidden, normal/private).  Tri-state: none, muted, unmuted.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Container cmd: Move all tabs of a container to its window.
