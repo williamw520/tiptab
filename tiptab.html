@@ -119,7 +119,20 @@
       </div><!-- h-container -->
 
       <footer class="footer-bar">
-        <div class="footer-btns"></div>
+        <div class="status-filter-btns" title="Filter by tab status">
+          <button class="cmd-filter-by-hidden btn footer-btn badge deselected" tabindex="-1" data-badge="&#x2713;" title="Filter by tab's hidden status">
+            <img src="icons/hide-all.png" >
+          </button>
+          <button class="cmd-filter-by-muted  btn footer-btn badge deselected" tabindex="-1" data-badge="&#x2713;" title="Filter by tab's muted status">
+            <img src="icons/mute-all.png" >
+          </button>
+          <button class="cmd-filter-by-pinned btn footer-btn badge deselected" tabindex="-1" data-badge="&#x2713;" title="Filter by tab's pinned status">
+            <img src="icons/pin-all.png" >
+          </button>
+        </div>
+        <div style="margin: 0.2rem 0.5rem 0 0.5rem; border-left: 1px dotted gray; height: 57.5%;"></div>
+        <div class="window-filter-btns" title="Filter by windows or containers">
+        </div>
       </footer>
 
     </div><!-- v-container -->
