@@ -1,7 +1,7 @@
 
 * Feature TODO
 ** DONE User defined thumbnail dimensions.
-** TODO Monitor audio playing.
+** DONE Add audio decoration.  Monitor audio playing.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Container cmd: Move all tabs of a container to its window.
 ** TODO Refresh one tab onUpdated
