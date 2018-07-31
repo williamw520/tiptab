@@ -77,6 +77,14 @@
         $("#showEmptyWindows").prop("checked", ttSettings.showEmptyWindows);
         $("#showEmptyContainers").prop("checked", ttSettings.showEmptyContainers);
         $("#realtimeUpdateThumbnail").prop("checked", ttSettings.realtimeUpdateThumbnail);
+
+        $("#thumbnailWidth0").val(ttSettings.thumbnailWidth0);
+        $("#thumbnailHeight0").val(ttSettings.thumbnailHeight0);
+        $("#thumbnailWidth1").val(ttSettings.thumbnailWidth1);
+        $("#thumbnailHeight1").val(ttSettings.thumbnailHeight1);
+        $("#thumbnailWidth2").val(ttSettings.thumbnailWidth2);
+        $("#thumbnailHeight2").val(ttSettings.thumbnailHeight2);
+        
         $("#enableCustomHotKey").prop("checked", ttSettings.enableCustomHotKey);
         $("#appHotKey").val(ttSettings.appHotKey);
         $(".is-error").removeClass("is-error");
@@ -88,7 +96,15 @@
         $("#showEmptyWindows").on("change",         function(){ ttSettings.showEmptyWindows = this.checked; updateChanges() });
         $("#showEmptyContainers").on("change",      function(){ ttSettings.showEmptyContainers = this.checked; updateChanges() });
         $("#realtimeUpdateThumbnail").on("change",  function(){ ttSettings.realtimeUpdateThumbnail = this.checked; updateChanges() });
-        $("#enableCustomHotKey").on("change",             function(){ ttSettings.enableCustomHotKey = this.checked; updateChanges() });
+
+        $("#thumbnailWidth0").on("input",          function(){ ttSettings.thumbnailWidth0  = $(this).val(); updateChanges() });
+        $("#thumbnailHeight0").on("input",         function(){ ttSettings.thumbnailHeight0 = $(this).val(); updateChanges() });
+        $("#thumbnailWidth1").on("input",          function(){ ttSettings.thumbnailWidth1  = $(this).val(); updateChanges() });
+        $("#thumbnailHeight1").on("input",         function(){ ttSettings.thumbnailHeight1 = $(this).val(); updateChanges() });
+        $("#thumbnailWidth2").on("input",          function(){ ttSettings.thumbnailWidth2  = $(this).val(); updateChanges() });
+        $("#thumbnailHeight2").on("input",         function(){ ttSettings.thumbnailHeight2 = $(this).val(); updateChanges() });
+
+        $("#enableCustomHotKey").on("change",       function(){ ttSettings.enableCustomHotKey = this.checked; updateChanges() });
         $("#appHotKey").on("input",                 function(){ getHotKeyInput(); updateChanges() });
 
         // Special handling for hotkey input by keypressing.
