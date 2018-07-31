@@ -36,9 +36,9 @@
     if (modulename)
         scope[modulename] = module; // set module name in scope, otherwise caller sets the name with the returned module object.
 
-    let orgSettings = new TipTabSettings();
-    let ttSettings = new TipTabSettings();
-    let hasChanged = false;
+    let orgSettings = TipTabSettings.ofLatest();
+    let ttSettings  = TipTabSettings.ofLatest();
+    let hasChanged  = false;
 
     // Firefox's Content Security Policy for WebExtensions prohibits running any Javascript in the html page.
     // Wait for the page loaded event before doing anything.
@@ -141,7 +141,7 @@
         });
 
         $("#resetToDefault").on("click", function(){
-            ttSettings = new TipTabSettings();
+            ttSettings = TipTabSettings.ofLatest();
             //settings.pRemove().then( () => refreshSettings() );
             refreshSettings();
             updateChanges();
