@@ -35,14 +35,22 @@
 
     class TipTabSettings {
 
-        constructor(jsonObj) {
+        static ofLatest() {
+            return new TipTabSettings()._newVersion2();
+        }
+
+        static upgradeWith(jsonObj) {
+            return TipTabSettings.ofLatest()._fromObj(jsonObj);     // initialize with latest version, then override with the data object.
+        }
+
+        static loadAs(jsonObj) {
+            let ttSettings = new TipTabSettings();
+            ttSettings._version = jsonObj._version;                 // preserve the version from the jsonObj
+            return ttSettings._fromObj(jsonObj);
+        }
+
+        constructor() {
             this._type = "TipTabSettings";
-            this._version = 2;
-            if (jsonObj) {
-                this._fromObj(jsonObj);
-            } else {
-                this._newVersion2();
-            }
         }
 
         _fromObj(jsonObj) {
@@ -57,12 +65,14 @@
         }
 
         _newVersion1() {
+            this._version               = 1;
             this.thumbnailPopup         = true;
             this.showEmptyWindows       = false;
             this.showEmptyContainers    = true;
             this.realtimeUpdateThumbnail= true;
             this.enableCustomHotKey     = true;
             this.appHotKey = "";
+            return this;
         }
 
         _fromVersion1(jsonObj) {
@@ -81,12 +91,14 @@
 
         _newVersion2() {
             this._newVersion1();
+            this._version               = 2;
             this.thumbnailWidth0        = "8.00rem";
             this.thumbnailHeight0       = "4.50rem";
             this.thumbnailWidth1        = "12.00rem";
             this.thumbnailHeight1       = "6.75rem";
             this.thumbnailWidth2        = "17.77rem";
             this.thumbnailHeight2       = "10.00rem";
+            return this;
         }
 
         _fromVersion2(jsonObj) {
@@ -110,11 +122,11 @@
         return browser.storage.local.get("tipTabSettings")
             .then( results => {
                 return results && results.hasOwnProperty("tipTabSettings") ?
-                    new module.TipTabSettings(results.tipTabSettings) : new module.TipTabSettings();
+                    TipTabSettings.upgradeWith(results.tipTabSettings) : TipTabSettings.ofLatest();
             })
             .catch( e => {
                 log.warn(e);
-                return new module.TipTabSettings();
+                return TipTabSettings.ofLatest();
             })
     }
 

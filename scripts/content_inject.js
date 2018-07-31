@@ -36,7 +36,7 @@
     
     log.info(window.location.href + " starts -------------------------");
 
-    let ttSettings = new TipTabSettings();
+    let ttSettings = TipTabSettings.ofLatest();
     let settingSeq = wwhotkey.ofKeySeq();
     let currentSeq = wwhotkey.ofKeySeq();
 
@@ -53,7 +53,8 @@
         return browser.storage.onChanged.addListener(storageChange => {
             if (storageChange.hasOwnProperty("tipTabSettings")) {
                 // log.info("storage.onChanged");
-                ttSettings = new TipTabSettings(storageChange.tipTabSettings.newValue);
+                //ttSettings = new TipTabSettings(storageChange.tipTabSettings.newValue);
+                ttSettings = TipTabSettings.upgradeWith(storageChange.tipTabSettings.newValue);
                 setupKeyboardListeners();
             }
         });
