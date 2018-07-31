@@ -67,6 +67,8 @@
         <div class="panel-body" style=" background: #fcfcfc;">
           <form class="form-horizontal">
 
+            <div class="divider text-left" data-content="Tab Display" style="margin-top:1rem;"></div>
+            
             <div class="form-group ">
               <div class="col-5 pr-2"> <label class="form-label" for="thumbnailPopup">Show Tab Thumbnail Popup</label> </div>
               <div class="col-7">
@@ -95,6 +97,41 @@
               </div>
             </div>    
 
+            <div class="divider text-left" data-content="Thumbnail Dimension" style="margin-top:1rem;"></div>
+            
+            <div class="form-group ">
+              <div class="col-5 pr-2"> <label class="form-label" for="appHotKey">Small Thumbnail Width/Height</label> </div>
+              <div class="col-7">
+                <div class="input-group">
+                  <input class="form-input" type="text" id="thumbnailWidth0"  maxlength="15" style="flex: 0 1 auto; width: 8rem;" placeholder="width, with unit" />
+                  <input class="form-input" type="text" id="thumbnailHeight0" maxlength="15" style="flex: 0 1 auto; width: 8rem;" placeholder="height, with unit" />
+                </div>
+              </div>
+            </div>    
+
+            <div class="form-group ">
+              <div class="col-5 pr-2"> <label class="form-label" for="appHotKey">Medium Thumbnail Width/Height</label> </div>
+              <div class="col-7">
+                <div class="input-group">
+                  <input class="form-input" type="text" id="thumbnailWidth1"  maxlength="15" style="flex: 0 1 auto; width: 8rem;" placeholder="width, with unit" />
+                  <input class="form-input" type="text" id="thumbnailHeight1" maxlength="15" style="flex: 0 1 auto; width: 8rem;" placeholder="height, with unit" />
+                </div>
+              </div>
+            </div>    
+
+            <div class="form-group ">
+              <div class="col-5 pr-2"> <label class="form-label" for="appHotKey">Large Thumbnail Width/Height</label> </div>
+              <div class="col-7">
+                <div class="input-group">
+                  <input class="form-input" type="text" id="thumbnailWidth2"  maxlength="15" style="flex: 0 1 auto; width: 8rem;" placeholder="width, with unit" />
+                  <input class="form-input" type="text" id="thumbnailHeight2" maxlength="15" style="flex: 0 1 auto; width: 8rem;" placeholder="height, with unit" />
+                </div>
+              </div>
+            </div>    
+
+
+            <div class="divider text-left" data-content="Shortcut Key" style="margin-top:1rem;"></div>
+
             <div class="form-group ">
               <div class="col-5 pr-2"> <label class="form-label" for="enableCustomHotKey">Enable Custom Hot Key</label> </div>
               <div class="col-7">
@@ -106,8 +143,8 @@
               <div class="col-5 pr-2"> <label class="form-label" for="appHotKey">Hot Key Sequence</label> </div>
               <div class="col-7">
                 <div class="input-group">
-                  <button class="btn" id="keyPressing">Enter by Key Press</button>
-                  <input class="form-input" type="text" id="appHotKey" maxlength="30" style="flex: 0 1 auto; width: 10rem;" placeholder="shift-ctrl-F" />
+                  <button class="btn" id="keyPressing" style="width:8rem;">Enter by Key Press</button>
+                  <input class="form-input" type="text" id="appHotKey" maxlength="30" style="flex: 0 1 auto; width: 8rem;" placeholder="shift-ctrl-F" />
                 </div>
                 <p class="form-input-error">Invalid key sequence.</p>
               </div>
