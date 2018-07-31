@@ -76,7 +76,7 @@
     const ICON_PINNED = ["icons/pin-all.png",  "icons/pin-pinned.png",  "icons/pin-unpinned.png"];
 
     // Module variables.
-    let ttSettings = new TipTabSettings();
+    let ttSettings = TipTabSettings.ofLatest();
     let defaultSeq;
     let settingSeq;
     let currentSeq = wwhotkey.ofKeySeq();
@@ -201,7 +201,7 @@
     function storage_onChanged(storageChange) {
         // Monitor settings storage change.
         if (app.has(storageChange, "tipTabSettings")) {
-            ttSettings = new TipTabSettings(storageChange.tipTabSettings.newValue);
+            ttSettings = TipTabSettings.upgradeWith(storageChange.tipTabSettings.newValue);
             thumbnailDimFromSetting(ttSettings);
             setupKeyboardListeners();
             redrawRefreshContentOnFiltering();
