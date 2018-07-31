@@ -264,7 +264,8 @@
         // if (tab && tab.hasOwnProperty("url") && is_tiptaburl(tab.url))  // skip the TipTab tab itself.
         //     return;
 
-        createTabData(tab);
+        let refreshNeeded = 0;
+        createTabData(tab);                 // create the tab object if it doesn't exist.
         if (info.hasOwnProperty("url"))
             tabById[tabId].url = info.url;
         if (info.hasOwnProperty("title"))
@@ -272,12 +273,22 @@
         if (info.hasOwnProperty("favIconUrl")) {
             tabById[tabId].favIconUrl = info.favIconUrl;
             if (tab.url == "about:newtab") {
-                refreshTabData(tab);
+                refreshNeeded++;
             }
         }
-        if (info.hasOwnProperty("status") && info.status == "complete") {
-            refreshTabData(tab);
+        if (info.hasOwnProperty("audible")) {
+            let oldAudible = tabById[tabId].audible;
+            tabById[tabId].audible = info.audible;
+            if (oldAudible != info.audible)
+                refreshNeeded++;
         }
+        if (info.hasOwnProperty("status") && info.status == "complete") {
+            refreshNeeded++;
+        }
+
+        if (refreshNeeded > 0)
+            refreshTabData(tabById[tabId]);
+        
     }
 
 
@@ -332,9 +343,10 @@
         $("#main-content").on("click", ".cmd-toggle-pinned",    function(){ toggleTabPinned($(this).closest(".tab-box").data("tid"))                });
 
         // Tab status click handlers
-        $("#main-content").on("click", ".status-pinned",        function(){ toggleTabPinned($(this).closest(".tab-box").data("tid")); return stopEvent(e)   });
-        $("#main-content").on("click", ".status-muted",         function(){ toggleTabMuted($(this).closest(".tab-box").data("tid")); return stopEvent(e)    });
-        $("#main-content").on("click", ".status-hidden",        function(){ toggleTabHidden($(this).closest(".tab-box").data("tid")); return stopEvent(e)   });
+        $("#main-content").on("click", ".status-pinned",        function(e){ toggleTabPinned($(this).closest(".tab-box").data("tid"));  return stopEvent(e) });
+        $("#main-content").on("click", ".status-muted",         function(e){ toggleTabMuted($(this).closest(".tab-box").data("tid"));   return stopEvent(e) });
+        $("#main-content").on("click", ".status-audible",       function(e){ toggleTabMuted($(this).closest(".tab-box").data("tid"));   return stopEvent(e) });
+        $("#main-content").on("click", ".status-hidden",        function(e){ toggleTabHidden($(this).closest(".tab-box").data("tid"));  return stopEvent(e) });
 
         // Tab topbar event handlers
         $("#main-content").on("click", ".tab-topbar",           function(){ $(this).closest(".tab-box").focus()                                     });
@@ -1149,9 +1161,10 @@
               <div class="tab-status-bar">
                 <a href="#" class="btn status-private   ${css_display(isPrivate)}"      tabindex="-1" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
                 <a href="#" class="btn status-container ${css_display(isContainer)}"    tabindex="-1" title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
-                <a href="#" class="btn status-hidden    ${css_display(tab.hidden)}"     tabindex="-1" title="Tab is hidden"><img src="icons/hide-hidden.png" ></a>
-                <a href="#" class="btn status-muted     ${css_display(isMuted(tab))}"   tabindex="-1" title="Tab is muted" ><img src="icons/mute-muted.png"  ></a>
-                <a href="#" class="btn status-pinned    ${css_display(tab.pinned)}"     tabindex="-1" title="Tab is pinned"><img src="icons/pin-unpinned.png"></a>
+                <a href="#" class="btn status-hidden    ${css_display(tab.hidden)}"     tabindex="-1" title="Tab is hidden"><img src="icons/hide-hidden.png"    ></a>
+                <a href="#" class="btn status-muted     ${css_display(isMuted(tab))}"   tabindex="-1" title="Tab is muted" ><img src="icons/mute-muted.png"     ></a>
+                <a href="#" class="btn status-audible   ${css_audible(tab)}"            tabindex="-1" title="Tab is playing sound"><img src="icons/audible.png" ></a>
+                <a href="#" class="btn status-pinned    ${css_display(tab.pinned)}"     tabindex="-1" title="Tab is pinned"><img src="icons/pin-unpinned.png"   ></a>
               </div>
             </div>   
         `;
@@ -1189,6 +1202,12 @@
             $statusbar.find(".status-muted").removeClass("d-none").addClass("d-block");
         } else {
             $statusbar.find(".status-muted").removeClass("d-block").addClass("d-none");
+        }
+
+        if (tab.audible) {
+            $statusbar.find(".status-audible").removeClass("d-none").addClass("d-block");
+        } else {
+            $statusbar.find(".status-audible").removeClass("d-block").addClass("d-none");
         }
 
         if (tab.hidden) {
@@ -1237,6 +1256,7 @@
     function css_draggable()                    { return uiState.displayType == DT_WINDOW || uiState.displayType == DT_CONTAINER ? "draggable-item" : "" }
     function css_tabbox(isPrivate)              { return isPrivate ? " droppable-private " : " droppable-normal " }
     function css_disabled_active(isActive)      { return isActive ? " disabled " : "" }
+    function css_audible(tab)                   { return tab.audible ? "d-block blink-yellow" : "d-none" }
 
     function canDropBeforeTab(draggingFromTid, droppingToTid) {
         if (draggingFromTid) {

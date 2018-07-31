@@ -310,9 +310,9 @@ a.disabled {
     animation-iteration-count: 1;
 }
 @keyframes flash-yellow {
-    0% { background-color: transparent; }
-    50% { background-color: #fbf8b2; }
-    100% { background-color: transparent; }
+    0%      { background-color: transparent; }
+    50%     { background-color: #fbf8b2; }
+    100%    { background-color: transparent; }
 }
 
 .flash-blue {
@@ -320,9 +320,9 @@ a.disabled {
     animation-iteration-count: 1;
 }
 @keyframes flash-blue {
-    0% { background-color: transparent; }
-    50% { background-color: #01d1ff; }
-    100% { background-color: transparent; }
+    0%      { background-color: transparent; }
+    50%     { background-color: #01d1ff; }
+    100%    { background-color: transparent; }
 }
 
 .flash-red {
@@ -330,9 +330,17 @@ a.disabled {
     animation-iteration-count: 1;
 }
 @keyframes flash-red {
-    0% { background-color: transparent; }
-    50% { background-color: red; }
-    100% { background-color: transparent; }
+    0%      { background-color: transparent; }
+    50%     { background-color: red; }
+    100%    { background-color: transparent; }
+}
+
+.blink-yellow {
+    animation: blink-yellow 1s linear infinite;
+}
+@keyframes blink-yellow {
+    50%     { background-color: white; }
+    100%    { background-color: red; }
 }
 
 .m-01   {   margin:         .1rem;  }
@@ -714,6 +722,18 @@ a.disabled {
     padding:            0.05rem 0 0 0;
 }
 .status-muted img {
+    width:              10px;
+    height:             10px;
+}
+
+.status-audible {
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    line-height:        0;
+    margin:             0 0.1rem 0 0.1rem;
+    padding:            0.05rem 0 0 0;
+}
+.status-audible img {
     width:              10px;
     height:             10px;
 }
