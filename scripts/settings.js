@@ -37,11 +37,11 @@
 
         constructor(jsonObj) {
             this._type = "TipTabSettings";
-            this._version = 1;
+            this._version = 2;
             if (jsonObj) {
                 this._fromObj(jsonObj);
             } else {
-                this._newVersion1();
+                this._newVersion2();
             }
         }
 
@@ -49,17 +49,19 @@
             switch (jsonObj._version) {
             case 1:
                 return this._fromVersion1(jsonObj);
+            case 2:
+                return this._fromVersion2(jsonObj);
             default:
                 throw Error("Unsupported object version " + jsonObj._version);
             }
         }
 
-        _newVersion1(capacity) {
-            this.thumbnailPopup = true;
-            this.showEmptyWindows = false;
-            this.showEmptyContainers = true;
-            this.realtimeUpdateThumbnail = true;
-            this.enableCustomHotKey = true;
+        _newVersion1() {
+            this.thumbnailPopup         = true;
+            this.showEmptyWindows       = false;
+            this.showEmptyContainers    = true;
+            this.realtimeUpdateThumbnail= true;
+            this.enableCustomHotKey     = true;
             this.appHotKey = "";
         }
 
@@ -70,13 +72,38 @@
             this.realtimeUpdateThumbnail= jsonObj.hasOwnProperty("realtimeUpdateThumbnail") ? jsonObj.realtimeUpdateThumbnail : true;
             this.enableCustomHotKey     = jsonObj.hasOwnProperty("enableCustomHotKey") ? jsonObj.enableCustomHotKey : true;
             this.appHotKey              = jsonObj.appHotKey || "";
-            return this._validate();
+            return this._validate1();
         }
 
-        _validate() {
+        _validate1() {
             return this;
         }
 
+        _newVersion2() {
+            this._newVersion1();
+            this.thumbnailWidth0        = "8.00rem";
+            this.thumbnailHeight0       = "4.50rem";
+            this.thumbnailWidth1        = "12.00rem";
+            this.thumbnailHeight1       = "6.75rem";
+            this.thumbnailWidth2        = "17.77rem";
+            this.thumbnailHeight2       = "10.00rem";
+        }
+
+        _fromVersion2(jsonObj) {
+            this._fromVersion1(jsonObj);
+            this.thumbnailWidth0        = jsonObj.hasOwnProperty("thumbnailWidth0")  ? jsonObj.thumbnailWidth0  : "8.0rem";
+            this.thumbnailHeight0       = jsonObj.hasOwnProperty("thumbnailHeight0") ? jsonObj.thumbnailHeight0 : "4.50rem";
+            this.thumbnailWidth1        = jsonObj.hasOwnProperty("thumbnailWidth1")  ? jsonObj.thumbnailWidth1  : "12.00rem";
+            this.thumbnailHeight1       = jsonObj.hasOwnProperty("thumbnailHeight1") ? jsonObj.thumbnailHeight1 : "6.75rem";
+            this.thumbnailWidth2        = jsonObj.hasOwnProperty("thumbnailWidth2")  ? jsonObj.thumbnailWidth2  : "17.77rem";
+            this.thumbnailHeight2       = jsonObj.hasOwnProperty("thumbnailHeight2") ? jsonObj.thumbnailHeight2 : "10.00rem";
+            return this._validate2();
+        }
+
+        _validate2() {
+            return this;
+        }
+        
     }
 
     function pLoad() {

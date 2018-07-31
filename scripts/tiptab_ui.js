@@ -71,10 +71,6 @@
     // Chars
     const CHAR_CHECKMARK = "&#x2713;";
 
-    // Dimensions for thumbnailSize.  See --img-width-base and --img-height-base in .css file.
-    const imgWidth  = ["8.0rem", "12rem", "17.77rem"];
-    const imgHeight = ["4.5rem", "6.75rem",  "10rem"];
-
     const ICON_HIDDEN = ["icons/hide-all.png", "icons/hide-hidden.png", "icons/hide-shown.png"];
     const ICON_MUTED  = ["icons/mute-all.png", "icons/mute-muted.png",  "icons/mute-unmuted.png"];
     const ICON_PINNED = ["icons/pin-all.png",  "icons/pin-pinned.png",  "icons/pin-unpinned.png"];
@@ -103,6 +99,10 @@
     let thumbnailsMap = {};         // keyed by tab id
     let thumbnailsCapturing = {};   // keyed by tab id
 
+    // Effective dimensions for thumbnail; will set CSS variable --img-width and --img-height with these dimensions.
+    let imgWidth  = ["8.0rem", "12rem", "17.77rem"];
+    let imgHeight = ["4.5rem", "6.75rem",  "10rem"];
+
     let thumbnailFocusTid = null;   // related to thumbnail popup on mouse move.
     let enableOverlay = true;
     let overlayShownTid = null;
@@ -120,6 +120,7 @@
         Promise.resolve()
             //.then(() => log.info("Page initialization starts") )
             .then(() => settings.pLoad().then(tts => ttSettings = tts) )
+            .then(() => thumbnailDimFromSetting(ttSettings) )
             .then(() => pixels_per_rem = getFontSizeRem() )
             .then(() => pGetCurrnetTab() )
             .then(() => pGetLastActiveTab() )
@@ -188,13 +189,24 @@
         return uiState;
     }
 
+    function thumbnailDimFromSetting(theSettings) {
+        imgWidth[0]  = theSettings.thumbnailWidth0  || "8.0rem";
+        imgHeight[0] = theSettings.thumbnailHeight0 || "4.50rem";
+        imgWidth[1]  = theSettings.thumbnailWidth1  || "12.00rem";
+        imgHeight[1] = theSettings.thumbnailHeight1 || "6.75rem";
+        imgWidth[2]  = theSettings.thumbnailWidth2  || "17.77rem";
+        imgHeight[2] = theSettings.thumbnailHeight2 || "10.00rem";
+    }
+
     function storage_onChanged(storageChange) {
         // Monitor settings storage change.
         if (app.has(storageChange, "tipTabSettings")) {
             ttSettings = new TipTabSettings(storageChange.tipTabSettings.newValue);
+            thumbnailDimFromSetting(ttSettings);
             setupKeyboardListeners();
             redrawRefreshContentOnFiltering();
             redrawRefreshControls();
+            setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
         }
     }
 
