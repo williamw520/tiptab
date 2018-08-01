@@ -1,8 +1,5 @@
 
 * Feature TODO
-** DONE User defined thumbnail dimensions.
-** DONE Add audio decoration.  Monitor audio playing.
-** DONE Sync tab display with the tabs moved by the user directly in the browser.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Container cmd: Move all tabs of a container to its window.
 ** TODO Refresh one tab onUpdated
@@ -13,6 +10,12 @@
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
+
+
+* Release 2.4 Feature
+** DONE User defined thumbnail dimensions.
+** DONE Add audio decoration.  Monitor audio playing.
+** DONE Sync tab display with the tabs moved by the user directly in the browser.
 
 
 * Release 2.3 Feature
