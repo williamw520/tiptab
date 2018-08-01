@@ -137,6 +137,7 @@
             .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
             .then(() => browser.tabs.onRemoved.addListener(tabs_onRemoved) )
             .then(() => browser.tabs.onUpdated.addListener(tabs_onUpdated) )
+            .then(() => browser.tabs.onMoved.addListener(tabs_onMoved) )
             //.then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
@@ -291,6 +292,9 @@
         
     }
 
+    function tabs_onMoved(tabId, moveInfo) {
+        return pReloadTabsWindowsAndContainers().then( () => redrawRefreshUIContent(false, false) );
+    }
 
     function setupDOMListeners() {
         //log.info("setupDOMListeners");
