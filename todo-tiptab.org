@@ -2,6 +2,7 @@
 * Feature TODO
 ** DONE User defined thumbnail dimensions.
 ** DONE Add audio decoration.  Monitor audio playing.
+** DONE Sync tab display with the tabs moved by the user directly in the browser.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Container cmd: Move all tabs of a container to its window.
 ** TODO Refresh one tab onUpdated
