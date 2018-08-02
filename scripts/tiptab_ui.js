@@ -917,8 +917,8 @@
               <div class="window-lane d-none" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
                 <div class="window-topbar" title="Window">
                   <div class="window-title" title="Window">WINDOW-TITLE</div>
-                  <div class="dropdown dropdown-right window-topbar-menu" >
-                    <div class="btn-group" style="margin:0">
+                  <div class="dropdown dropdown-right window-topbar-menu">
+                    <div class="btn-group" >
                       <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
                       <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                         <li class="menu-item" title="Reload tabs in window"> <a href="#" class="cmd-reload-w-tabs nowrap">Reload Tabs</a> </li>
@@ -1138,7 +1138,7 @@
               </div>
 
               <div class="dropdown dropdown-right tab-topbar-menu" >
-                <div class="btn-group" style="margin:0">
+                <div class="btn-group">
                   <a href="#" class="btn dropdown-toggle tab-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
                   <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                     <li class="menu-item"> <a href="#" class="cmd-reload-tab nowrap">Reload Tab</a> </li>
