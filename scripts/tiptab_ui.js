@@ -81,9 +81,10 @@
     let settingSeq;
     let currentSeq = wwhotkey.ofKeySeq();
     let pixels_per_rem = 16;
-    let currentWid;
-    let currentTid;
-    let currentLastActiveTabId = -1;
+    let currentWid;                 // the current TipTab's window id
+    let currentTid;                 // the current TipTab's tab id
+    let currentLastActiveTabId = 0; // the previous active tab on the current window.
+    let previousFocusedTid = 0;
 
     let uiState = {};
     let tabById = {};               // the only map holding the Tab objects.
@@ -123,7 +124,7 @@
             .then(() => thumbnailDimFromSetting(ttSettings) )
             .then(() => pixels_per_rem = getFontSizeRem() )
             .then(() => pGetCurrnetTab() )
-            .then(() => pGetLastActiveTab() )
+            .then(() => pGetCurrentLastActiveTab() )
             .then(() => generateUILayout() )
             .then(() => pLoadUiState() )
             .then(() => refreshStaticUI() )     // for the UI that need to be set up before setting up the DOM listeners.
@@ -139,6 +140,7 @@
             .then(() => browser.tabs.onRemoved.addListener(tabs_onRemoved) )
             .then(() => browser.tabs.onUpdated.addListener(tabs_onUpdated) )
             .then(() => browser.tabs.onMoved.addListener(tabs_onMoved) )
+            .then(() => initialFocus() )
             //.then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
@@ -150,7 +152,7 @@
         });
     }
 
-    function pGetLastActiveTab() {
+    function pGetCurrentLastActiveTab() {
         return pSendCmd({ cmd: "last-active-tab", wid: currentWid, currentTid: currentTid }).then( res => currentLastActiveTabId = res.lastActiveTabId );
     }
 
@@ -161,7 +163,7 @@
         }
     }
 
-    let dSaveUiState = app.debounce(saveUiStateNow, 10*1000, false);
+    let dSaveUiState = app.debounce(saveUiStateNow, 5*1000, false);
 
     function pLoadUiState() {
         //log.info("pLoadUiState");
@@ -230,14 +232,19 @@
     }
 
     function windows_onFocusChanged(wid) {
-        // log.info("windows_onFocusChanged", wid);
+        // log.info("windows_onFocusChanged " + wid + ", currentWid: " + currentWid);
         if (wid >= 0) {
+            // Update the active window's title to bold.
             Object.values(windowById).forEach( w => w.focused = false );
             windowById[wid].focused = true;
             $(".window-title").removeClass("bold");
             $(".window-lane[data-wid='" + wid + "'] .window-title").addClass("bold");
+
+            // The TipTap's window is in focused.  Restore focus to tab-box or search box.
+            if (wid == currentWid) {
+                restoreFocus(true);
+            }
         }
-        
     }
 
     function tabs_onActivated(info) {
@@ -367,6 +374,9 @@
         // Tab topbar event handlers
         $("#main-content").on("click", ".tab-topbar",           function(){ $(this).closest(".tab-box").focus()                                     });
 
+        // focus handler on the tab-able elements (.cmd-search and .tab-box)
+        $("body").on("focus", "[tabindex]:not([disabled]):not([tabindex='-1'])", function(){ previousFocusedTid = $(this).data("tid")               });
+
         // Footer command handlers
         $(".footer-bar").on("click", ".cmd-filter-by-window",   function(){ toggleFilterByWindow($(this).data("wid"))                               });
         $(".footer-bar").on("click", ".cmd-filter-by-container",function(){ toggleFilterByContainer($(this).data("cid"))                            });
@@ -381,21 +391,23 @@
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
 
         // Command containers stop event propagation
-        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private", function(e){ return stopEvent(e) });
-
+        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private",
+                                                                function(e){ return stopEvent(e) });
         // Search handler
         $(".cmd-search").on("click",                            function(){ $(this).select()            });
         $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())   });
 
         $(window).focus(function(){
+            // log.info("window.focus");
             tiptabWindowActive = true;
-            initialFocus().select();
         });
+
         $(window).blur(function(){
-            //log.info("tiptabWindow shutdown");
+            // log.info("window.blur, tiptabWindow shutdown");
             tiptabWindowActive = false;
             saveUiStateNow();
         });
+
 
         // Mouse events on thumbnail
         $("#main-content").on("mouseover", "img.tab-img", function(){
@@ -497,10 +509,10 @@
 
     function focusNextTabbox() {
         if (document.activeElement) {
-            let $tabbables = $("[tabindex]:not([disabled]):not([tabindex='-1'])");
-            let activeIndex = $tabbables.index($(document.activeElement));
+            let $tabbingItems = $("[tabindex]:not([disabled]):not([tabindex='-1'])");
+            let activeIndex = $tabbingItems.index($(document.activeElement));
             if (activeIndex >= 0) {
-                $tabbables[ (activeIndex + 1) % $tabbables.length ].focus();
+                $tabbingItems[ (activeIndex + 1) % $tabbingItems.length ].focus();
             }
         }
     }    
@@ -514,7 +526,7 @@
 
         setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
 
-        $(".cmd-search").val(uiState.searchTerms.join(" ")).focus().select();
+        $(".cmd-search").val(uiState.searchTerms.join(" "));
     }
     
     function redrawRefreshControls() {
@@ -1665,7 +1677,7 @@
         redrawRefreshControls();
         redrawRefreshUIContent(false, false);
         saveUiStateNow();
-        initialFocus();
+        focusSearch();
     }
 
     // size: 0-2
@@ -1673,7 +1685,7 @@
         uiState.thumbnailSize = size;
         resizeThumbnails();
         saveUiStateNow();
-        initialFocus()
+        focusSearch();
     }
 
     function resizeThumbnails() {
@@ -1869,8 +1881,27 @@
     }
 
     function initialFocus() {
+        // log.info("initialFocus");
+        $(".cmd-search").focus().select();
+    }
+
+    function restoreFocus(bSelect) {
+        // log.info("restoreFocus previousFocusedTid: " + previousFocusedTid);
+        if (previousFocusedTid) {
+            $tabbox(previousFocusedTid).focus();
+            return;
+        }
         // Put the focus in the search field so that the custom hotkey can work.
-        return $(".cmd-search").focus();
+        focusSearch(bSelect);
+    }
+
+    function focusSearch(bSelect) {
+        // log.info("focusSearch");
+        // Put the focus in the search field so that the custom hotkey can work.
+        if (bSelect)
+            $(".cmd-search").focus().select();
+        else
+            $(".cmd-search").focus();
     }
 
     function pSendCmd(msg) {
@@ -1913,6 +1944,7 @@
     }
 
     function activateTab(tab) {
+        previousFocusedTid = tab.id;
         browser.tabs.update(tab.id, { active: true }).then( () => browser.windows.update(tab.windowId, {focused: true}) );
     }
 

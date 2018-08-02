@@ -1,6 +1,6 @@
 
 * Feature TODO
-** TODO Preserve the input focus on the tab when activating it.
+** DONE Preserve the input focus on the tab when activating it.
 ** DONE Scale the window lane's buttons and title better.
 ** DONE Scale the tab's buttons and title better.
 ** DONE Make the active window's title bold.
