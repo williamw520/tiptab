@@ -67,10 +67,12 @@
     function getLastActiveTab(wid, currentTid) {
         if (wid && activatedHistory[wid]) {
             let history = activatedHistory[wid];
-            for (let i = history.newestIndex - 1; i >= 0; i--) {
-                let tid = history.get(i);
-                if (tid != currentTid) {
-                    return tid;
+            if (history) {
+                for (let i = history.newestIndex - 1; i >= 0; i--) {
+                    let tid = history.get(i);
+                    if (tid != currentTid) {
+                        return tid;
+                    }
                 }
             }
         }

@@ -604,6 +604,9 @@ a.disabled {
     border:             .05rem solid #007bff;
     width:              15rem;
 }
+.cmd-search:focus {
+    background:         #ffffee;
+}
 
 .saved-search {
     height:             100%;
@@ -682,7 +685,7 @@ a.disabled {
     opacity:            1;
 }
 .tab-box:focus {
-    box-shadow:         0 0 .2rem -.0rem rgba(0, 0, 255, 1.0);
+    box-shadow:         0 0 .2rem .1rem rgba(0, 0, 255, 1.0);
     outline:            none;
 }
 
