@@ -22,16 +22,27 @@
     --footer-height:        2.2rem;
     
     /* thumbnail has 16:9 rato */
+    --img-width:            8.0rem;     /* These will be set dynamically to the custom thumbnail dimensions. */
+    --img-height:           4.5rem;
     --img-width-base:       8.0rem;
     --img-height-base:      4.5rem;
-    --img-width:            8.0rem;
-    --img-height:           4.5rem;
     --img-border:           0.075rem;
 
-    --topbar-width:         calc(var(--img-width) + 2px);
-    --topbar-height:        calc(var(--img-height-base) / 5 + 1px);
-    --topbar-btn-width:     calc(var(--img-height-base) / 5);
-    --topbar-btn-height:    calc(var(--img-height-base) / 6);
+    /* lane dimensions */
+    --lane-topbar-width:    100%;
+    --lane-topbar-height:   1.25rem;
+    --lane-topbar-gap:      0.14rem;
+    --lane-btn-height:      calc(var(--lane-topbar-height) - var(--lane-topbar-gap)*2 - 0.02rem);
+    --lane-btn-width:       calc(var(--lane-btn-height) / 1);
+
+    /* tab component dimensions */
+    --tab-topbar-gap:       0.1rem;
+    --topbar-btn-height:    calc(var(--img-height-base) / 5);
+    --topbar-btn-width:     calc(var(--topbar-btn-height) / 1);
+    --status-btn-height:    calc(var(--img-height-base) / 6);
+    --status-btn-width:     calc(var(--status-btn-height) / 1);
+    --tab-topbar-width:     calc(var(--img-width) + var(--img-border)*2);
+    --tab-topbar-height:    calc(var(--topbar-btn-height) + var(--tab-topbar-gap)*2);
 
     --thumbnail-width:      calc(var(--img-width)  + var(--img-border) + var(--img-border));
     --thumbnail-height:     calc(var(--img-height) + var(--img-border) + var(--img-border));
@@ -546,31 +557,31 @@ a.disabled {
 }
 .window-topbar {
     position:           relative;
+    height:             var(--lane-topbar-height);
     margin-bottom:      var(--tab-gap);
-    padding:            0.0rem calc(var(--tab-gap)/2) 0.0rem calc(var(--tab-gap)/2);
     background:         #f4f4f4;
     border-bottom:      0.02rem solid #d0d0d0;
 }
 .window-title {
-    font-size:          85%;
+    margin-left:        calc(var(--lane-topbar-gap)*2);
+    font-size:          90%;
     white-space:        nowrap;
     overflow:           hidden;
     text-overflow:      ellipsis;
-    
 }
 .window-topbar-menu {
     position:           absolute;
-    top:                0.15rem;
-    right:              calc(var(--tab-gap)/2);
+    top:                var(--lane-topbar-gap);
+    right:              var(--lane-topbar-gap);
     line-height:        0;
-    /* opacity:            var(--topbar-opacity); */
 }
 .btn.window-menu-dropdown {
-    font-size:          85%;
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
-    line-height:        1.0;
-    padding:            0;
+    width:              var(--lane-btn-width);
+    height:             var(--lane-btn-height);
+    padding:            0 0 0.05rem 0;
+    display:            flex;
+    align-items:        center;
+    justify-content:    center;    
 }
 
 .container-lane {
@@ -640,11 +651,13 @@ a.disabled {
 }
 
 .tab-topbar {
-    width:              var(--topbar-width);
-    height:             var(--topbar-height);
+    width:              var(--tab-topbar-width);
+    height:             calc(var(--tab-topbar-height)*1);
     cursor:             default;
-    padding:            0;
-    line-height:        1.3;
+    padding:            0 0 0.05rem 0;
+    display:            flex;
+    align-items:        center;
+    
 }
 .tab-box:hover .tab-topbar {
     border:             0.02rem solid var(--default-color);
@@ -653,7 +666,6 @@ a.disabled {
 }
 .tab-topbar:hover {
     background-color:   gray !important;
-    /* opacity:            var(--topbar-opacity-half); */
 }
 
 .tab-status-bar {
@@ -679,8 +691,8 @@ a.disabled {
 }
 
 .status-private {
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
+    width:              var(--status-btn-width);
+    height:             var(--status-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.2rem 0 0 0;
@@ -691,8 +703,8 @@ a.disabled {
 }
 
 .status-container {
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
+    width:              var(--status-btn-width);
+    height:             var(--status-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0rem 0 0 0;
@@ -703,8 +715,8 @@ a.disabled {
 }
 
 .status-pinned {
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
+    width:              var(--status-btn-width);
+    height:             var(--status-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.05rem 0 0 0;
@@ -715,8 +727,8 @@ a.disabled {
 }
 
 .status-muted {
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
+    width:              var(--status-btn-width);
+    height:             var(--status-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.05rem 0 0 0;
@@ -727,8 +739,8 @@ a.disabled {
 }
 
 .status-audible {
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
+    width:              var(--status-btn-width);
+    height:             var(--status-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.05rem 0 0 0;
@@ -739,8 +751,8 @@ a.disabled {
 }
 
 .status-hidden {
-    width:              var(--topbar-btn-width);
-    height:             var(--topbar-btn-height);
+    width:              var(--status-btn-width);
+    height:             var(--status-btn-height);
     line-height:        0;
     margin:             0 0.1rem 0 0.1rem;
     padding:            0.05rem 0 0 0;
@@ -758,18 +770,18 @@ a.disabled {
 }
 
 .tab-topbar .tab-title {
-    font-size:          80%;
+    font-size:          90%;
     white-space:        nowrap;
     overflow:           hidden;
     text-overflow:      ellipsis;
-    padding:            0.0rem 0 0 0.2rem;
+    margin-left:        calc(var(--tab-topbar-gap)*1.5);
 }
 
 .tab-topbar-cmds {
     display:            flex;
     position:           absolute;
-    top:                0.10rem;
-    left:               0.1rem;
+    top:                calc(var(--tab-topbar-gap));
+    left:               calc(var(--tab-topbar-gap)*1.2);
     height:             var(--topbar-btn-height);
     padding:            0;
     opacity:            var(--topbar-opacity);
@@ -783,19 +795,19 @@ a.disabled {
 }
 
 .tab-topbar-cmds .cmd-close-tab {
-    font-size:          50%;
+    font-size:          60%;
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
-    line-height:        0;
-    margin:             0rem 0 0 0;
-    padding:            0.16rem 0 0 0;
+    padding:            0 0 0.02rem 0;
+    display:            flex;
+    align-items:        center;
+    justify-content:    center;    
 }
-
 
 .tab-topbar-menu {
     position:           absolute;
-    top:                0.10rem;
-    right:              0.1rem;
+    top:                calc(var(--tab-topbar-gap));
+    right:              calc(var(--tab-topbar-gap)*1.2);
     line-height:        0;
     opacity:            var(--topbar-opacity);
 }
@@ -807,18 +819,19 @@ a.disabled {
 }
 
 .btn.tab-menu-dropdown {
-    font-size:          85%;
     width:              var(--topbar-btn-width);
     height:             var(--topbar-btn-height);
-    line-height:        1.0;
-    padding:            0;
+    padding:            0 0 0.05rem 0;
+    display:            flex;
+    align-items:        center;
+    justify-content:    center;    
 }
 
 
 /* Override Spectre's .dropdown, dropdown-toggle, and .menu to make it more user friendly. */
 .dropdown .dropdown-toggle:focus {
     /* Repeatedly clicking on the dropdown-toggle div should toggle the showing/hiding of the menu. */
-    pointer-events: none;           /* Don't accept click event when focused; next click would lose focus. */
+    pointer-events:     none;           /* Don't accept click event when focused; next click would lose focus. */
 }
 .dropdown .menu {
     display:            inherit;        /* Negate "display: none" in spectre.css.  Showing/hiding is controlled by visibility below. */
@@ -868,7 +881,6 @@ a.disabled {
     height:             auto;
     z-index:            100;
     cursor:             pointer;
-    /* background-color:   rgba(0, 0, 0, 0.2); */
 
     display:            flex;
     justify-content:    center;
@@ -943,7 +955,7 @@ a.disabled {
 .tab-box.onhover-move-in-border-ondrop::after {
     position:           absolute;
     left:               calc(var(--tab-gap) * -2 + var(--px1));
-    top:                var(--topbar-height);
+    top:                var(--tab-topbar-height);
     width:              calc(var(--tab-gap) + var(--tab-gap) + var(--img-width) + var(--img-border) + var(--img-border) - var(--px1));
     height:             var(--thumbnail-height);
     background-color:   var(--drag-bg);
@@ -956,7 +968,7 @@ a.disabled {
 .tab-box.onhover-copy-in-border-ondrop::after {
     position:           absolute;
     left:               calc(var(--tab-gap) * -2 + var(--px1));
-    top:                var(--topbar-height);
+    top:                var(--tab-topbar-height);
     width:              calc(var(--tab-gap) + var(--tab-gap) + var(--img-width) + var(--img-border) + var(--img-border) - var(--px1));
     height:             var(--thumbnail-height);
     background-color:   var(--drag-bg);
