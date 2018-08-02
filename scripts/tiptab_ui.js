@@ -134,6 +134,7 @@
             .then(() => browser.storage.onChanged.addListener(storage_onChanged) )
             .then(() => browser.windows.onCreated.addListener(windows_onCreated) )
             .then(() => browser.windows.onRemoved.addListener(windows_onRemoved) )
+            .then(() => browser.windows.onFocusChanged.addListener(windows_onFocusChanged) )
             .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
             .then(() => browser.tabs.onRemoved.addListener(tabs_onRemoved) )
             .then(() => browser.tabs.onUpdated.addListener(tabs_onUpdated) )
@@ -226,6 +227,17 @@
         windowIds = windowIds.filter( id => id != wid );
         delete windowById[wid];
         delete tabIdsByWid[wid];
+    }
+
+    function windows_onFocusChanged(wid) {
+        // log.info("windows_onFocusChanged", wid);
+        if (wid >= 0) {
+            Object.values(windowById).forEach( w => w.focused = false );
+            windowById[wid].focused = true;
+            $(".window-title").removeClass("bold");
+            $(".window-lane[data-wid='" + wid + "'] .window-title").addClass("bold");
+        }
+        
     }
 
     function tabs_onActivated(info) {
@@ -916,7 +928,7 @@
         return `
               <div class="window-lane d-none" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
                 <div class="window-topbar" title="Window">
-                  <div class="window-title" title="Window">WINDOW-TITLE</div>
+                  <div class="window-title ${w.focused ? 'bold' : ''}" title="Window">WINDOW-TITLE</div>
                   <div class="dropdown dropdown-right window-topbar-menu">
                     <div class="btn-group" >
                       <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
