@@ -1,5 +1,9 @@
 
 * Feature TODO
+** TODO Preserve the input focus on the tab when activating it.
+** DONE Scale the window lane's buttons and title better.
+** DONE Scale the tab's buttons and title better.
+** TODO Make the active window's title bold.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Container cmd: Move all tabs of a container to its window.
 ** TODO Refresh one tab onUpdated
@@ -90,7 +94,6 @@
 ** DONE Bug: empty search text is not saved.  Refreshing the TipTab page gets back the old search text.
 ** DONE Bug: drag and drop new tab into container doesn't initialize the tab menu handlers.
 ** DONE Drop and drop from private window to normal
-
 
 * Release 1.3 Feature
 ** DONE Initial zoom out of thumbnails.
