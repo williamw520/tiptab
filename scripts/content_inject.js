@@ -37,7 +37,8 @@
     log.info(window.location.href + " starts -------------------------");
 
     let ttSettings = TipTabSettings.ofLatest();
-    let settingSeq = wwhotkey.ofKeySeq();
+    let launchSeq = wwhotkey.ofKeySeq();
+    let searchSeq = wwhotkey.ofKeySeq();
     let currentSeq = wwhotkey.ofKeySeq();
 
     function init() {
@@ -63,9 +64,10 @@
     function setupKeyboardListeners() {
         document.removeEventListener("keydown", hotKeydownHandler, false);
         document.removeEventListener("keyup", hotKeyupHandler, false);
-        if (ttSettings.enableCustomHotKey && ttSettings.appHotKey) {
+        if (ttSettings.enableCustomHotKey && (ttSettings.appHotKey || ttSettings.searchHotKey)) {
             try {
-                settingSeq = wwhotkey.ofKeySeq(ttSettings.appHotKey);
+                launchSeq = wwhotkey.ofKeySeq(ttSettings.appHotKey);
+                searchSeq = wwhotkey.ofKeySeq(ttSettings.searchHotKey);
                 document.addEventListener("keydown", hotKeydownHandler, false);
                 document.addEventListener("keyup", hotKeyupHandler, false);
                 return;
@@ -73,14 +75,20 @@
                 console.error(e);
             }
         }
-        settingSeq = wwhotkey.ofKeySeq();
+        launchSeq = wwhotkey.ofKeySeq();
     }
 
     function hotKeydownHandler(e) {
         if (ttSettings.enableCustomHotKey) {
             currentSeq.fromEvent(e);
-            if (settingSeq.hasKey() && settingSeq.equals(currentSeq)) {
-                // log.info("hotKeydownHandler match settingSeq: " + settingSeq.toString() + ", currentSeq: " + currentSeq.toString());
+            if (launchSeq.hasKey() && launchSeq.equals(currentSeq)) {
+                // log.info("hotKeydownHandler match launchSeq: " + launchSeq.toString() + ", currentSeq: " + currentSeq.toString());
+                browser.runtime.sendMessage({ cmd: "open-ui" });
+                e.preventDefault();
+                return false;
+            }
+            if (searchSeq.hasKey() && searchSeq.equals(currentSeq)) {
+                // log.info("hotKeydownHandler match searchSeq: " + searchSeq.toString() + ", currentSeq: " + currentSeq.toString());
                 browser.runtime.sendMessage({ cmd: "open-ui" });
                 e.preventDefault();
                 return false;
