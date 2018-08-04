@@ -44,6 +44,7 @@
         Promise.resolve()
             .then(() => log.info("tiptab_daemon init ===================================================== ") )
             .then(() => browser.browserAction.onClicked.addListener(browserAction_onClicked) )
+            .then(() => browser.commands.onCommand.addListener(commands_onCommand) )
             .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
             .then(() => setupMessageHandlers() )
             .then(() => log.info("tiptab_daemon init done ----------------------------------------------- ") )
@@ -51,6 +52,12 @@
     }
 
     function browserAction_onClicked() {
+        log.info("browserAction_onClicked");
+        pOpenTipTabUI();
+    }
+
+    function commands_onCommand(command) {
+        log.info("commands_onCommand", command);
         pOpenTipTabUI();
     }
 
@@ -106,6 +113,7 @@
     }
 
     function pOpenTipTabUI() {
+        log.info("pOpenTipTabUI");
         return browser.tabs.query({}).then( tabs => {
             let uiUrl = browser.extension.getURL("tiptab.html");
             let uiTab = tabs.find( t => is_tiptaburl(t.url) );
