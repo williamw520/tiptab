@@ -36,7 +36,7 @@
     class TipTabSettings {
 
         static ofLatest() {
-            return new TipTabSettings()._newVersion2();
+            return new TipTabSettings()._newVersion3();
         }
 
         static upgradeWith(jsonObj) {
@@ -59,6 +59,8 @@
                 return this._fromVersion1(jsonObj);
             case 2:
                 return this._fromVersion2(jsonObj);
+            case 3:
+                return this._fromVersion3(jsonObj);
             default:
                 throw Error("Unsupported object version " + jsonObj._version);
             }
@@ -113,6 +115,23 @@
         }
 
         _validate2() {
+            return this;
+        }
+        
+        _newVersion3() {
+            this._newVersion2();
+            this._version               = 3;
+            this.searchHotKey           = "";
+            return this;
+        }
+
+        _fromVersion3(jsonObj) {
+            this._fromVersion2(jsonObj);
+            this.searchHotKey           = jsonObj.searchHotKey || "";
+            return this._validate3();
+        }
+
+        _validate3() {
             return this;
         }
         

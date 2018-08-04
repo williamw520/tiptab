@@ -77,8 +77,10 @@
 
     // Module variables.
     let ttSettings = TipTabSettings.ofLatest();
-    let defaultSeq;
-    let settingSeq;
+    let launchDefaultSeq;
+    let launchSettingSeq;
+    let searchDefaultSeq;
+    let searchSettingSeq;
     let currentSeq = wwhotkey.ofKeySeq();
     let pixels_per_rem = 16;
     let currentWid;                 // the current TipTab's window id
@@ -477,29 +479,61 @@
     function setupKeyboardListeners() {
         $("#main-content").off("keyup", ".tab-box", onTabBoxEnterKey).on("keyup", ".tab-box", onTabBoxEnterKey);
 
-        document.removeEventListener("keydown", hotKeydownHandler, false);
+        document.removeEventListener("keydown", keydownHandler, false);
         document.removeEventListener("keyup", hotKeyupHandler, false);
-        defaultSeq = wwhotkey.ofKeySeq(getDefaultHotKey());
-        settingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.appHotKey : "");
-        document.addEventListener("keydown", hotKeydownHandler, false);
+        launchDefaultSeq = wwhotkey.ofKeySeq(getDefaultLaunchHotKey());
+        launchSettingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.appHotKey : "");
+        searchDefaultSeq = wwhotkey.ofKeySeq(getDefaultSearchHotKey());
+        searchSettingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.searchHotKey : "");
+        document.addEventListener("keydown", keydownHandler, false);
         document.addEventListener("keyup", hotKeyupHandler, false);
     }
     
-    function getDefaultHotKey() {
+    function getDefaultLaunchHotKey() {
         try {
             let manifest = browser.runtime.getManifest();
-            return manifest.commands._execute_browser_action.suggested_key.default;
+            let hotkey = manifest.commands._execute_browser_action.suggested_key.default;
+            log.info("getDefaultLaunchHotKey " + hotkey);
+            return hotkey;
+        } catch (err) {
+            return "Ctrl-Shift-L";
+        }
+    }
+
+    function getDefaultSearchHotKey() {
+        try {
+            let manifest = browser.runtime.getManifest();
+            let hotkey = manifest.commands.search.suggested_key.default;
+            log.info("getDefaultSearchHotKey " + hotkey);
+            return hotkey;
         } catch (err) {
             return "Ctrl-Shift-F";
         }
     }
 
-    function hotKeydownHandler(e) {
+    function keydownHandler(e) {
+        currentSeq.fromEvent(e);
         if (ttSettings.enableCustomHotKey) {
-            currentSeq.fromEvent(e);
-            if (defaultSeq.equals(currentSeq) || settingSeq.equals(currentSeq)) {
+            if (currentSeq.equals(launchSettingSeq)) {
+                log.info("custom launch hotkey");
                 focusNextTabbox();
+                return;
             }
+            if (currentSeq.equals(searchSettingSeq)) {
+                log.info("custom search hotkey");
+                focusSearch(true);
+                return;
+            }
+        }
+        if (currentSeq.equals(launchDefaultSeq)) {
+            log.info("default launch hotkey");
+            focusNextTabbox();
+            return;
+        }
+        if (currentSeq.equals(searchDefaultSeq)) {
+            log.info("default search hotkey");
+            focusSearch();
+            return;
         }
     }
 
@@ -1887,12 +1921,18 @@
 
     function restoreFocus(bSelect) {
         // log.info("restoreFocus previousFocusedTid: " + previousFocusedTid);
+        if (!focusPreviousTab()) {
+            // Put the focus in the search field so that the custom hotkey can work.
+            focusSearch(bSelect);
+        }
+    }
+
+    function focusPreviousTab() {
         if (previousFocusedTid) {
             $tabbox(previousFocusedTid).focus();
-            return;
+            return true;
         }
-        // Put the focus in the search field so that the custom hotkey can work.
-        focusSearch(bSelect);
+        return false;
     }
 
     function focusSearch(bSelect) {
@@ -1994,7 +2034,7 @@
 
     function refreshBrowserActionTooltip() {
         let manifest = browser.runtime.getManifest();
-        let hotkey   = ttSettings.appHotKey || "Ctrl-Shift-F";
+        let hotkey   = ttSettings.appHotKey || "Ctrl-Shift-L";
         let tooltip  = manifest.name + " (hot key " + hotkey + ")";
         browser.browserAction.setTitle({ title: tooltip });
     }

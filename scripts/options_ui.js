@@ -87,6 +87,7 @@
         
         $("#enableCustomHotKey").prop("checked", ttSettings.enableCustomHotKey);
         $("#appHotKey").val(ttSettings.appHotKey);
+        $("#searchHotKey").val(ttSettings.searchHotKey);
         $(".is-error").removeClass("is-error");
     }
 
@@ -105,24 +106,45 @@
         $("#thumbnailHeight2").on("input",         function(){ ttSettings.thumbnailHeight2 = $(this).val(); updateChanges() });
 
         $("#enableCustomHotKey").on("change",       function(){ ttSettings.enableCustomHotKey = this.checked; updateChanges() });
-        $("#appHotKey").on("input",                 function(){ getHotKeyInput(); updateChanges() });
+        $("#appHotKey").on("input",                 function(){ getAppHotKeyInput();    updateChanges() });
+        $("#searchHotKey").on("input",              function(){ getSearchHotKeyInput(); updateChanges() });
 
         // Special handling for hotkey input by keypressing.
-        let keyPressingHandler = function(e) {
+        let appKeyPressingHandler = function(e) {
             let ks = wwhotkey.ofKeyboardEvent(e);
             $("#appHotKey").val(ks.toString());
-            getHotKeyInput();
+            getAppHotKeyInput();
             updateChanges();
             return stopEvent(e);
         };
-        let $keyPressingBtn = $("#keyPressing");
-        $keyPressingBtn.on("click", function(e){
-            $keyPressingBtn.text("Click Again to End");
-            $(document).on("keydown", keyPressingHandler);
+        let $appKeyPressingBtn = $("#appKeyPressing");
+        $appKeyPressingBtn.on("click", function(e){
+            $appKeyPressingBtn.text("Click Again to End");
+            $(document).on("keydown", appKeyPressingHandler);
             $(".keypress-cover").removeClass("d-none").on("click", function(e){
                 $(this).addClass("d-none").off();
-                $keyPressingBtn.text("Enter by Key Press");
-                $(document).off("keydown", keyPressingHandler);
+                $appKeyPressingBtn.text("Enter by Key Press");
+                $(document).off("keydown", appKeyPressingHandler);
+            });
+            return stopEvent(e);
+        });
+
+        // Special handling for hotkey input by keypressing.
+        let searchKeyPressingHandler = function(e) {
+            let ks = wwhotkey.ofKeyboardEvent(e);
+            $("#searchHotKey").val(ks.toString());
+            getSearchHotKeyInput();
+            updateChanges();
+            return stopEvent(e);
+        };
+        let $searchKeyPressingBtn = $("#searchKeyPressing");
+        $searchKeyPressingBtn.on("click", function(e){
+            $searchKeyPressingBtn.text("Click Again to End");
+            $(document).on("keydown", searchKeyPressingHandler);
+            $(".keypress-cover").removeClass("d-none").on("click", function(e){
+                $(this).addClass("d-none").off();
+                $searchKeyPressingBtn.text("Enter by Key Press");
+                $(document).off("keydown", searchKeyPressingHandler);
             });
             return stopEvent(e);
         });
@@ -149,7 +171,7 @@
 
     }
 
-    function getHotKeyInput() {
+    function getAppHotKeyInput() {
         let $appHotKey = $("#appHotKey");
         ttSettings.appHotKey = $appHotKey.val().trim();
         if (ttSettings.appHotKey.length == 0 || wwhotkey.validKeyIdSequence(ttSettings.appHotKey)) {
@@ -158,6 +180,18 @@
         } else {
             $appHotKey.addClass("is-error");
             $appHotKey.closest(".input-group").addClass("is-error");
+        }
+    }
+
+    function getSearchHotKeyInput() {
+        let $searchHotKey = $("#searchHotKey");
+        ttSettings.searchHotKey = $searchHotKey.val().trim();
+        if (ttSettings.searchHotKey.length == 0 || wwhotkey.validKeyIdSequence(ttSettings.searchHotKey)) {
+            $searchHotKey.removeClass("is-error");
+            $searchHotKey.closest(".input-group").removeClass("is-error");
+        } else {
+            $searchHotKey.addClass("is-error");
+            $searchHotKey.closest(".input-group").addClass("is-error");
         }
     }
 

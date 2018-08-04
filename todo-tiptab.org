@@ -4,6 +4,7 @@
 ** DONE Scale the window lane's buttons and title better.
 ** DONE Scale the tab's buttons and title better.
 ** DONE Make the active window's title bold.
+** DONE Default search shortcut, with an extension command.  Custom search shortcut, in app.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Container cmd: Move all tabs of a container to its window.
 ** TODO Refresh one tab onUpdated

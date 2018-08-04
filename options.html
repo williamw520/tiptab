@@ -140,11 +140,22 @@
             </div>    
 
             <div class="form-group ">
-              <div class="col-5 pr-2"> <label class="form-label" for="appHotKey">Hot Key Sequence</label> </div>
+              <div class="col-5 pr-2"> <label class="form-label" for="appHotKey">Launch Hot Key</label> </div>
               <div class="col-7">
                 <div class="input-group">
-                  <button class="btn" id="keyPressing" style="width:8rem;">Enter by Key Press</button>
-                  <input class="form-input" type="text" id="appHotKey" maxlength="30" style="flex: 0 1 auto; width: 8rem;" placeholder="shift-ctrl-F" />
+                  <button class="btn" id="appKeyPressing" style="width:8rem;">Enter by Key Press</button>
+                  <input class="form-input" type="text" id="appHotKey" maxlength="30" style="flex: 0 1 auto; width: 8rem;" placeholder="Shift-Ctrl-L" />
+                </div>
+                <p class="form-input-error">Invalid key sequence.</p>
+              </div>
+            </div>    
+
+            <div class="form-group ">
+              <div class="col-5 pr-2"> <label class="form-label" for="searchHotKey">Search Hot Key</label> </div>
+              <div class="col-7">
+                <div class="input-group">
+                  <button class="btn" id="searchKeyPressing" style="width:8rem;">Enter by Key Press</button>
+                  <input class="form-input" type="text" id="searchHotKey" maxlength="30" style="flex: 0 1 auto; width: 8rem;" placeholder="Shift-Ctrl-F" />
                 </div>
                 <p class="form-input-error">Invalid key sequence.</p>
               </div>

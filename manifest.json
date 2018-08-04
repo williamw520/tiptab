@@ -52,9 +52,17 @@
     "commands": {
         "_execute_browser_action": {
             "suggested_key": {
+                "default": "Ctrl+Shift+L",
+                "mac": "MacCtrl+Shift+L"
+            },
+            "description": "Launch the Tip Tab extension."
+        },
+        "search": {
+            "suggested_key": {
                 "default": "Ctrl+Shift+F",
                 "mac": "MacCtrl+Shift+F"
-            }
+            },
+            "description": "Search tabs."
         }
     },
 
