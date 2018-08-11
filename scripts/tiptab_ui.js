@@ -25,6 +25,7 @@
     // import appcfg
     // import app
     // import dlg
+    // import settings
     // import wwhotkey
     let TipTabSettings = settings.TipTabSettings;
 
@@ -77,14 +78,14 @@
 
     // Module variables.
     let ttSettings = TipTabSettings.ofLatest();
-    let launchDefaultSeq;
-    let launchSettingSeq;
+    let activateDefaultSeq;
+    let activateSettingSeq;
     let searchDefaultSeq;
     let searchSettingSeq;
     let currentSeq = wwhotkey.ofKeySeq();
     let pixels_per_rem = 16;
-    let currentWid;                 // the current TipTab's window id
-    let currentTid;                 // the current TipTab's tab id
+    let tiptapWid;                  // the current TipTab's window id
+    let tiptapTid;                  // the current TipTab's tab id
     let currentLastActiveTabId = 0; // the previous active tab on the current window.
     let previousFocusedTid = 0;
 
@@ -142,20 +143,58 @@
             .then(() => browser.tabs.onRemoved.addListener(tabs_onRemoved) )
             .then(() => browser.tabs.onUpdated.addListener(tabs_onUpdated) )
             .then(() => browser.tabs.onMoved.addListener(tabs_onMoved) )
-            .then(() => initialFocus() )
+            .then(() => setupMessageHandlers() )
+            .then(() => pHandleFirstAppCmd() )
+            //.then(() => refreshBrowserActionTooltip() )
             //.then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
 
     function pGetCurrnetTab() {
         return browser.tabs.getCurrent().then( tab => {
-            currentWid = tab.windowId;
-            currentTid = tab.id;
+            tiptapWid = tab.windowId;
+            tiptapTid = tab.id;
         });
     }
 
     function pGetCurrentLastActiveTab() {
-        return pSendCmd({ cmd: "last-active-tab", wid: currentWid, currentTid: currentTid }).then( res => currentLastActiveTabId = res.lastActiveTabId );
+        return pSendCmd({ cmd: "last-active-tab", wid: tiptapWid, tiptapTid: tiptapTid }).then( res => currentLastActiveTabId = res.lastActiveTabId );
+    }
+
+    function pHandleFirstAppCmd() {
+        // log.info("pHandleFirstAppCmd");
+        return pSendCmd({ cmd: "last-app-command" }).then( res => {
+            if (res.appCommand) {
+                handleAppCommand(res.appCommand, true, true);
+            } else {
+                // Usually when the user refresh the TipTap page.
+                // TODO: save last focus across TipTap invocation sessions.
+                restoreFocus(true);
+            }
+        });
+    }
+
+    function handleAppCommand(appCommand, ttWinHasFocus, ttTabIsActive) {
+        pEnsureTipTabPageInFront(ttWinHasFocus, ttTabIsActive).then(() => {
+            if (appCommand == "launch") {
+                restoreFocus(true);
+            } else if (appCommand == "activate") {
+                //log.info("handleAppCommand, activate");
+                // Only move the focus forward if the TipTap page is in focus;
+                // otherwise, let windows_onFocusChanged() or tabs_onActivated() restore the focus on tab-box.
+                if (ttWinHasFocus && ttTabIsActive) {
+                    focusNextTabbox();
+                } else {
+                    //log.info("handleAppCommand, TipTap page was not in focus.  Let windows_onFocusChanged() or tabs_onActivated() restore focus on tab-box.");
+                }
+            } else if (appCommand == "search") {
+                //log.info("handleAppCommand, search");
+                focusSearch(true);
+            } else {
+                log.warn("handleAppCommand, unknown appCommand: " + appCommand);
+                focusSearch(true);
+            }
+        });
     }
 
     async function saveUiStateNow() {
@@ -213,6 +252,7 @@
             redrawRefreshContentOnFiltering();
             redrawRefreshControls();
             setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
+            //refreshBrowserActionTooltip();
         }
     }
 
@@ -233,8 +273,25 @@
         delete tabIdsByWid[wid];
     }
 
+    // Ways the extension page comes into focus:
+    // 1. Not running, browserAction button is clicked, via browser.browserAction.onClicked => appCommand: launch, onFocusChanged/tabs_onActivated not called
+    // 2. Not running, the "launch" hot key is pressed, via browser.commands.onCommand => appCommand: launch, onFocusChanged/tabs_onActivated not called
+    // 3. Not running, the "search" hot key is pressed, via browser.commands.onCommand => appCommand: search, onFocusChanged/tabs_onActivated not called
+    // 4. Window unfocused, browserAction button is clicked, via browser.browserAction.onClicked => appCommand: launch, onFocusChanged, onMessage appCommand
+    // 5. Window unfocused, the "launch" hot key is pressed, via browser.commands.onCommand => appCommand: launch, onFocusChanged, onMessage appCommand
+    // 6. Window unfocused, the "search" hot key is pressed, via browser.commands.onCommand => appCommand: search, onFocusChanged, onMessage appCommand
+    // 7. Tab inactive, browserAction button is clicked, via browser.browserAction.onClicked => appCommand: launch, onActivated, onMessage appCommand
+    // 8. Tab inactive, the "launch" hot key is pressed, via browser.commands.onCommand => appCommand: launch, onActivated, onMessage appCommand
+    // 9. Tab inactive, the "search" hot key is pressed, via browser.commands.onCommand => appCommand: search, onActivated, onMessage appCommand
+    // 10. Tab active, browserAction button is clicked, via browser.browserAction.onClicked => appCommand: launch, onFocusChanged/tabs_onActivated not called
+    // 11. Tab active, the "launch" hot key is pressed, via browser.commands.onCommand => appCommand: launch, onFocusChanged/tabs_onActivated not called
+    // 12. Tab active, the "search" hot key is pressed, via browser.commands.onCommand => appCommand: search, onFocusChanged/tabs_onActivated not called
+    // 13. Window unfocused, the window is activated => appCommand: none, onFocusChanged
+    // 14. Tab inactive, the tab is activated => appCommand: none,
+    // 15. Window unfocused and tab inactive, the window is activated => appCommand: none, onFocusChanged
+    // 16. Window unfocused and tab inactive, the tab is activated => appCommand: none, onFocusChanged, onActivated
     function windows_onFocusChanged(wid) {
-        // log.info("windows_onFocusChanged " + wid + ", currentWid: " + currentWid);
+        // log.info("windows_onFocusChanged windowId: " + wid + ", is tiptapWid: " + (wid == tiptapWid));
         if (wid >= 0) {
             // Update the active window's title to bold.
             Object.values(windowById).forEach( w => w.focused = false );
@@ -242,18 +299,27 @@
             $(".window-title").removeClass("bold");
             $(".window-lane[data-wid='" + wid + "'] .window-title").addClass("bold");
 
-            // The TipTap's window is in focused.  Restore focus to tab-box or search box.
-            if (wid == currentWid) {
+            // TipTap loses focus on the tab-box item sometimes when activated other tabs before.
+            // Restore focus to previous focused tab-box or to the search box when the TipTap's window is in focused.
+            // The active states of all tabs in tabById are tracked by tabs_onActivated and they are uptodate.
+            if (wid == tiptapWid && tabById.hasOwnProperty(tiptapTid) && tabById[tiptapTid].active) {
                 restoreFocus(true);
             }
         }
     }
 
     function tabs_onActivated(info) {
+        // log.info("tabs_onActivated windowId: " + info.windowId + ", tabId: " + info.tabId);
         // log.info("tabs_onActivated", info);
         if (tabById.hasOwnProperty(info.tabId)) {
             tabById[info.tabId].hidden = false;     // active tab cannot be hidden.
             transitionActiveTabs(info.tabId);       // refresh tab's UI
+        }
+
+        // TipTap loses focus on the tab-box item sometimes when activated other tabs before.
+        // Restore focus to previous focused tab-box or to the search box when the TipTap's window is in focused.
+        if (info.windowId == tiptapWid && info.tabId == tiptapTid) {
+            restoreFocus(true);
         }
     }
 
@@ -317,6 +383,7 @@
         return pReloadTabsWindowsAndContainers().then( () => redrawRefreshUIContent(false, false) );
     }
 
+
     function setupDOMListeners() {
         //log.info("setupDOMListeners");
 
@@ -341,6 +408,8 @@
         $(".v-btn-bar").on("click", ".cmd-small-size",          function(){ setThumbnailSize(0)                 });
         $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                 });
         $(".v-btn-bar").on("click", ".cmd-large-size",          function(){ setThumbnailSize(2)                 });
+
+        $("#main-content").on("click", ".error-close",          function(){ hideErrorMsg()                      });
 
         // Window command handlers
         $("#main-content").on("click", ".cmd-reload-w-tabs",    function(){ reloadWindowTabs($(this).closest(".window-lane").data("wid"))           });
@@ -479,21 +548,20 @@
     function setupKeyboardListeners() {
         $("#main-content").off("keyup", ".tab-box", onTabBoxEnterKey).on("keyup", ".tab-box", onTabBoxEnterKey);
 
-        document.removeEventListener("keydown", keydownHandler, false);
-        document.removeEventListener("keyup", hotKeyupHandler, false);
-        launchDefaultSeq = wwhotkey.ofKeySeq(getDefaultLaunchHotKey());
-        launchSettingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.appHotKey : "");
-        searchDefaultSeq = wwhotkey.ofKeySeq(getDefaultSearchHotKey());
-        searchSettingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.searchHotKey : "");
-        document.addEventListener("keydown", keydownHandler, false);
-        document.addEventListener("keyup", hotKeyupHandler, false);
+        // document.removeEventListener("keydown", keydownHandler, false);
+        // document.removeEventListener("keyup", hotKeyupHandler, false);
+        // activateDefaultSeq = wwhotkey.ofKeySeq(getDefaultActivateHotKey());
+        // activateSettingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.appHotKey : "");
+        // searchDefaultSeq = wwhotkey.ofKeySeq(getDefaultSearchHotKey());
+        // searchSettingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.searchHotKey : "");
+        // document.addEventListener("keydown", keydownHandler, false);
+        // document.addEventListener("keyup", hotKeyupHandler, false);
     }
     
-    function getDefaultLaunchHotKey() {
+    function getDefaultActivateHotKey() {
         try {
             let manifest = browser.runtime.getManifest();
             let hotkey = manifest.commands._execute_browser_action.suggested_key.default;
-            log.info("getDefaultLaunchHotKey " + hotkey);
             return hotkey;
         } catch (err) {
             return "Ctrl-Shift-L";
@@ -504,7 +572,6 @@
         try {
             let manifest = browser.runtime.getManifest();
             let hotkey = manifest.commands.search.suggested_key.default;
-            log.info("getDefaultSearchHotKey " + hotkey);
             return hotkey;
         } catch (err) {
             return "Ctrl-Shift-F";
@@ -514,25 +581,21 @@
     function keydownHandler(e) {
         currentSeq.fromEvent(e);
         if (ttSettings.enableCustomHotKey) {
-            if (currentSeq.equals(launchSettingSeq)) {
-                log.info("custom launch hotkey");
-                focusNextTabbox();
+            if (currentSeq.equals(activateSettingSeq)) {
+                handleAppCommand("activate", true, true);   // keydown handling is on the Tip Tab page.  Its window has to be in focused and it's active.
                 return;
             }
             if (currentSeq.equals(searchSettingSeq)) {
-                log.info("custom search hotkey");
-                focusSearch(true);
+                handleAppCommand("search", true, true);     // keydown handling is on the Tip Tab page.  Its window has to be in focused and it's active.
                 return;
             }
         }
-        if (currentSeq.equals(launchDefaultSeq)) {
-            log.info("default launch hotkey");
-            focusNextTabbox();
+        if (currentSeq.equals(activateDefaultSeq)) {
+            handleAppCommand("activate", true, true);       // keydown handling is on the Tip Tab page.  Its window has to be in focused and it's active.
             return;
         }
         if (currentSeq.equals(searchDefaultSeq)) {
-            log.info("default search hotkey");
-            focusSearch();
+            handleAppCommand("search", true, true);         // keydown handling is on the Tip Tab page.  Its window has to be in focused and it's active.
             return;
         }
     }
@@ -542,14 +605,37 @@
     }
 
     function focusNextTabbox() {
+        // log.info("focusNextTabbox");
         if (document.activeElement) {
             let $tabbingItems = $("[tabindex]:not([disabled]):not([tabindex='-1'])");
             let activeIndex = $tabbingItems.index($(document.activeElement));
             if (activeIndex >= 0) {
                 $tabbingItems[ (activeIndex + 1) % $tabbingItems.length ].focus();
+            } else {
+                // log.info("No activeIndex");
+                focusSearch(true);
             }
+        } else {
+            // log.info("No document.activeElement");
+            focusSearch(true);
         }
     }    
+
+    function setupMessageHandlers() {
+        // log.info("setupMessageHandlers");
+        return browser.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
+            // log.info("onMessage() ", msg);
+            switch (msg.cmd) {
+            case "appCommand":
+                // log.info("from tiptab_daemon, appCommand, arg: " + msg.arg);
+                handleAppCommand(msg.arg, msg.ttWinHasFocus, msg.ttTabIsActive);
+                return;
+            default:
+                log.info("onMessage() unknown cmd: " + msg.cmd);
+                break;
+            }
+        });
+    }
 
 
     function generateUILayout() {
@@ -770,7 +856,11 @@
     }
 
     function wasTabActive(tab) {
-        return tab.hasOwnProperty("windowId") && tab.windowId == currentWid && tab.id == currentLastActiveTabId;
+        return tab.hasOwnProperty("windowId") && tab.windowId == tiptapWid && tab.id == currentLastActiveTabId;
+    }
+
+    function isDraggable(tab) {
+        return !tab.pinned & (uiState.displayType == DT_WINDOW || uiState.displayType == DT_CONTAINER);
     }
 
     function countTabs() {
@@ -942,7 +1032,13 @@
     
     function renderAllTabLane() {
         return `
-            <div class="content-title">all tabs</div>
+            <div class="content-title-bar">
+              <span class="content-title">all tabs</span>
+              <span class="error-display">
+                <i class="icon icon-cross" style="margin-top:-0.15rem;"></i>
+                <span class="error-msg"></span>
+              </span>
+            </div>
             <div class="all-tab-lane">
               <div class="tab-grid"></div>
             </div>
@@ -964,7 +1060,13 @@
     // unsafe text are left out.
     function renderWindowLanes() {
         return `
-            <div class="content-title">tabs by window</div>
+            <div class="content-title-bar">
+              <span class="content-title">tabs by window</span>
+              <span class="error-display">
+                <i class="icon icon-cross" style="margin-top:-0.15rem;"></i>
+                <span class="error-msg"></span>
+              </span>
+            </div>
             ${ windowIds.map( wid => windowById[wid] ).map( w => renderWindowLane(w) ).join("\n") }
         `;
     }
@@ -1102,7 +1204,14 @@
     // unsafe text are left out.
     function renderContainerLanes() {
         return `
-            <div class="content-title">tabs by container</div>
+            <div class="content-title-bar">
+              <span class="content-title">tabs by container</span>
+              <span class="error-display">
+                <i class="icon icon-cross error-close" style="margin-top:-0.15rem;"></i>
+                <span class="error-msg"></span>
+              </span>
+            </div>
+
             ${ containerIds.map( cid => containerById[cid] ).map( c => `
                 <div class="container-lane d-none" data-cid="${c.cookieStoreId}" style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(is_firefox_private(c.cookieStoreId))}">
                   <div class="container-tab-title" title="${is_firefox_default(c.cookieStoreId) ? '' : 'Container'}">
@@ -1187,7 +1296,7 @@
         return `
             <div class="tab-box ${css_tabbox(isPrivate)}" id="tid-${tab.id}" data-tid="${tab.id}" tabindex="2">
 
-              <div class="tab-topbar ${css_draggable()}" title="Drag the top bar to start drag and drop on the thumbnail.">
+              <div class="tab-topbar ${isDraggable(tab) ? 'draggable-item' : ''}" title="Drag the top bar to start drag and drop on the thumbnail.">
                 <div class="tab-title ${isTabActive(tab) ? 'bold' : ''}" title="TAB-TITLE">TAB-TITLE</div>
               </div>
 
@@ -1315,11 +1424,20 @@
     function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .4rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
     function border_color_private(isPrivate)    { return isPrivate ? "border-color: " + COLOR_PRIVATE + ";" : "" }
     function css_display(showing)               { return showing  ? "d-block" : "d-none" }
-    function css_draggable()                    { return uiState.displayType == DT_WINDOW || uiState.displayType == DT_CONTAINER ? "draggable-item" : "" }
     function css_tabbox(isPrivate)              { return isPrivate ? " droppable-private " : " droppable-normal " }
     function css_disabled_active(isActive)      { return isActive ? " disabled " : "" }
     function css_audible(tab)                   { return tab.audible ? "d-block blink-yellow" : "d-none" }
 
+    function showErrorMsg(msg) {
+        $(".error-display").show();
+        $(".error-msg").text(msg);
+    }
+
+    function hideErrorMsg() {
+        $(".error-display").hide();
+        $(".error-msg").text("");
+    }
+    
     function canDropBeforeTab(draggingFromTid, droppingToTid) {
         if (draggingFromTid) {
             let isDraggablePrivate = is_firefox_private(tabById[draggingFromTid].cookieStoreId);
@@ -1359,8 +1477,10 @@
 
     function setupDragAndDropForDT_Window() {
         effectiveTabIds.forEach( tid => {
+            let tab = tabById[tid];
             let $tb = $tabbox(tid);
-            if ($tb.hasClass("draggabled-item"))
+
+            if (tab.pinned || $tb.hasClass("draggabled-item"))
                 return;
 
             $tb.draggable({
@@ -1570,6 +1690,7 @@
         let srcPrivate  = is_firefox_private(tabById[srcTab.id].cookieStoreId);
         let destPrivate = windowById[destWid].incognito;
         let sameDomain  = srcPrivate == destPrivate;
+        
         if (sameDomain) {
             // Move the tab to the end of th window
             browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( movedTabs => {
@@ -1600,7 +1721,7 @@
                     let $srcTabBox  = $tabbox(srcTab.id);
                     $srcTabBox.removeAttr("style");
                 }
-            });
+            })
         } else {
             // Copy the tab to the end of th window
             openInWindow(srcTab, destWid, null);
@@ -1656,7 +1777,7 @@
             let $newTabBox = $tabbox(newTab.id);
             let toWidth = $newTabBox.width();
             $tabbox(newTab.id).width(0).animate({ width: toWidth }, 500).effect( "bounce", {times:2, distance:5}, 200 );
-        }).then(() => browser.tabs.update(currentTid, { active: true }).then( () => browser.windows.update(currentWid, {focused: true}) ));
+        }).then(() => browser.tabs.update(tiptapTid, { active: true }).then( () => browser.windows.update(tiptapWid, {focused: true}) ));
         // Rely on tabs.onUpdated to add the newly created tab when the tab.url and tab.title are completely filled in.
     }
 
@@ -1671,7 +1792,7 @@
             cookieStoreId:  destCid,
             pinned:         srcTab.pinned,
             url:            srcTab.url,
-        }).then(() => browser.tabs.update(currentTid, { active: true }).then( () => browser.windows.update(currentWid, {focused: true}) ));
+        }).then(() => browser.tabs.update(tiptapTid, { active: true }).then( () => browser.windows.update(tiptapWid, {focused: true}) ));
         // Rely on tabs.onUpdated to add the newly created tab when the tab.url and tab.title are completely filled in.
     }
 
@@ -1914,25 +2035,29 @@
         redrawRefreshContentOnFiltering();
     }
 
-    function initialFocus() {
-        // log.info("initialFocus");
-        $(".cmd-search").focus().select();
-    }
-
-    function restoreFocus(bSelect) {
-        // log.info("restoreFocus previousFocusedTid: " + previousFocusedTid);
-        if (!focusPreviousTab()) {
-            // Put the focus in the search field so that the custom hotkey can work.
-            focusSearch(bSelect);
+    function pEnsureTipTabPageInFront(ttWinHasFocus, ttTabIsActive) {
+        if (ttWinHasFocus) {
+            if (ttTabIsActive) {
+                return Promise.resolve();
+            } else {
+                return browser.tabs.update(tiptapTid, {active: true});
+            }
+        } else {
+            if (ttTabIsActive) {
+                return browser.windows.update(tiptapWid, {focused: true});
+            } else {
+                return browser.windows.update(tiptapWid, {focused: true}).then( () => browser.tabs.update(tiptapTid, {active: true}) );
+            }
         }
     }
 
-    function focusPreviousTab() {
+    function restoreFocus(bSelectSearchText) {
+        // log.info("restoreFocus previousFocusedTid: " + previousFocusedTid);
         if (previousFocusedTid) {
             $tabbox(previousFocusedTid).focus();
-            return true;
+        } else {
+            focusSearch(bSelectSearchText);     // no previous focused tab-box, focus the search field instead.
         }
-        return false;
     }
 
     function focusSearch(bSelect) {
@@ -2034,8 +2159,8 @@
 
     function refreshBrowserActionTooltip() {
         let manifest = browser.runtime.getManifest();
-        let hotkey   = ttSettings.appHotKey || "Ctrl-Shift-L";
-        let tooltip  = manifest.name + " (hot key " + hotkey + ")";
+        let hotkeys  = (ttSettings.appHotKey || "Ctrl+Shift+L") +  ", " + (ttSettings.searchHotKey || "Ctrl+Shift+F");
+        let tooltip  = manifest.name + " (" + hotkeys + ")";
         browser.browserAction.setTitle({ title: tooltip });
     }
 

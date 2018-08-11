@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "__MSG_extensionName__",
     "description": "__MSG_extensionDescription__",    
-    "version": "2.4",
+    "version": "2.5",
     "author": "William Wong",
     "default_locale": "en",
 
@@ -34,11 +34,12 @@
 
     "background": {
         "scripts": [
-            "/pkg/moment-with-locales.min.js",
             "scripts/util/logger.js",
             "scripts/util/appcfg.js",
             "scripts/util/app.js",
             "scripts/util/ringbuf.js",
+            "scripts/util/wwhotkey.js",
+            "scripts/settings.js",
             "scripts/tiptab_daemon.js"
         ]
     },
@@ -50,12 +51,12 @@
     },
     
     "commands": {
-        "_execute_browser_action": {
+        "activate": {
             "suggested_key": {
                 "default": "Ctrl+Shift+L",
                 "mac": "MacCtrl+Shift+L"
             },
-            "description": "Launch the Tip Tab extension."
+            "description": "Activate the Tip Tab page."
         },
         "search": {
             "suggested_key": {
@@ -71,20 +72,6 @@
         "browser_style": true,
         "open_in_tab": true
     },
-
-    "content_scripts": [
-        {
-            "js": [
-                "scripts/util/logger.js",
-                "scripts/util/appcfg.js",
-                "scripts/util/wwhotkey.js",
-                "scripts/settings.js",
-                "scripts/content_inject.js"
-            ],
-            "matches": ["*://*/*"],
-            "match_about_blank": true
-        }
-    ],
 
     "web_accessible_resources": [
     ]

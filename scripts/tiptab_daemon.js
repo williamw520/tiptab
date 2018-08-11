@@ -25,7 +25,11 @@
     // import logger
     // import appcfg
     // import app
+    // import ringbuf
+    // import wwhotkey
+    // import settings
     let RingBuf = ringbuf.RingBuf;
+    let TipTabSettings = settings.TipTabSettings;
 
     let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
 
@@ -36,34 +40,38 @@
     const MAX_ACTIVATED_HISTORY = 10;
     const TIPTAB_URL = browser.extension.getURL("tiptab.html");
 
+    // Module variables.
+    let ttSettings = TipTabSettings.ofLatest();
     let activatedHistory = {};          // Keyed by windowId.  Value is a RingBuf listing the tabId of the last activated tabs.
-
-    function is_tiptaburl(url) { return url.startsWith(TIPTAB_URL) };   // sometimes # is added to the end of the url.
+    let lastAppCommand = "";
 
     function init() {
         Promise.resolve()
-            .then(() => log.info("tiptab_daemon init ===================================================== ") )
+            //.then(() => log.info("tiptab_daemon init ===================================================== ") )
+            .then(() => browser.runtime.getPlatformInfo().then( info => wwhotkey.setOS(info.os) ) )
+            .then(() => settings.pLoad().then(tts => ttSettings = tts) )
             .then(() => browser.browserAction.onClicked.addListener(browserAction_onClicked) )
             .then(() => browser.commands.onCommand.addListener(commands_onCommand) )
             .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
+            .then(() => browser.storage.onChanged.addListener(storage_onChanged) )
             .then(() => setupMessageHandlers() )
-            .then(() => log.info("tiptab_daemon init done ----------------------------------------------- ") )
+            .then(() => updateCustomHotKeys() )
+            //.then(() => log.info("tiptab_daemon init done ----------------------------------------------- ") )
             .catch( e => console.warn(dump(e)) )
     }
 
     function browserAction_onClicked() {
-        log.info("browserAction_onClicked");
-        pOpenTipTabUI();
+        // log.info("browserAction_onClicked, command as: launch");
+        pActivateTipTabUI("launch");
     }
 
     function commands_onCommand(command) {
-        log.info("commands_onCommand", command);
-        pOpenTipTabUI();
+        // log.info("commands_onCommand, command: " + command);
+        pActivateTipTabUI(command);
     }
 
     function tabs_onActivated(activeInfo) {
         // log.info("tabs_onActivated tabId " + activeInfo.tabId + " winId " + activeInfo.windowId);
-
         let tabHistory = activatedHistory[activeInfo.windowId];
         if (!tabHistory) {
             tabHistory = activatedHistory[activeInfo.windowId] = new RingBuf(MAX_ACTIVATED_HISTORY);
@@ -71,39 +79,39 @@
         tabHistory.push(activeInfo.tabId);
     }
 
-    function getLastActiveTab(wid, currentTid) {
-        if (wid && activatedHistory[wid]) {
-            let history = activatedHistory[wid];
-            if (history) {
-                for (let i = history.newestIndex - 1; i >= 0; i--) {
-                    let tid = history.get(i);
-                    if (tid != currentTid) {
-                        return tid;
-                    }
-                }
-            }
+    function storage_onChanged(storageChange) {
+        // Monitor settings storage change.
+        if (app.has(storageChange, "tipTabSettings")) {
+            // log.info("storage_onChanged", ttSettingsNew);
+            ttSettings = storageChange.tipTabSettings.newValue;
+            updateCustomHotKeys();
         }
-        return -1;
     }
 
     function setupMessageHandlers() {
-        log.info("setupMessageHandlers");
         return browser.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
             // log.info("onMessage() ", msg);
             switch (msg.cmd) {
             case "dbg-test":
                 log.info(msg);
                 break;
-            case "open-ui":
-                pOpenTipTabUI();
-                break;
-            case "close-ui":
-                log.info("close-ui not implementated yet");
+            case "hotkey":
+                // deprecated
+                log.info("from content_inject hotkey, command: " + msg.arg);
+                pActivateTipTabUI(msg.arg);
                 break;
             case "last-active-tab":
                 if (sendResponse) {
-                    sendResponse({ lastActiveTabId: getLastActiveTab(msg.wid, msg.currentTid) });
+                    // log.info("from tiptap_ui, last-active-tab");
+                    sendResponse({ lastActiveTabId: getLastActiveTab(msg.wid, msg.tiptapTid) });
                 }
+                return;
+            case "last-app-command":
+                if (sendResponse) {
+                    // log.info("from tiptap_ui, last-app-command, lastAppCommand: " + lastAppCommand);
+                    sendResponse({ appCommand: lastAppCommand });
+                }
+                lastAppCommand = "";   // Clear after returning the last command.
                 return;
             default:
                 log.info("onMessage() unknown cmd: " + msg.cmd);
@@ -112,18 +120,58 @@
         });
     }
 
-    function pOpenTipTabUI() {
-        log.info("pOpenTipTabUI");
-        return browser.tabs.query({}).then( tabs => {
-            let uiUrl = browser.extension.getURL("tiptab.html");
-            let uiTab = tabs.find( t => is_tiptaburl(t.url) );
-            if (uiTab) {
-                browser.windows.update(uiTab.windowId, {focused: true}).then( () => browser.tabs.update(uiTab.id, {active: true}) );
+    function getLastActiveTab(wid, tiptapTid) {
+        if (wid && activatedHistory[wid]) {
+            let history = activatedHistory[wid];
+            if (history) {
+                for (let i = history.newestIndex - 1; i >= 0; i--) {
+                    let tid = history.get(i);
+                    if (tid != tiptapTid) {
+                        return tid;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    function pActivateTipTabUI(appCmd) {
+        // log.info("pActivateTipTabUI appCmd: " + appCmd);
+        return browser.tabs.query({url: TIPTAB_URL}).then( tabs => {
+            let ttTab = tabs.length > 0 ? tabs[0] : null;
+            if (ttTab) {
+                return browser.windows.getLastFocused().then( focusedWin => {
+                    let ttWinHasFocus = ttTab.windowId == focusedWin.id;
+                    let ttTabIsActive = ttTab.active;
+                    return browser.runtime.sendMessage({ cmd: "appCommand", arg: appCmd,
+                                                         ttWinHasFocus: ttWinHasFocus, ttTabIsActive: ttTabIsActive });
+                });
             } else {
-                browser.tabs.create({ url: uiUrl });
+                // No existing TipTab page.  Create one.
+                // The newly created page is not ready to handle message yet.  Save the appCmd for later retrieval during extension's init.
+                lastAppCommand = appCmd;
+                return browser.tabs.create({ url: TIPTAB_URL });
             }
         });
-    }    
+    }
+
+    function updateCustomHotKey(command, shortcut) {
+        // log.info("updateCustomHotKey, command: " + command + ", shortcut: " + shortcut);
+        if (shortcut) {
+            try {
+                browser.commands.update({ name: command, shortcut: wwhotkey.ofKeySeq(shortcut).toString() });
+            } catch(e) {
+                log.error(e);
+            }
+        } else {
+            browser.commands.reset(command);
+        }
+    }
+
+    function updateCustomHotKeys() {
+        updateCustomHotKey("activate",  ttSettings.enableCustomHotKey ? ttSettings.appHotKey : "");
+        updateCustomHotKey("search",    ttSettings.enableCustomHotKey ? ttSettings.searchHotKey : "");
+    }
 
     init();
 
