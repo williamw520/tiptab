@@ -537,12 +537,31 @@ a.disabled {
     border-right:       0.02rem solid #c0c0c0;
 }
 
-.content-title {
+.content-title-bar {
     font-size:          75%;
     color:              gray;
     background:         #fbfbfb;
-    padding:            0.05rem 0.4rem 0.05rem 0.4rem;
+    padding:            0;
     border-bottom:      0.02rem solid #e0e0e0;
+    display:            relative;
+}
+.content-title {
+    display:            inline-block;
+    padding:            0.05rem 0.4rem 0.05rem 0.4rem;
+    width:              6rem;
+}
+.error-display {
+    padding:            0.05rem 0.2rem 0.05rem 0.2rem;
+    border-left:        0.02rem solid #c0c0c0;
+    margin-left:        0.5rem;
+    display:            none;
+}
+.error-msg {
+    padding-left:       0.3rem;
+    color:              red;
+    white-space:        nowrap;
+    overflow:           hidden;
+    text-overflow:      ellipsis;
 }
 
 .all-tab-lane {

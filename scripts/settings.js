@@ -88,6 +88,10 @@
         }
 
         _validate1() {
+            // Enforce hotkey string format as XX+XX+XX
+            if (this.appHotKey.indexOf("-") >= 0) {
+                this.appHotKey = this.appHotKey.replace(/\-/g, "+");
+            }
             return this;
         }
 
@@ -132,6 +136,9 @@
         }
 
         _validate3() {
+            if (this.searchHotKey.indexOf("-") >= 0) {
+                this.searchHotKey = this.searchHotKey.replace(/\-/g, "+");
+            }
             return this;
         }
         
