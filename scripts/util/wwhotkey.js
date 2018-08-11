@@ -113,6 +113,14 @@
     const KEY_NAME_TO_ID        = KEYS.reduce( (map, item) => { map[item.name] = item.id; return map; }, {});
 
 
+    // Module variables
+    let platformOS = "";
+
+    // Caller should call this when initializing the module with the value from browser.runtime.getPlatformInfo()
+    function setOS(os) {
+        platformOS = os;
+    }
+
     class ModifierKey {
         constructor(modifierIds) {
             this.modVKCodes = {};       // Track which modifier keycodes are on.
@@ -158,10 +166,10 @@
 
         toString() {
             let str = "";
-            if (this.shift) str += "Shift-";
-            if (this.ctrl) str += "Ctrl-";
-            if (this.alt) str += "Alt-";
-            if (this.meta) str += "Meta-";
+            if (this.ctrl)  str += (platformOS == "mac" ? "MacCtrl+" : "Ctrl+");
+            if (this.alt)   str += "Alt+";
+            if (this.meta)  str += "Meta+";
+            if (this.shift) str += "Shift+";
             return str;
         }
     }
@@ -169,7 +177,7 @@
 
     class KeySeq {
 
-        // Create from a key sequence, i.e. shift-ctrl-x
+        // Create from a key sequence, i.e. Shift+Ctrl+X
         static ofKeySeq(keySeq) {
             let ks = new KeySeq();
             if (keySeq) {
@@ -228,7 +236,7 @@
 
 
         static parseKeySeq(seq) {
-            return seq.indexOf("-") > -1 ? seq.split("-") : seq.split("+");
+            return seq.indexOf("+") > -1 ? seq.split("+") : seq.split("-");
         }
 
         static validKeyIdSequence(seq) {
@@ -259,6 +267,7 @@
 
 
     // Module export
+    module.setOS = setOS;
     module.MODIFIERS = MODIFIERS;
     module.MODIFIER_ID_TO_VKCODE = MODIFIER_ID_TO_VKCODE;
     module.VKCODE_TO_MODIFIER_NAME = VKCODE_TO_MODIFIER_NAME;
@@ -292,9 +301,9 @@ if (_RUNTEST_WWHOTKEY) {
     console.log("Run unit tests");
 
     // console.log(json( wwhotkey.ofKeySeq() ));
-    // console.log(json( wwhotkey.ofKeySeq("shift-b") ));
-    // console.log(json( wwhotkey.ofKeySeq("ctrl-shift-alt-b") ));
-    // console.log(json( wwhotkey.ofKeySeq("option-command-meta-ctrl-shift-alt-b") ));
+    // console.log(json( wwhotkey.ofKeySeq("shift+b") ));
+    // console.log(json( wwhotkey.ofKeySeq("ctrl+shift+alt+b") ));
+    // console.log(json( wwhotkey.ofKeySeq("option+command+meta+ctrl+shift+alt+b") ));
 
     console.assert( wwhotkey.ofKeySeq().modKeys.shift == false, "Assert failed" );
     console.assert( wwhotkey.ofKeySeq().modKeys.ctrl  == false, "Assert failed" );
@@ -302,13 +311,13 @@ if (_RUNTEST_WWHOTKEY) {
     console.assert( wwhotkey.ofKeySeq().modKeys.meta  == false, "Assert failed" );
     console.assert( wwhotkey.ofKeySeq().keyCode       == 0,     "Assert failed" );
 
-    console.assert( wwhotkey.ofKeySeq("shift-b").modKeys.shift == true,  "Assert failed" );
-    console.assert( wwhotkey.ofKeySeq("shift-b").modKeys.ctrl  == false, "Assert failed" );
-    console.assert( wwhotkey.ofKeySeq("shift-b").modKeys.alt   == false, "Assert failed" );
-    console.assert( wwhotkey.ofKeySeq("shift-b").modKeys.meta  == false, "Assert failed" );
-    console.assert( wwhotkey.ofKeySeq("shift-b").keyCode       == 65+1,  "Assert failed" );
+    console.assert( wwhotkey.ofKeySeq("shift+b").modKeys.shift == true,  "Assert failed" );
+    console.assert( wwhotkey.ofKeySeq("shift+b").modKeys.ctrl  == false, "Assert failed" );
+    console.assert( wwhotkey.ofKeySeq("shift+b").modKeys.alt   == false, "Assert failed" );
+    console.assert( wwhotkey.ofKeySeq("shift+b").modKeys.meta  == false, "Assert failed" );
+    console.assert( wwhotkey.ofKeySeq("shift+b").keyCode       == 65+1,  "Assert failed" );
 
-    ["shift-b", "ctrl-b", "alt-b", "meta-b"].forEach( seq => {
+    ["shift+b", "ctrl+b", "alt+b", "meta+b"].forEach( seq => {
         console.assert( wwhotkey.ofKeySeq(seq).modKeys.shift == has(seq, "shift"),  "Assert failed: " + seq );
         console.assert( wwhotkey.ofKeySeq(seq).modKeys.ctrl  == has(seq, "ctrl"),   "Assert failed: " + seq );
         console.assert( wwhotkey.ofKeySeq(seq).modKeys.alt   == has(seq, "alt"),    "Assert failed: " + seq );
@@ -316,7 +325,7 @@ if (_RUNTEST_WWHOTKEY) {
         console.assert( wwhotkey.ofKeySeq(seq).keyCode       == 65+1,               "Assert failed: " + seq );
     });
 
-    ["shift-ctrl-b", "ctrl-shift-b", "alt-shift-b", "meta-alt-b"].forEach( seq => {
+    ["shift+ctrl+b", "ctrl+shift+b", "alt+shift+b", "meta+alt+b"].forEach( seq => {
         console.assert( wwhotkey.ofKeySeq(seq).modKeys.shift == has(seq, "shift"),  "Assert failed: " + seq );
         console.assert( wwhotkey.ofKeySeq(seq).modKeys.ctrl  == has(seq, "ctrl"),   "Assert failed: " + seq );
         console.assert( wwhotkey.ofKeySeq(seq).modKeys.alt   == has(seq, "alt"),    "Assert failed: " + seq );
@@ -324,7 +333,7 @@ if (_RUNTEST_WWHOTKEY) {
         console.assert( wwhotkey.ofKeySeq(seq).keyCode       == 65+1,               "Assert failed: " + seq );
     });
 
-    ["shift-ctrl-option-command-alt-b"].forEach( seq => {
+    ["shift+ctrl+option+command+alt+b"].forEach( seq => {
         console.assert( wwhotkey.ofKeySeq(seq).modKeys.shift == has(seq, "shift"),  "Assert failed: " + seq );
         console.assert( wwhotkey.ofKeySeq(seq).modKeys.ctrl  == has(seq, "ctrl"),   "Assert failed: " + seq );
         console.assert( wwhotkey.ofKeySeq(seq).modKeys.alt   == has(seq, "alt"),    "Assert failed: " + seq );
@@ -334,7 +343,7 @@ if (_RUNTEST_WWHOTKEY) {
 
     ["shift", "ctrl", "alt", "meta"].forEach( mod => {
         for (let i = 0; i < 26; i++) {
-            let seq = mod + "-" + String.fromCharCode(97 + i);      // 'a' to 'z'
+            let seq = mod + "+" + String.fromCharCode(97 + i);      // 'a' to 'z'
             console.assert( wwhotkey.ofKeySeq(seq).modKeys.shift == has(seq, "shift"),  "Assert failed: " + seq );
             console.assert( wwhotkey.ofKeySeq(seq).modKeys.ctrl  == has(seq, "ctrl"),   "Assert failed: " + seq );
             console.assert( wwhotkey.ofKeySeq(seq).modKeys.alt   == has(seq, "alt"),    "Assert failed: " + seq );
@@ -342,7 +351,7 @@ if (_RUNTEST_WWHOTKEY) {
             console.assert( wwhotkey.ofKeySeq(seq).keyCode       == 65+i,               "Assert failed: " + seq );
         }
         for (let i = 0; i < 10; i++) {
-            let seq = mod + "-" + String.fromCharCode(48 + i);      // '0' to '9'
+            let seq = mod + "+" + String.fromCharCode(48 + i);      // '0' to '9'
             console.assert( wwhotkey.ofKeySeq(seq).modKeys.shift == has(seq, "shift"),  "Assert failed: " + seq );
             console.assert( wwhotkey.ofKeySeq(seq).modKeys.ctrl  == has(seq, "ctrl"),   "Assert failed: " + seq );
             console.assert( wwhotkey.ofKeySeq(seq).modKeys.alt   == has(seq, "alt"),    "Assert failed: " + seq );
@@ -359,21 +368,21 @@ if (_RUNTEST_WWHOTKEY) {
     };
     
     console.assert( wwhotkey.ofKeySeq("").equals( wwhotkey.ofKeySeq("") ),  "Assert failed: equals" );
-    console.assert( !wwhotkey.ofKeySeq("").equals( wwhotkey.ofKeySeq("shift-b") ), "Assert failed: equals" );
-    console.assert( !wwhotkey.ofKeySeq("shift-b").equals( wwhotkey.ofKeySeq("") ), "Assert failed: equals" );
-    console.assert( !wwhotkey.ofKeySeq("shift-b").equals( wwhotkey.ofKeySeq("shift-c") ), "Assert failed: equals" );
-    console.assert( !wwhotkey.ofKeySeq("shift-b").equals( wwhotkey.ofKeySeq("alt-b") ), "Assert failed: equals" );
-    console.assert( !wwhotkey.ofKeySeq("shift-b").equals( wwhotkey.ofKeySeq("meta-b") ), "Assert failed: equals" );
-    console.assert( !wwhotkey.ofKeySeq("shift-b").equals( wwhotkey.ofKeySeq("shift-alt-b") ), "Assert failed: equals" );
-    console.assert( !wwhotkey.ofKeySeq("shift-b").equals( wwhotkey.ofKeySeq("alt-meta-c") ), "Assert failed: equals" );
+    console.assert( !wwhotkey.ofKeySeq("").equals( wwhotkey.ofKeySeq("shift+b") ), "Assert failed: equals" );
+    console.assert( !wwhotkey.ofKeySeq("shift+b").equals( wwhotkey.ofKeySeq("") ), "Assert failed: equals" );
+    console.assert( !wwhotkey.ofKeySeq("shift+b").equals( wwhotkey.ofKeySeq("shift+c") ), "Assert failed: equals" );
+    console.assert( !wwhotkey.ofKeySeq("shift+b").equals( wwhotkey.ofKeySeq("alt+b") ), "Assert failed: equals" );
+    console.assert( !wwhotkey.ofKeySeq("shift+b").equals( wwhotkey.ofKeySeq("meta+b") ), "Assert failed: equals" );
+    console.assert( !wwhotkey.ofKeySeq("shift+b").equals( wwhotkey.ofKeySeq("shift+alt+b") ), "Assert failed: equals" );
+    console.assert( !wwhotkey.ofKeySeq("shift+b").equals( wwhotkey.ofKeySeq("alt+meta+c") ), "Assert failed: equals" );
     
-    let ks1 = wwhotkey.ofKeySeq("shift-alt-b");
+    let ks1 = wwhotkey.ofKeySeq("shift+alt+b");
     ks1.modKeys.shift = false;
     console.assert( ks1.modKeys.shift == false, "Assert failed: ", ks1 );
     console.assert( ks1.modKeys.ctrl  == false, "Assert failed: ", ks1 );
     console.assert( ks1.modKeys.alt   == true,  "Assert failed: ", ks1 );
     console.assert( ks1.modKeys.meta  == false, "Assert failed: ", ks1 );
-    console.assert( ks1.toString()    == "Alt-B", "Assert failed: ", ks1 );
+    console.assert( ks1.toString()    == "Alt+B", "Assert failed: ", ks1 );
 
 }
 

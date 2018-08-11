@@ -34,14 +34,22 @@
     if (modulename)
         scope[modulename] = module; // set module name in scope, otherwise caller sets the name with the returned module object.
     
+    const tiptabUrl = browser.extension.getURL("tiptab.html");
+    function is_tiptaburl(url) { return url.startsWith(tiptabUrl) };    // sometimes # is added to the end of the url; just check prefix.
+
     log.info(window.location.href + " starts -------------------------");
 
     let ttSettings = TipTabSettings.ofLatest();
-    let launchSeq = wwhotkey.ofKeySeq();
+    let activateSeq = wwhotkey.ofKeySeq();
     let searchSeq = wwhotkey.ofKeySeq();
     let currentSeq = wwhotkey.ofKeySeq();
 
     function init() {
+        if (is_tiptaburl(window.location.href)) {
+            log.info("Skip content_inject on the TipTab UI");
+            return;
+        }
+
         Promise.resolve()
             .then(() => settings.pLoad().then(tts => ttSettings = tts ))
             .then(() => pMonitorDataChange() )
@@ -66,7 +74,7 @@
         document.removeEventListener("keyup", hotKeyupHandler, false);
         if (ttSettings.enableCustomHotKey && (ttSettings.appHotKey || ttSettings.searchHotKey)) {
             try {
-                launchSeq = wwhotkey.ofKeySeq(ttSettings.appHotKey);
+                activateSeq = wwhotkey.ofKeySeq(ttSettings.appHotKey);
                 searchSeq = wwhotkey.ofKeySeq(ttSettings.searchHotKey);
                 document.addEventListener("keydown", hotKeydownHandler, false);
                 document.addEventListener("keyup", hotKeyupHandler, false);
@@ -75,21 +83,21 @@
                 console.error(e);
             }
         }
-        launchSeq = wwhotkey.ofKeySeq();
+        activateSeq = wwhotkey.ofKeySeq();
     }
 
     function hotKeydownHandler(e) {
         if (ttSettings.enableCustomHotKey) {
             currentSeq.fromEvent(e);
-            if (launchSeq.hasKey() && launchSeq.equals(currentSeq)) {
-                // log.info("hotKeydownHandler match launchSeq: " + launchSeq.toString() + ", currentSeq: " + currentSeq.toString());
-                browser.runtime.sendMessage({ cmd: "open-ui" });
+            if (activateSeq.hasKey() && activateSeq.equals(currentSeq)) {
+                log.info("hotKeydownHandler match activateSeq: " + activateSeq.toString() + ", currentSeq: " + currentSeq.toString());
+                browser.runtime.sendMessage({ cmd: "hotkey", arg: "activate" });
                 e.preventDefault();
                 return false;
             }
             if (searchSeq.hasKey() && searchSeq.equals(currentSeq)) {
-                // log.info("hotKeydownHandler match searchSeq: " + searchSeq.toString() + ", currentSeq: " + currentSeq.toString());
-                browser.runtime.sendMessage({ cmd: "open-ui" });
+                log.info("hotKeydownHandler match searchSeq: " + searchSeq.toString() + ", currentSeq: " + currentSeq.toString());
+                browser.runtime.sendMessage({ cmd: "hotkey", arg: "search" });
                 e.preventDefault();
                 return false;
             }

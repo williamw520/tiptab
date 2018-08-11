@@ -123,7 +123,7 @@
             $(document).on("keydown", appKeyPressingHandler);
             $(".keypress-cover").removeClass("d-none").on("click", function(e){
                 $(this).addClass("d-none").off();
-                $appKeyPressingBtn.text("Enter by Key Press");
+                $appKeyPressingBtn.text("Input by Key Press");
                 $(document).off("keydown", appKeyPressingHandler);
             });
             return stopEvent(e);
@@ -143,7 +143,7 @@
             $(document).on("keydown", searchKeyPressingHandler);
             $(".keypress-cover").removeClass("d-none").on("click", function(e){
                 $(this).addClass("d-none").off();
-                $searchKeyPressingBtn.text("Enter by Key Press");
+                $searchKeyPressingBtn.text("Input by Key Press");
                 $(document).off("keydown", searchKeyPressingHandler);
             });
             return stopEvent(e);
