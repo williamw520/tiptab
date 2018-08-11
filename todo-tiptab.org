@@ -1,5 +1,17 @@
 
 * Feature TODO
+** TODO In-app shortcut keys.  Custom in-app shortcut keys.
+** TODO Container cmd: Move all tabs of a container to its window.
+** TODO Refresh one tab onUpdated
+** TODO Monitor container events and refresh container info/UI.
+** TODO Bookmark a tab.
+** TODO Bookmark all tabs of a window.
+** TODO Show bookmarks as tab box, with saved thumbnails shown.
+** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
+** TODO Save all screenshots.  This needs zip support in Javascript.
+** TODO Sort tabs
+
+* Release 2.5 Feature
 ** DONE Preserve the input focus on the tab when activating it.
 ** DONE Scale the window lane's buttons and title better.
 ** DONE Scale the tab's buttons and title better.
@@ -14,16 +26,6 @@
 ** DONE Handle the Mac control key for custom hotkey's shortcut, with MacCtrl.
 ** DONE Remove the old handling custom hotkey with content script in pages.
 ** DONE Revamp hotkey => app command => activation/focus.
-** TODO In-app shortcut keys.  Custom in-app shortcut keys.
-** TODO Container cmd: Move all tabs of a container to its window.
-** TODO Refresh one tab onUpdated
-** TODO Monitor container events and refresh container info/UI.
-** TODO Bookmark a tab.
-** TODO Bookmark all tabs of a window.
-** TODO Show bookmarks as tab box, with saved thumbnails shown.
-** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
-** TODO Save all screenshots.  This needs zip support in Javascript.
-** TODO Sort tabs
 
 
 * Release 2.4 Feature
