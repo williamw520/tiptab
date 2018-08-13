@@ -167,6 +167,7 @@ The following 3rd party libraries are used in this extension.  The versions and 
 
 
 * Description
+
 Tip Tab let you manage and navigate the open browser tabs visually, similar to the Exposé feature on Mac OS.
 
 NOTE: Starting from version 2.3, Tip Tab requires Firefox 61, to support the hidden tab feature.
@@ -207,24 +208,21 @@ NOTE: Starting from version 2.3, Tip Tab requires Firefox 61, to support the hid
 
 <b>Information:</b>
 <ul>
-  <li>Shift-Ctrl-F is the default hotkey to bring up Tip Tab.</li>
-  <li>The custom extension hotkey can be used to bring up Tip Tab.</li>
-  <li>The hotkey (either one) can be used to cycle through the tabs, with the Enter key to select a tab.</li>
+  <li>Ctrl+Shift+L is the default hotkey to activate Tip Tab; also for cycling through the tab focus.</li>
+  <li>Ctrl+Shift+F is the default hotkey to search Tip Tab.</li>
+  <li>Custom hotkeys can be set up in the Options page to override the default ones.</li>
   <li>The Options page can be brought up from Firefox's addon manager or from the dropdown menu at upper right hand corner.</li>
   <li>Reload the Tip Tab page (or the Refresh All command) to refresh all the tabs.</li>
-  <li>This extension requires Firefox 59 and up.</li>
+  <li>This extension requires Firefox 61 and up.</li>
   <li>Dragging and dropping tabs across security domains (containers and normal/private windows) would only copy the tab's url and open it as new.
       The tab history and cookies are NOT copied, to maintain the security isolation of the tabs.</li>
 </ul>
 
 <b>Issues:</b>
 <ul>
-  <li>Custom hotkey would not work on special Firefox pages, 
-      such as about:newtab, about:addons, about:config, and other privileged pages.
-      For security reason, any custom key events are restricted by Firefox on those pages.</li>
   <li>For keyboard navigation, the Tab key will cycle the focus through the tabs, plus onto the Firefox controls on the frame, such as the address bar, the search bar.
       Cycling the focus to outside controls is part of the normal handling on the Tab key by Firefox and cannot be changed.
-      The custom hotkey will only cycle the focus through the tabs and Tip Tab's search bar.
+      The hotkey will only cycle the focus through the tabs and Tip Tab's search field.
   </li>
 </ul>
 
