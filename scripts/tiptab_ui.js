@@ -295,9 +295,12 @@
         if (wid >= 0) {
             // Update the active window's title to bold.
             Object.values(windowById).forEach( w => w.focused = false );
-            windowById[wid].focused = true;
             $(".window-title").removeClass("bold");
-            $(".window-lane[data-wid='" + wid + "'] .window-title").addClass("bold");
+
+            if (windowById.hasOwnProperty(wid)) {
+                windowById[wid].focused = true;
+                $(".window-lane[data-wid='" + wid + "'] .window-title").addClass("bold");
+            }
 
             // TipTap loses focus on the tab-box item sometimes when activated other tabs before.
             // Restore focus to previous focused tab-box or to the search box when the TipTap's window is in focused.
@@ -391,12 +394,12 @@
         dlg.setupDlg("#about-dlg", true);
 
         // Global menu at the top navbar
-        $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage() });
+        $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage()   });
         $("#global-cmds").on("click", ".cmd-refresh",           pReloadRedrawRefreshContent);
-        $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                  });
-        $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(null, true)            });
-        $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(null, false)           });
-        $("#global-cmds").on("click", ".cmd-close-ui",          function(){ pSendCmd({ cmd: "close-ui" })   });
+        $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                      });
+        $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(effectiveTabIds, true)     });
+        $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(effectiveTabIds, false)    });
+        $("#global-cmds").on("click", ".cmd-close-ui",          function(){ pSendCmd({ cmd: "close-ui" })       });
         $("#global-cmds").on("click", ".cmd-about",             showAboutDlg);
         $(".logo").on("click",                                  showAboutDlg);
 
@@ -1872,13 +1875,23 @@
         document.execCommand("copy");
     }
 
+    function muteTabs(tids, isMuting) {
+        Promise.all( tids.map( tid => browser.tabs.update(tid, { muted: isMuting }) ) )
+            .then( updatedTabs => updatedTabs.forEach( tab => tabById[tab.id].mutedInfo = tab.mutedInfo ) )
+            .then( () => refreshTabBoxes(tids, false) );
+    }
+
+    function muteWindowTabs(wid, isMuting) {
+        muteTabs(effectiveWindowTabs(wid), isMuting);
+    }
+
     function muteWindowTabs(wid, isMuting) {
         let tabs = wid ? effectiveWindowTabs(wid) : toTabs(effectiveTabIds);    // tabs of a window or all tabs.
         Promise.all( tabs.map( tab => browser.tabs.update(tab.id, { muted: isMuting }) ) )
             .then( updatedTabs => updatedTabs.forEach( tab => tabById[tab.id].mutedInfo = tab.mutedInfo ) )
             .then( () => refreshTabBoxes(toTabIds(tabs), false) )
     }
-                     
+
     function showTabs(tids) {
         browser.tabs.show(tids).then( () => {
             toTabs(tids).forEach( tab => tab.hidden = false );
