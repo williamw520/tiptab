@@ -977,16 +977,16 @@
     }
 
     function zoomOutAnimation(tids) {
-        if (tids.length == 0)
-            return;
-        let total = 500;
-        let inc = total / tids.length;
-        let delayMS = 0;
-        tids.forEach( tid => {
-            let $tabBox = $tabbox(tid);
-            $tabBox.removeClass("d-invisible").css("opacity", "0").stop().delay(delayMS).animate( {  opacity: 1 }, 100 );
-            delayMS += inc;
-        });
+        // if (tids.length == 0)
+        //     return;
+        // let total = 500;
+        // let inc = total / tids.length;
+        // let delayMS = 0;
+        // tids.forEach( tid => {
+        //     let $tabBox = $tabbox(tid);
+        //     $tabBox.removeClass("d-invisible").css("opacity", "0").stop().delay(delayMS).animate( {  opacity: 1 }, 100 );
+        //     delayMS += inc;
+        // });
     }
 
     // Re-draw/re-generate the UI content layout based on the current displayType.
