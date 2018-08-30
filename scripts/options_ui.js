@@ -53,6 +53,7 @@
             .then(() => setupDOMListeners())
             .then(() => refreshControls())
             .then(() => refreshSettings())
+            .then(() => activateTab("tab-general"))
             .then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
@@ -74,6 +75,7 @@
 
     function refreshSettings() {
         $("#thumbnailPopup").prop("checked", ttSettings.thumbnailPopup);
+        $("#openInNewWindow").prop("checked", ttSettings.openInNewWindow);
         $("#showEmptyWindows").prop("checked", ttSettings.showEmptyWindows);
         $("#showEmptyContainers").prop("checked", ttSettings.showEmptyContainers);
         $("#realtimeUpdateThumbnail").prop("checked", ttSettings.realtimeUpdateThumbnail);
@@ -92,18 +94,26 @@
     }
 
     function setupDOMListeners() {
+        // Handle click on the tabs.
+        $("ul.tab li.tab-item").click(function(){
+		    let tabid = $(this).data("tabid");
+		    $(this).addClass("active").siblings().removeClass("active");
+            $(".tab-body#" + tabid).show().siblings().hide();
+        })
+
         // Input handlers
         $("#thumbnailPopup").on("change",           function(){ ttSettings.thumbnailPopup = this.checked; updateChanges() });
+        $("#openInNewWindow").on("change",          function(){ ttSettings.openInNewWindow = this.checked; updateChanges() });
         $("#showEmptyWindows").on("change",         function(){ ttSettings.showEmptyWindows = this.checked; updateChanges() });
         $("#showEmptyContainers").on("change",      function(){ ttSettings.showEmptyContainers = this.checked; updateChanges() });
         $("#realtimeUpdateThumbnail").on("change",  function(){ ttSettings.realtimeUpdateThumbnail = this.checked; updateChanges() });
 
-        $("#thumbnailWidth0").on("input",          function(){ ttSettings.thumbnailWidth0  = $(this).val(); updateChanges() });
-        $("#thumbnailHeight0").on("input",         function(){ ttSettings.thumbnailHeight0 = $(this).val(); updateChanges() });
-        $("#thumbnailWidth1").on("input",          function(){ ttSettings.thumbnailWidth1  = $(this).val(); updateChanges() });
-        $("#thumbnailHeight1").on("input",         function(){ ttSettings.thumbnailHeight1 = $(this).val(); updateChanges() });
-        $("#thumbnailWidth2").on("input",          function(){ ttSettings.thumbnailWidth2  = $(this).val(); updateChanges() });
-        $("#thumbnailHeight2").on("input",         function(){ ttSettings.thumbnailHeight2 = $(this).val(); updateChanges() });
+        $("#thumbnailWidth0").on("input",           function(){ ttSettings.thumbnailWidth0  = $(this).val(); updateChanges() });
+        $("#thumbnailHeight0").on("input",          function(){ ttSettings.thumbnailHeight0 = $(this).val(); updateChanges() });
+        $("#thumbnailWidth1").on("input",           function(){ ttSettings.thumbnailWidth1  = $(this).val(); updateChanges() });
+        $("#thumbnailHeight1").on("input",          function(){ ttSettings.thumbnailHeight1 = $(this).val(); updateChanges() });
+        $("#thumbnailWidth2").on("input",           function(){ ttSettings.thumbnailWidth2  = $(this).val(); updateChanges() });
+        $("#thumbnailHeight2").on("input",          function(){ ttSettings.thumbnailHeight2 = $(this).val(); updateChanges() });
 
         $("#enableCustomHotKey").on("change",       function(){ ttSettings.enableCustomHotKey = this.checked; updateChanges() });
         $("#appHotKey").on("input",                 function(){ getAppHotKeyInput();    updateChanges() });
@@ -169,6 +179,11 @@
             updateChanges();
         });
 
+    }
+
+    function activateTab(tabid) {
+        $("ul.tab li.tab-item[data-tabid='" + tabid + "']").addClass("active").siblings().removeClass("active");
+        $(".tab-body#" + tabid).show().siblings().hide();
     }
 
     function getAppHotKeyInput() {
