@@ -468,8 +468,9 @@
         $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private",
                                                                 function(e){ return stopEvent(e) });
         // Search handler
-        $(".cmd-search").on("click",                            function(){ $(this).select()            });
-        $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())   });
+        $(".cmd-search").on("click",                            function(){ $(this).select()                            });
+        $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())                   });
+        $(".cmd-clear-search").on("click",                      function(){ $(".cmd-search").val(""); searchTabs("")    });
 
         $(window).focus(function(){
             // log.info("window.focus");
