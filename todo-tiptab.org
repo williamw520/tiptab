@@ -1,6 +1,7 @@
 
 * Feature TODO
 ** DONE Clear search command.
+** DONE Open Tip Tab in new window, controlled by option.
 ** TODO Create window command.
 ** TODO Create tab command.
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
@@ -10,7 +11,6 @@
 ** TODO Refresh one tab onUpdated
 ** TODO Monitor container events and refresh container info/UI.
 ** TODO Save container windows and their tabs.
-** TODO 
 ** TODO Bookmark a tab.
 ** TODO Bookmark all tabs of a window.
 ** TODO Show bookmarks as tab box, with saved thumbnails shown.

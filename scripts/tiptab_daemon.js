@@ -150,9 +150,21 @@
                 // No existing TipTab page.  Create one.
                 // The newly created page is not ready to handle message yet.  Save the appCmd for later retrieval during extension's init.
                 lastAppCommand = appCmd;
-                return browser.tabs.create({ url: TIPTAB_URL });
+                return pOpenNewTipTab();
             }
         });
+    }
+
+    function pOpenNewTipTab() {
+        if (ttSettings.openInNewWindow) {
+            let newWindow;
+            return browser.windows.create({ type: "normal",  url: "about:blank" })
+                .then( w  => newWindow = w )
+                .then( () => browser.tabs.create({ windowId: newWindow.id,  url: TIPTAB_URL }) )
+                .then( () => browser.tabs.remove(newWindow.tabs[0].id) );
+        } else {
+            return browser.tabs.create({ url: TIPTAB_URL });
+        }
     }
 
     function updateCustomHotKey(command, shortcut) {
