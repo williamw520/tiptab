@@ -2,12 +2,12 @@
 * Feature TODO
 ** DONE Clear search command.
 ** DONE Open Tip Tab in new window, controlled by option.
-** TODO Create window command.
-** TODO Create tab command.
+** DONE Create window command.
+** DONE Create tab command.
 ** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
 ** TODO Shortcut keys to saved searches, Ctrl+Shift+[1-9]
+** TODO Container cmd: Move all tabs of a container to its window, open tab in container
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
-** TODO Container cmd: Move all tabs of a container to its window.
 ** TODO Refresh one tab onUpdated
 ** TODO Monitor container events and refresh container info/UI.
 ** TODO Save container windows and their tabs.
