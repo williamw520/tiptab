@@ -396,6 +396,7 @@
         // Global menu at the top navbar
         $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage()   });
         $("#global-cmds").on("click", ".cmd-refresh",           pReloadRedrawRefreshContent);
+        $("#global-cmds").on("click", ".cmd-create-window",     function(){ createWindow()                      });
         $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                      });
         $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(effectiveTabIds, true)     });
         $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(effectiveTabIds, false)    });
@@ -416,8 +417,9 @@
 
         // Window command handlers
         $("#main-content").on("click", ".cmd-reload-w-tabs",    function(){ reloadWindowTabs($(this).closest(".window-lane").data("wid"))           });
-        $("#main-content").on("click", ".cmd-copy-w-title-url", function(){ copyWindowTabTitleUrls($(this).closest(".window-lane").data("wid"))     });
+        $("#main-content").on("click", ".cmd-create-tab",       function(){ createTab($(this).closest(".window-lane").data("wid"))                  });
         $("#main-content").on("click", ".cmd-undo-close",       function(){ undoCloseTab()                                                          });
+        $("#main-content").on("click", ".cmd-copy-w-title-url", function(){ copyWindowTabTitleUrls($(this).closest(".window-lane").data("wid"))     });
         $("#main-content").on("click", ".cmd-mute-w-all",       function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), true)       });
         $("#main-content").on("click", ".cmd-unmute-w-all",     function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), false)      });
         $("#main-content").on("click", ".cmd-show-w-all",       function(){ showWindowTabs($(this).closest(".window-lane").data("wid"), true)       });
@@ -468,9 +470,9 @@
         $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private",
                                                                 function(e){ return stopEvent(e) });
         // Search handler
-        $(".cmd-search").on("click",                            function(){ $(this).select()                            });
-        $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())                   });
-        $(".cmd-clear-search").on("click",                      function(){ $(".cmd-search").val(""); searchTabs("")    });
+        $(".cmd-search").on("click",                            function(){ $(this).select()                                                        });
+        $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())                                               });
+        $(".cmd-clear-search").on("click",                      function(){ $(".cmd-search").val("").select(); searchTabs("")                       });
 
         $(window).focus(function(){
             // log.info("window.focus");
@@ -1086,7 +1088,9 @@
                       <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
                       <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                         <li class="menu-item" title="Reload tabs in window"> <a href="#" class="cmd-reload-w-tabs nowrap">Reload Tabs</a> </li>
+                        <li class="menu-item" title="Create tab in window"> <a href="#" class="cmd-create-tab nowrap">Ceate Tab</a> </li>
                         <li class="menu-item" title="Undo the last close tab"> <a href="#" class="cmd-undo-close nowrap">Undo Close Tab</a> </li>
+                        <li class="divider"></li>
                         <li class="menu-item" title="Copy titles and Urls of tabs in window"> <a href="#" class="cmd-copy-w-title-url nowrap">Copy Titles & Urls</a> </li>
                         <li class="divider"></li>
                         <li class="menu-item" title="Show tabs in window">   <a href="#" class="cmd-show-w-all nowrap">Show Tabs</a> </li>
@@ -1866,6 +1870,18 @@
     function reloadWindowTabs(wid) {
         let tabs = effectiveWindowTabs(wid);
         tabs.forEach( tab => browser.tabs.reload(tab.id) );
+    }
+
+
+    function createWindow() {
+        browser.windows.create({ type: "normal" }).then( () => browser.windows.update(tiptapWid, { focused: true }) );
+    }
+
+    function createTab(wid) {
+        browser.tabs.create({
+            active:         false,
+            windowId:       wid,
+        });
     }
 
     function copyWindowTabTitleUrls(wid) {

@@ -235,8 +235,8 @@ body {
 
 .logo.logo-sm {
     font-size:      .6rem;
-    width:          1.2rem;
-    height:         1.2rem;
+    width:          1.4rem;
+    height:         1.4rem;
 }
 
 .logo.logo-lg {
@@ -435,6 +435,7 @@ a.disabled {
     position:       fixed;
     height:         var(--header-height);
     width:          100%;
+    padding:        0;
     background:     #fdfdfd;
     border-bottom:  0.02rem solid #b0b0b0;
     z-index:        1000;
