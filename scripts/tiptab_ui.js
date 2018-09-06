@@ -501,7 +501,7 @@
 
 
         // Mouse events on thumbnail
-        $("#main-content").on("mouseover", "img.tab-img", function(){
+        $("#main-content").on("mouseover", ".tabbox-arc", function(){
             if (!tiptabWindowActive || !enableOverlay)
                 return;
             // mouse enters the thumbnail image; starts the overlay popup sequence.
@@ -514,7 +514,7 @@
                 $(".overlay-img").css("opacity", "0.0").attr("src", thumbnail); // set the overlay image but hide it initially.
             }
         });
-        $("#main-content").on("mouseout", "img.tab-img", function(){
+        $("#main-content").on("mouseout", ".tabbox-arc", function(){
             closeOverlay();
         });
         $("#main-content").on("mousemove", function(){
@@ -1390,6 +1390,8 @@
                 <a href="#" class="btn status-audible   ${css_audible(tab)}"            tabindex="-1" title="Tab is playing sound"><img src="icons/audible.png" ></a>
                 <a href="#" class="btn status-pinned    ${css_display(tab.pinned)}"     tabindex="-1" title="Tab is pinned"><img src="icons/pin-unpinned.png"   ></a>
               </div>
+
+              <div class="tabbox-arc ${ttSettings.thumbnailPopup ? '' : 'hidden'}"></div>
             </div>   
         `;
     }
