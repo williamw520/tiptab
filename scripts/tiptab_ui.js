@@ -64,6 +64,9 @@
     function is_firefox_private(id) { return id == CT_FIREFOX_PRIVATE }
     function is_real_container(id)  { return !is_firefox_default(id) && !is_firefox_private(id) }
 
+    // Search
+    const MAX_SAVED_SEARCHES = 8;
+
     // Colors
     //const COLOR_DEFAULT = "#c7c9cd";
     const COLOR_DEFAULT = "#97999d";
@@ -77,6 +80,7 @@
     const ICON_PINNED = ["icons/pin-all.png",  "icons/pin-pinned.png",  "icons/pin-unpinned.png"];
 
     // Module variables.
+    let tiptabWindowActive = true;  // setupDOMListeners() is called too late after the window has been in focus.  Assume window is active on startup.
     let ttSettings = TipTabSettings.ofLatest();
     let activateDefaultSeq;
     let activateSettingSeq;
@@ -88,6 +92,7 @@
     let tiptapTid;                  // the current TipTab's tab id
     let currentLastActiveTabId = 0; // the previous active tab on the current window.
     let previousFocusedTid = 0;
+    let searchSaving = false;
 
     let uiState = {};
     let tabById = {};               // the only map holding the Tab objects.
@@ -115,7 +120,6 @@
     let popupDelayTimer;
     let enableOverlayDelayTimer;
 
-    let tiptabWindowActive = true;  // setupDOMListeners() is called too late after the window has been in focus.  Assume window is active on startup.
 
     // Firefox's Content Security Policy for WebExtensions prohibits running any Javascript in the html page.
     // Wait for the page loaded event before doing anything.
@@ -230,6 +234,14 @@
         uiState.filterByHidden = state.filterByHidden || 0;
         uiState.filterByMuted = state.filterByMuted || 0;
         uiState.filterByPinned = state.filterByPinned || 0;
+
+        uiState.savedSearch = (state.savedSearch && app.isArray(state.savedSearch)) ? state.savedSearch : [];
+        if (uiState.savedSearch.length < MAX_SAVED_SEARCHES) {
+            for (var i = uiState.savedSearch.length; i < MAX_SAVED_SEARCHES; i++)
+                uiState.savedSearch[i] = "";
+        } else if (uiState.savedSearch.length > MAX_SAVED_SEARCHES) {
+            uiState.savedSearch.length = MAX_SAVED_SEARCHES;
+        }
 
         return uiState;
     }
@@ -473,6 +485,8 @@
         $(".cmd-search").on("click",                            function(){ $(this).select()                                                        });
         $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())                                               });
         $(".cmd-clear-search").on("click",                      function(){ $(".cmd-search").val("").select(); searchTabs("")                       });
+        $(".cmd-search-save").on("click",                       function(){ toggleSearchSaving()                                                    });
+        $("#saved-search").on("click", ".btn-saved-search",     function(){ handleSavedSearch($(this))                                              });
 
         $(window).focus(function(){
             // log.info("window.focus");
@@ -660,6 +674,7 @@
         refreshVBtnBarControls();
         redrawFooterControls();     // footer controls are dynamic and need redrawing based on current state of the data.
         refreshFooterControls();
+        redrawSavedSearches();
     }
 
     function refreshControls() {
@@ -709,6 +724,36 @@
             refreshContainerFooterBtns();
             break;
         }
+    }
+
+    function redrawSavedSearches() {
+        $("#saved-search").html(renderSavedSearches());
+        fillSavedSearchText();
+        $(".cmd-search-save").attr("title", "Save search");
+    }
+
+    // Rendered html has no unsafe text.
+    function renderSavedSearches() {
+        return `${ uiState.savedSearch.map( txt => `
+            <button class="btn btn-sm mr-2 btn-saved-search ${txt ? '' : 'hidden'}" tabindex='-1'></button>
+            `).join(" ") }`;
+    }
+
+    // Use html-escaped API to fill in unsafe text.
+    function fillSavedSearchText() {
+        uiState.savedSearch.forEach( (txt, i) => $("#saved-search .btn-saved-search").eq(i)
+                                     .text(txt)
+                                     .attr("title", (i+1) + " - search by: " + txt)
+                                     .addClass() );
+    }
+
+    function showSavedSearchButtonsForSaving() {
+        uiState.savedSearch.forEach( (txt, i) => $("#saved-search .btn-saved-search").eq(i)
+                                     .text(txt || "+")
+                                     .attr("title", (txt ? "click to save over existing search text" : "click to save here"))
+                                     .addClass("btn-saved-search-saving")
+                                     .addClass(txt ? "" : "btn-saved-search-saving-new")
+                                     .show() );
     }
 
 
@@ -1148,8 +1193,8 @@
         $(".window-filter-btns").html(
             `${ windowIds.map( wid => windowById[wid] ).map( w => `
                 <button class="cmd-filter-by-window btn footer-btn badge" data-wid="${w.id}" data-badge="${CHAR_CHECKMARK}" tabindex="-1"></button>
-                ` ).join("\n") }
-        `);
+                ` ).join("\n") }`
+        );
     }
 
     function refreshWindowFooterBtns() {
@@ -1164,8 +1209,8 @@
         $(".window-filter-btns").html(
             `${ containerIds.map( cid => containerById[cid] ).map( c => `
                 <button class="cmd-filter-by-container btn footer-btn badge" data-cid="${c.cookieStoreId}" data-badge="${CHAR_CHECKMARK}" style="color: ${c.colorCode}" tabindex="-1"></button>
-                ` ).join("\n") }
-        `);
+                ` ).join("\n") }`
+        );
     }
  
     function refreshContainerFooterBtns() {
@@ -1426,7 +1471,7 @@
         $tabimg(tid).attr("src", thumbnail);
     }
 
- 
+
     function stopEvent(e)                       { e.preventDefault(); return false }
     function box_shadow_private(isPrivate)      { return isPrivate ? "box-shadow: 0 0 .4rem -.02rem rgba(0, 0, 0, 0.75);" : "" }
     function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .4rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
@@ -2168,6 +2213,35 @@
         }
         redrawRefreshContentOnFiltering();
     }
+
+    function toggleSearchSaving() {
+        if (searchSaving) {
+            // cancel searchSaving
+            searchSaving = false;
+            redrawSavedSearches();
+            $(".cmd-search-save i").removeClass("icon-stop").addClass("icon-link");
+        } else {
+            // start searchSaving
+            searchSaving = true;
+            showSavedSearchButtonsForSaving();
+            $(".cmd-search-save").attr("title", "Cancel search saving");
+            $(".cmd-search-save i").removeClass("icon-link").addClass("icon-stop");
+        }
+    }
+
+    function handleSavedSearch($btn) {
+        let index = $btn.index();
+        log.info("clicked handleSavedSearch " + index);
+        if (searchSaving) {
+            uiState.savedSearch[index] = $(".cmd-search").val();
+            toggleSearchSaving();
+        } else {
+            let txt = uiState.savedSearch[index] || "";
+            $(".cmd-search").val(txt).select();
+            searchTabs(txt);
+        }        
+    }
+
 
     function closeOverlay() {
         thumbnailFocusTid = null;

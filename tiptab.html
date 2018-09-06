@@ -40,32 +40,29 @@
       <header class="header-bar">
         <div class="navbar" style="width:100%" id="global-cmds">
           
-          <div class="navbar-section nowrap" style="flex-grow: 0;">
+          <div class="navbar-section" style="flex-grow: 0; flex-shrink: 0;">
             <div class="flex-centered logo-box">
               <div class="logo logo-sm" title="Tip Tab"><img src="/icons/app-256.png"></div>
             </div>
           </div>
 
-          <div class="navbar-section nowrap mr-5" style="flex-grow: 0; margin-left: 2px;">
+          <div class="navbar-section mr-5" style="flex-grow: 0; flex-shrink: 0;">
             <div class="input-group">
-              <div id="searchbar" class="has-icon-right"  style="flex-grow: 1;">
+              <div id="searchbar" class="has-icon-right">
                 <input type="search" class="cmd-search form-input input-sm rounded" placeholder="search tabs" tabindex="1" >
                 <i class="cmd-clear-search form-icon icon icon-cross ptr" style="z-index: 9;" title="Clear search"></i>
               </div>
-              <!-- 
-              <button class="cmd-search-save btn btn-sm ml-4" title="Save search"><i class="icon icon-plus"></i></button>
-              <div class="saved-search"></div>
-              -->
+              <button class="cmd-search-save btn btn-sm ml-1" tabindex="-1" title="Save search"><i class="icon icon-link"></i></button>
             </div>
           </div>
 
-          <div class="navbar-section" style="flex-grow: 1;"></div>
+          <div id="saved-search" class="navbar-section saved-search-bar" style="flex-grow: 1; flex-shrink: 1; min-width: 0; overflow: hidden;"></div>
           
-          <div class="navbar-section" style="flex-grow: 0;">
-            <button class="cmd-refresh btn btn-link mr-3" title="Refresh All."><i class="icon icon-refresh"></i></button>
-            <button class="cmd-create-window btn btn-link mr-3" title="Create Window."><i class="icon icon-plus"></i></button>
-            <button class="cmd-undo-close btn btn-link mr-3" title="Undo Last Closed Tab."><i class="icon icon-upload"></i></button>
-            <div class="dropdown dropdown-right global-cmd-menu" style="margin-right: .6rem">
+          <div class="navbar-section" style="flex-grow: 0; flex-shrink: 0;">
+            <button class="cmd-refresh btn btn-link mr-2 ml-2" title="Refresh All."><i class="icon icon-refresh"></i></button>
+            <button class="cmd-create-window btn btn-link mr-2" title="Create Window."><i class="icon icon-plus"></i></button>
+            <button class="cmd-undo-close btn btn-link mr-2" title="Undo Last Closed Tab."><i class="icon icon-upload"></i></button>
+            <div class="dropdown dropdown-right global-cmd-menu" style="margin-right: .4rem">
               <div class="btn-group">
                 <a href="#" class="btn btn-link btn-dropdown dropdown-toggle" tabindex="-1"><i class="icon icon-menu"></i></a>
                 <ul class="menu">
