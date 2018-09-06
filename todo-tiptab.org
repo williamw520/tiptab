@@ -4,8 +4,9 @@
 ** DONE Open Tip Tab in new window, controlled by option.
 ** DONE Create window command.
 ** DONE Create tab command.
-** TODO Saved searches on the side.  Selected on the saved search limit the shown tabs
+** DONE Saved searches on the side.  Selected on the saved search limit the shown tabs
 ** TODO Shortcut keys to saved searches, Ctrl+Shift+[1-9]
+** TODO Thumbnail popup when mouse is over the quarter circle at the lower-right corner.
 ** TODO Container cmd: Move all tabs of a container to its window, open tab in container
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Refresh one tab onUpdated

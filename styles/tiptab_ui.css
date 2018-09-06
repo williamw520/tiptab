@@ -443,6 +443,13 @@ a.disabled {
     display:        flex;   /* place all children in the h and v center */
 }
 
+/* override Spectre's navbar */
+.header-bar .navbar {
+    /* align-items: stretch; */
+    flex-wrap: nowrap;
+    /* justify-content: space-between; */
+}
+
 .footer-bar {
     position:       fixed;
     left:           var(--left-pane-width);
@@ -622,14 +629,28 @@ a.disabled {
 
 .cmd-search {
     border:             .05rem solid #007bff;
-    width:              15rem;
+    width:              10rem;
 }
 .cmd-search:focus {
     background:         #ffffee;
 }
 
-.saved-search {
-    height:             100%;
+.saved-search-bar {
+    padding:            0 1px;
+}
+.btn-saved-search {
+    width:              5rem;
+    border:             .05rem dotted #007bff;
+    white-space:        nowrap;
+    overflow:           hidden;
+    text-overflow:      ellipsis;
+}
+.btn-saved-search-saving {
+    background:         #ffffee;
+    box-shadow:         0 0 .1rem 0 rgba(0, 0, 255, 1.0);
+}
+.btn-saved-search-saving-new {
+    color:              gray;
 }
 
 .tab-grid {
