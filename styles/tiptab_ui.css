@@ -47,6 +47,9 @@
     --thumbnail-width:      calc(var(--img-width)  + var(--img-border) + var(--img-border));
     --thumbnail-height:     calc(var(--img-height) + var(--img-border) + var(--img-border));
 
+    --tab-arc-width:        calc(var(--img-height) * 0.25);
+    --tab-arc-height:       calc(var(--img-height) * 0.25);
+    
     --tab-gap:              0.5rem;
 
     --left-pane-width:      2.2rem;
@@ -730,8 +733,23 @@ a.disabled {
     outline:            none;
 }
 
-.tabbox_dummy {
+.tabbox-dummy {
     visibility:         hidden;
+}
+
+.tabbox-arc {           /* quarter-circle-bottom-right */
+    position:           absolute;
+    bottom:             0;
+    right:              0;
+    height:             var(--tab-arc-width);
+    width:              var(--tab-arc-height);
+    border-radius:      78% 0 0 0;
+    border:             0.04rem solid #787878;
+    background-color:   rgba(128, 128, 128, 0.7);
+    opacity:            0.2;
+}
+.tabbox-arc:hover {
+    opacity:            0.5;
 }
 
 .status-private {
