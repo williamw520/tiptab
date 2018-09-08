@@ -46,17 +46,19 @@
             </div>
           </div>
 
-          <div class="navbar-section mr-5" style="flex-grow: 0; flex-shrink: 0;">
+          <div class="navbar-section mr-1" style="flex-grow: 0; flex-shrink: 0;">
             <div class="input-group">
               <div id="searchbar" class="has-icon-right">
                 <input type="search" class="cmd-search form-input input-sm rounded" placeholder="search tabs" tabindex="1" >
                 <i class="cmd-clear-search form-icon icon icon-cross ptr" style="z-index: 9;" title="Clear search"></i>
               </div>
               <button class="cmd-search-save btn btn-sm ml-1" tabindex="-1" title="Save search"><i class="icon icon-link"></i></button>
+              <button class="cmd-search-save-cancel btn btn-sm ml-1 invisible" tabindex="-1" title="Cancel search button saving"><i class="icon icon-stop"></i></button>
             </div>
           </div>
 
-          <div id="saved-search" class="navbar-section saved-search-bar" style="flex-grow: 1; flex-shrink: 1; min-width: 0; overflow: hidden;"></div>
+          <div id="saved-search" class="navbar-section saved-search-bar" style="flex-grow: 1; flex-shrink: 1; min-width: 0; overflow: hidden;">
+          </div>
           
           <div class="navbar-section" style="flex-grow: 0; flex-shrink: 0;">
             <button class="cmd-refresh btn btn-link mr-2 ml-2" title="Refresh All."><i class="icon icon-refresh"></i></button>

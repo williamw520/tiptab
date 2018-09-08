@@ -86,7 +86,8 @@
     let activateSettingSeq;
     let searchDefaultSeq;
     let searchSettingSeq;
-    let currentSeq = wwhotkey.ofKeySeq();
+    let currentSeq = wwhotkey.KeySeq.ofKeySeq();
+    let savedSearchSeqs = [];
     let pixels_per_rem = 16;
     let tiptapWid;                  // the current TipTab's window id
     let tiptapTid;                  // the current TipTab's tab id
@@ -486,6 +487,7 @@
         $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())                                               });
         $(".cmd-clear-search").on("click",                      function(){ $(".cmd-search").val("").select(); searchTabs("")                       });
         $(".cmd-search-save").on("click",                       function(){ toggleSearchSaving()                                                    });
+        $(".cmd-search-save-cancel").on("click",                function(){ endSearchSaving()                                                       });
         $("#saved-search").on("click", ".btn-saved-search",     function(){ handleSavedSearch($(this))                                              });
 
         $(window).focus(function(){
@@ -568,14 +570,27 @@
     function setupKeyboardListeners() {
         $("#main-content").off("keyup", ".tab-box", onTabBoxEnterKey).on("keyup", ".tab-box", onTabBoxEnterKey);
 
-        // document.removeEventListener("keydown", keydownHandler, false);
-        // document.removeEventListener("keyup", hotKeyupHandler, false);
-        // activateDefaultSeq = wwhotkey.ofKeySeq(getDefaultActivateHotKey());
-        // activateSettingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.appHotKey : "");
-        // searchDefaultSeq = wwhotkey.ofKeySeq(getDefaultSearchHotKey());
-        // searchSettingSeq = wwhotkey.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.searchHotKey : "");
-        // document.addEventListener("keydown", keydownHandler, false);
-        // document.addEventListener("keyup", hotKeyupHandler, false);
+        document.removeEventListener("keydown", keydownHandler, false);
+        document.removeEventListener("keyup", hotKeyupHandler, false);
+
+        savedSearchSeqs = [];
+        for (let i = 1; i <= MAX_SAVED_SEARCHES; i++) {
+            let prefix = (ttSettings.savedSearchKeyPrefix || "").trim();
+            let keySeq = prefix == "" ? "" : prefix + i;            // Ctrl+Shift+1 to Ctrl+Shift+8
+            savedSearchSeqs.push(wwhotkey.KeySeq.ofKeySeq(keySeq));
+        }
+
+        // activateDefaultSeq = wwhotkey.KeySeq.ofKeySeq(getDefaultActivateHotKey());
+        // activateSettingSeq = wwhotkey.KeySeq.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.appHotKey : "");
+        // searchDefaultSeq = wwhotkey.KeySeq.ofKeySeq(getDefaultSearchHotKey());
+        // searchSettingSeq = wwhotkey.KeySeq.ofKeySeq(ttSettings.enableCustomHotKey ? ttSettings.searchHotKey : "");
+        activateDefaultSeq = wwhotkey.KeySeq.ofKeySeq("");
+        activateSettingSeq = wwhotkey.KeySeq.ofKeySeq("");
+        searchDefaultSeq = wwhotkey.KeySeq.ofKeySeq("");
+        searchSettingSeq = wwhotkey.KeySeq.ofKeySeq("");
+        
+        document.addEventListener("keydown", keydownHandler, false);
+        document.addEventListener("keyup", hotKeyupHandler, false);
     }
     
     function getDefaultActivateHotKey() {
@@ -617,6 +632,16 @@
         if (currentSeq.equals(searchDefaultSeq)) {
             handleAppCommand("search", true, true);         // keydown handling is on the Tip Tab page.  Its window has to be in focused and it's active.
             return;
+        }
+        for (let i = 0; i < savedSearchSeqs.length; i++) {
+            if (currentSeq.equals(savedSearchSeqs[i])) {
+                let $btn = $("#saved-search .btn-saved-search").eq(i);
+                $btn.addClass("flash-yellow").delay(300).queue(() => $btn.removeClass("flash-yellow").dequeue() );
+                let txt = uiState.savedSearch[i] || "";
+                $(".cmd-search").val(txt).select();
+                searchTabs(txt);
+                return;
+            }
         }
     }
 
@@ -734,25 +759,32 @@
 
     // Rendered html has no unsafe text.
     function renderSavedSearches() {
-        return `${ uiState.savedSearch.map( txt => `
-            <button class="btn btn-sm mr-2 btn-saved-search ${txt ? '' : 'hidden'}" tabindex='-1'></button>
-            `).join(" ") }`;
+        let lastIndex = 0;
+        for (let i = uiState.savedSearch.length - 1; i >=0; i--) {
+            if (uiState.savedSearch[i]) {
+                lastIndex = i;
+                break;
+            }
+        }
+
+        return `<div class="btn-group btn-group-block">
+                    ${ uiState.savedSearch.map( (txt, i) => 
+                        `<button class="btn btn-sm btn-saved-search ${i <= lastIndex ? '' : 'hidden'}" tabindex='-1'></button>`
+                    ).join(" ") }
+                </div>`;
     }
 
     // Use html-escaped API to fill in unsafe text.
     function fillSavedSearchText() {
         uiState.savedSearch.forEach( (txt, i) => $("#saved-search .btn-saved-search").eq(i)
                                      .text(txt)
-                                     .attr("title", (i+1) + " - search by: " + txt)
-                                     .addClass() );
+                                     .attr("title", (i+1) + " - search by: " + txt) );
     }
 
     function showSavedSearchButtonsForSaving() {
         uiState.savedSearch.forEach( (txt, i) => $("#saved-search .btn-saved-search").eq(i)
-                                     .text(txt || "+")
                                      .attr("title", (txt ? "click to save over existing search text" : "click to save here"))
                                      .addClass("btn-saved-search-saving")
-                                     .addClass(txt ? "" : "btn-saved-search-saving-new")
                                      .show() );
     }
 
@@ -2218,25 +2250,33 @@
 
     function toggleSearchSaving() {
         if (searchSaving) {
-            // cancel searchSaving
-            searchSaving = false;
-            redrawSavedSearches();
-            $(".cmd-search-save i").removeClass("icon-stop").addClass("icon-link");
+            // done searchSaving
+            // Save the temporarily stored search text in the button to uiState.
+            for (let i = 0; i < MAX_SAVED_SEARCHES; i++) {
+                uiState.savedSearch[i] = $("#saved-search .btn-saved-search").eq(i).text();
+            }
+            endSearchSaving();
         } else {
             // start searchSaving
             searchSaving = true;
             showSavedSearchButtonsForSaving();
-            $(".cmd-search-save").attr("title", "Cancel search saving");
-            $(".cmd-search-save i").removeClass("icon-link").addClass("icon-stop");
+            $(".cmd-search-save").attr("title", "Finish saving search button changes");
+            $(".cmd-search-save i").removeClass("icon-link").addClass("icon-check");
+            $(".cmd-search-save-cancel").removeClass("invisible");
         }
     }
 
+    function endSearchSaving() {
+        searchSaving = false;
+        redrawSavedSearches();
+        $(".cmd-search-save i").removeClass("icon-check").addClass("icon-link");
+        $(".cmd-search-save-cancel").addClass("invisible");
+    }
+ 
     function handleSavedSearch($btn) {
         let index = $btn.index();
-        log.info("clicked handleSavedSearch " + index);
         if (searchSaving) {
-            uiState.savedSearch[index] = $(".cmd-search").val();
-            toggleSearchSaving();
+            $btn.text($(".cmd-search").val());  // save the search text in the button's text temporarily.
         } else {
             let txt = uiState.savedSearch[index] || "";
             $(".cmd-search").val(txt).select();

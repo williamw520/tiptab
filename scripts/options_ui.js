@@ -90,6 +90,8 @@
         $("#enableCustomHotKey").prop("checked", ttSettings.enableCustomHotKey);
         $("#appHotKey").val(ttSettings.appHotKey);
         $("#searchHotKey").val(ttSettings.searchHotKey);
+        $("#savedSearchKeyPrefix").val(ttSettings.savedSearchKeyPrefix);
+
         $(".is-error").removeClass("is-error");
     }
 
@@ -116,12 +118,13 @@
         $("#thumbnailHeight2").on("input",          function(){ ttSettings.thumbnailHeight2 = $(this).val(); updateChanges() });
 
         $("#enableCustomHotKey").on("change",       function(){ ttSettings.enableCustomHotKey = this.checked; updateChanges() });
-        $("#appHotKey").on("input",                 function(){ getAppHotKeyInput();    updateChanges() });
-        $("#searchHotKey").on("input",              function(){ getSearchHotKeyInput(); updateChanges() });
+        $("#appHotKey").on("input",                 function(){ getAppHotKeyInput();            updateChanges() });
+        $("#searchHotKey").on("input",              function(){ getSearchHotKeyInput();         updateChanges() });
+        $("#savedSearchKeyPrefix").on("input",      function(){ getSavedSearchKeyPrefixInput(); updateChanges() });
 
         // Special handling for hotkey input by keypressing.
         let appKeyPressingHandler = function(e) {
-            let ks = wwhotkey.ofKeyboardEvent(e);
+            let ks = wwhotkey.KeySeq.ofKeyboardEvent(e);
             $("#appHotKey").val(ks.toString());
             getAppHotKeyInput();
             updateChanges();
@@ -141,7 +144,7 @@
 
         // Special handling for hotkey input by keypressing.
         let searchKeyPressingHandler = function(e) {
-            let ks = wwhotkey.ofKeyboardEvent(e);
+            let ks = wwhotkey.KeySeq.ofKeyboardEvent(e);
             $("#searchHotKey").val(ks.toString());
             getSearchHotKeyInput();
             updateChanges();
@@ -159,6 +162,27 @@
             return stopEvent(e);
         });
 
+        // Special handling for hotkey input by keypressing.
+        let savedSearchKeyPrefixPressingHandler = function(e) {
+            let ks = wwhotkey.KeySeq.ofKeyboardEvent(e);
+            $("#savedSearchKeyPrefix").val(ks.toString());
+            getSavedSearchKeyPrefixInput();
+            updateChanges();
+            return stopEvent(e);
+        };
+        let $savedSearchKeyPrefixPressingBtn = $("#savedSearchKeyPrefixPressing");
+        $savedSearchKeyPrefixPressingBtn.on("click", function(e){
+            $savedSearchKeyPrefixPressingBtn.text("Click Again to End");
+            $(document).on("keydown", savedSearchKeyPrefixPressingHandler);
+            $(".keypress-cover").removeClass("d-none").on("click", function(e){
+                $(this).addClass("d-none").off();
+                $savedSearchKeyPrefixPressingBtn.text("Input by Key Press");
+                $(document).off("keydown", savedSearchKeyPrefixPressingHandler);
+            });
+            return stopEvent(e);
+        });
+
+        
         // Button handlers
         $("#saveChanges").on("click", function(){
             settings.pSave(ttSettings).then(() => {
@@ -189,7 +213,7 @@
     function getAppHotKeyInput() {
         let $appHotKey = $("#appHotKey");
         ttSettings.appHotKey = $appHotKey.val().trim();
-        if (ttSettings.appHotKey.length == 0 || wwhotkey.validKeyIdSequence(ttSettings.appHotKey)) {
+        if (wwhotkey.KeySeq.validKeyIdSequence(ttSettings.appHotKey, true)) {
             $appHotKey.removeClass("is-error");
             $appHotKey.closest(".input-group").removeClass("is-error");
         } else {
@@ -201,7 +225,7 @@
     function getSearchHotKeyInput() {
         let $searchHotKey = $("#searchHotKey");
         ttSettings.searchHotKey = $searchHotKey.val().trim();
-        if (ttSettings.searchHotKey.length == 0 || wwhotkey.validKeyIdSequence(ttSettings.searchHotKey)) {
+        if (wwhotkey.KeySeq.validKeyIdSequence(ttSettings.searchHotKey, true)) {
             $searchHotKey.removeClass("is-error");
             $searchHotKey.closest(".input-group").removeClass("is-error");
         } else {
@@ -210,6 +234,19 @@
         }
     }
 
+    function getSavedSearchKeyPrefixInput() {
+        let $input = $("#savedSearchKeyPrefix");
+        let input  = $input.val().trim();
+        if (wwhotkey.KeySeq.validModifierIdSequence(input, true)) {
+            $input.removeClass("is-error");
+            $input.closest(".input-group").removeClass("is-error");
+        } else {
+            $input.addClass("is-error");
+            $input.closest(".input-group").addClass("is-error");
+        }
+        ttSettings.savedSearchKeyPrefix = input;
+    }
+    
     function postSaving(oldSettings, newSettings) {
         //broadcastToTabs({ cmd: "settings-changed", settings: newSettings });
         orgSettings = Object.assign({}, newSettings);
