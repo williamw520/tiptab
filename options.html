@@ -61,7 +61,8 @@
         </nav><!-- panel-nav -->
         
         <div class="panel-body" style=" background: #fcfcfc;">
-          
+
+          <!-- tab-general -->
           <form class="form-horizontal tab-body hidden" id="tab-general">
 
             <div class="divider text-left" data-content="Tab Display" style="margin-top:1rem;"></div>
@@ -89,6 +90,7 @@
 
           </form><!-- tab-general -->
 
+          <!-- tab-thumbnail -->
           <form class="form-horizontal tab-body hidden" id="tab-thumbnail">
 
             <div class="divider text-left" data-content="Thumbnail Display" style="margin-top:1rem;"></div>
@@ -141,13 +143,14 @@
 
           </form><!-- tab-thumbnail -->
 
-          <form class="form-horizontal tab-body hidden" id="tab-keys">
+          <!-- tab-keys -->
+          <form class="form-horizontal tab-body hidden" id="tab-keys" >
 
-            <div class="divider text-left" data-content="Shortcut Key" style="margin-top:1rem;"></div>
+            <div class="divider text-left" data-content="Browser Scope Hot Keys" style="margin-top:1rem;"></div>
             
             <div class="form-group ">
-              <div class="col-5 pr-2"> <label class="form-label" for="enableCustomHotKey">Enable Custom Hot Key</label> </div>
-              <div class="col-7">
+              <div class="col-5 pr-2" > <label class="form-label" for="enableCustomHotKey">Enable Custom Hot Key</label> </div>
+              <div class="col-7" >
                 <label class="form-switch "> <input type="checkbox" id="enableCustomHotKey"> <i class="form-icon"></i> </label>
               </div>
             </div>    
@@ -169,6 +172,19 @@
                 <div class="input-group">
                   <button class="btn" id="searchKeyPressing" style="width:8rem;">Input by Key Press</button>
                   <input class="form-input" type="text" id="searchHotKey" maxlength="30" style="flex: 0 1 auto; width: 8rem;" placeholder="Ctrl+Shift+F" />
+                </div>
+                <p class="form-input-error">Invalid key sequence.</p>
+              </div>
+            </div>
+
+            <div class="divider text-left" data-content="Tip Tab Extension Scope Shortcuts" style="margin-top:1rem;"></div>
+            
+            <div class="form-group ">
+              <div class="col-5 pr-2"> <label class="form-label" for="savedSearchKeyPrefix">Saved Search Key Prefix (PREFIX+[1-8])</label> </div>
+              <div class="col-7">
+                <div class="input-group">
+                  <button class="btn" id="savedSearchKeyPrefixPressing" style="width:8rem;">Input by Key Press</button>
+                  <input class="form-input" type="text" id="savedSearchKeyPrefix" maxlength="30" style="flex: 0 1 auto; width: 8rem;" placeholder="Ctrl+Shift+" />
                 </div>
                 <p class="form-input-error">Invalid key sequence.</p>
               </div>

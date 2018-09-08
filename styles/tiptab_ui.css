@@ -85,6 +85,10 @@ body {
     display:        none;
 }
 
+.invisible {
+    visibility:     hidden;
+}
+
 .ptr {
     cursor:         pointer;
 }

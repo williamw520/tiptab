@@ -40,9 +40,9 @@
     log.info(window.location.href + " starts -------------------------");
 
     let ttSettings = TipTabSettings.ofLatest();
-    let activateSeq = wwhotkey.ofKeySeq();
-    let searchSeq = wwhotkey.ofKeySeq();
-    let currentSeq = wwhotkey.ofKeySeq();
+    let activateSeq = wwhotkey.KeySeq.ofKeySeq();
+    let searchSeq = wwhotkey.KeySeq.ofKeySeq();
+    let currentSeq = wwhotkey.KeySeq.ofKeySeq();
 
     function init() {
         if (is_tiptaburl(window.location.href)) {
@@ -74,8 +74,8 @@
         document.removeEventListener("keyup", hotKeyupHandler, false);
         if (ttSettings.enableCustomHotKey && (ttSettings.appHotKey || ttSettings.searchHotKey)) {
             try {
-                activateSeq = wwhotkey.ofKeySeq(ttSettings.appHotKey);
-                searchSeq = wwhotkey.ofKeySeq(ttSettings.searchHotKey);
+                activateSeq = wwhotkey.KeySeq.ofKeySeq(ttSettings.appHotKey);
+                searchSeq = wwhotkey.KeySeq.ofKeySeq(ttSettings.searchHotKey);
                 document.addEventListener("keydown", hotKeydownHandler, false);
                 document.addEventListener("keyup", hotKeyupHandler, false);
                 return;
@@ -83,7 +83,7 @@
                 console.error(e);
             }
         }
-        activateSeq = wwhotkey.ofKeySeq();
+        activateSeq = wwhotkey.KeySeq.ofKeySeq();
     }
 
     function hotKeydownHandler(e) {
