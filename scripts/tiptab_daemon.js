@@ -171,7 +171,7 @@
         // log.info("updateCustomHotKey, command: " + command + ", shortcut: " + shortcut);
         if (shortcut) {
             try {
-                browser.commands.update({ name: command, shortcut: wwhotkey.ofKeySeq(shortcut).toString() });
+                browser.commands.update({ name: command, shortcut: wwhotkey.KeySeq.ofKeySeq(shortcut).toString() });
             } catch(e) {
                 log.error(e);
             }

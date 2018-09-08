@@ -148,12 +148,14 @@
             this._newVersion3();
             this._version               = 4;
             this.openInNewWindow        = true;
+            this.savedSearchKeyPrefix   = "Ctrl+Shift+";
             return this;
         }
 
         _fromVersion4(jsonObj) {
             this._fromVersion2(jsonObj);
-            this.openInNewWindow        = jsonObj.hasOwnProperty("openInNewWindow") ? jsonObj.openInNewWindow  : true;
+            this.openInNewWindow        = jsonObj.hasOwnProperty("openInNewWindow") ? jsonObj.openInNewWindow : true;
+            this.savedSearchKeyPrefix   = jsonObj.hasOwnProperty("savedSearchKeyPrefix") ? jsonObj.savedSearchKeyPrefix : "Ctrl+Shift+";
             return this._validate4();
         }
 
