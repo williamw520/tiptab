@@ -1,12 +1,5 @@
 
 * Feature TODO
-** DONE Clear search command.
-** DONE Open Tip Tab in new window, controlled by option.
-** DONE Create window command.
-** DONE Create tab command.
-** DONE Thumbnail popup when mouse is over the quarter circle at the lower-right corner.
-** DONE Saved searches as buttons at the search bar.
-** DONE Shortcut keys to saved searches, Ctrl+Shift+[1-8]
 ** TODO Container cmd: Move all tabs of a container to its window, open tab in container
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Refresh one tab onUpdated
@@ -17,6 +10,15 @@
 ** TODO Show bookmarks as tab box, with saved thumbnails shown.
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
+
+* Release 2.6 Feature
+** DONE Clear search command.
+** DONE Open Tip Tab in new window, controlled by option.
+** DONE Create window command.
+** DONE Create tab command.
+** DONE Thumbnail popup when mouse is over the quarter circle at the lower-right corner.
+** DONE Saved searches as buttons at the search bar.
+** DONE Shortcut keys to saved searches, Ctrl+Shift+[1-8]
 
 * Release 2.5 Feature
 ** DONE Preserve the input focus on the tab when activating it.
