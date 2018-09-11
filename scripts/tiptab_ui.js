@@ -128,6 +128,7 @@
         // Page is loaded and ready for the script to run.
         Promise.resolve()
             //.then(() => log.info("Page initialization starts") )
+            .then(() => preInit() )
             .then(() => settings.pLoad().then(tts => ttSettings = tts) )
             .then(() => thumbnailDimFromSetting(ttSettings) )
             .then(() => pixels_per_rem = getFontSizeRem() )
@@ -152,8 +153,20 @@
             .then(() => pHandleFirstAppCmd() )
             //.then(() => refreshBrowserActionTooltip() )
             //.then(() => log.info("Page initialization done") )
+            .then(() => postInit() )
             .catch( e => log.warn(e) )
     });
+
+    function preInit() {
+    }
+
+    function postInit() {
+        // Use this to debug focusable elements with tabindex.
+        // $(":focusable").each(function(){
+        //     let itemInfo = $(this).prop("tagName") + ", id: " + $(this).attr("id") + ", class: " + $(this).attr("class") + ", tabindex: " + $(this).attr("tabindex");
+        //     log.info(itemInfo);
+        // });
+    }
 
     function pGetCurrnetTab() {
         return browser.tabs.getCurrent().then( tab => {
@@ -759,7 +772,7 @@
 
     // Rendered html has no unsafe text.
     function renderSavedSearches() {
-        let lastIndex = 0;
+        let lastIndex = -1;
         for (let i = uiState.savedSearch.length - 1; i >=0; i--) {
             if (uiState.savedSearch[i]) {
                 lastIndex = i;
@@ -768,10 +781,12 @@
         }
 
         return `<div class="btn-group btn-group-block">
-                    ${ uiState.savedSearch.map( (txt, i) => 
-                        `<button class="btn btn-sm btn-saved-search ${i <= lastIndex ? '' : 'hidden'}" tabindex='-1'></button>`
-                    ).join(" ") }
+                  ${ uiState.savedSearch.map( (txt, i) => renderSavedSearchButton(i > lastIndex) ).join(" ") }
                 </div>`;
+    }
+
+    function renderSavedSearchButton(asHidden) {
+        return `<button class="btn btn-sm btn-saved-search ${asHidden ? 'hidden' : ''}" tabindex='-1'></button>`;
     }
 
     // Use html-escaped API to fill in unsafe text.
