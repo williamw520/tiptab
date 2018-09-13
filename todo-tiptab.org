@@ -11,6 +11,10 @@
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
 
+* Release 2.7 Feature
+** Bug Fix: blank saved search button when there's no saved search. 
+** Bug Fix: tab-able and focusable buttons for global commands.
+
 * Release 2.6 Feature
 ** DONE Clear search command.
 ** DONE Open Tip Tab in new window, controlled by option.
