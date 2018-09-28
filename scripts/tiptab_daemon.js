@@ -158,10 +158,15 @@
     function pOpenNewTipTab() {
         if (ttSettings.openInNewWindow) {
             let newWindow;
+            let newTab;
             return browser.windows.create({ type: "normal",  url: "about:blank" })
-                .then( w  => newWindow = w )
-                .then( () => browser.tabs.create({ windowId: newWindow.id,  url: TIPTAB_URL }) )
-                .then( () => browser.tabs.remove(newWindow.tabs[0].id) );
+                .then( win  => newWindow = win )
+                .then( ()   => browser.tabs.create({ windowId: newWindow.id,  url: TIPTAB_URL }) )
+                .then( tab  => newTab = tab )
+                .then( ()   => browser.tabs.query({ windowId: newWindow.id }) )
+                .then( tabs => tabs.filter( tab => tab.id != newTab.id ) )
+                .then( tabs => tabs.map( tab => browser.tabs.remove(tab.id) ) )
+                .then( remv => Promise.all(remv) );
         } else {
             return browser.tabs.create({ url: TIPTAB_URL });
         }

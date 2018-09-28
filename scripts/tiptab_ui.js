@@ -420,31 +420,30 @@
         dlg.setupDlg("#about-dlg", true);
 
         // Global menu at the top navbar
-        $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage()   });
+        $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage()               });
         $("#global-cmds").on("click", ".cmd-refresh",           pReloadRedrawRefreshContent);
-        $("#global-cmds").on("click", ".cmd-create-window",     function(){ createWindow()                      });
-        $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                      });
-        $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(effectiveTabIds, true)     });
-        $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(effectiveTabIds, false)    });
-        $("#global-cmds").on("click", ".cmd-close-ui",          function(){ pSendCmd({ cmd: "close-ui" })       });
+        $("#global-cmds").on("click", ".cmd-create-window",     function(){ pCreateWindow().then(() => refocusTiptap())     });
+        $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                                  });
+        $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(effectiveTabIds, true)                 });
+        $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(effectiveTabIds, false)                });
+        $("#global-cmds").on("click", ".cmd-close-ui",          function(){ pSendCmd({ cmd: "close-ui" })                   });
         $("#global-cmds").on("click", ".cmd-about",             showAboutDlg);
         $(".logo").on("click",                                  showAboutDlg);
 
         // Commands on v-btn-bar
-        $(".v-btn-bar").on("click", ".cmd-all-tabs",            function(){ selectDisplayType(DT_ALL_TABS)      });
-        $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_WINDOW)        });
-        $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_CONTAINER)     });
-        $(".v-btn-bar").on("click", ".cmd-all-windows",         function(){ selectDisplayType(DT_ALL_WINDOWS)   });
-        $(".v-btn-bar").on("click", ".cmd-small-size",          function(){ setThumbnailSize(0)                 });
-        $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                 });
-        $(".v-btn-bar").on("click", ".cmd-large-size",          function(){ setThumbnailSize(2)                 });
+        $(".v-btn-bar").on("click", ".cmd-all-tabs",            function(){ selectDisplayType(DT_ALL_TABS)                  });
+        $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_WINDOW)                    });
+        $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_CONTAINER)                 });
+        $(".v-btn-bar").on("click", ".cmd-all-windows",         function(){ selectDisplayType(DT_ALL_WINDOWS)               });
+        $(".v-btn-bar").on("click", ".cmd-small-size",          function(){ setThumbnailSize(0)                             });
+        $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                             });
+        $(".v-btn-bar").on("click", ".cmd-large-size",          function(){ setThumbnailSize(2)                             });
 
-        $("#main-content").on("click", ".error-close",          function(){ hideErrorMsg()                      });
+        $("#main-content").on("click", ".error-close",          function(){ hideErrorMsg()                                  });
 
-        // Window command handlers
+        // Window command handlers.  Event propagation stopped by .window-topbar-menu.
         $("#main-content").on("click", ".cmd-reload-w-tabs",    function(){ reloadWindowTabs($(this).closest(".window-lane").data("wid"))           });
-        $("#main-content").on("click", ".cmd-create-tab",       function(){ createTab($(this).closest(".window-lane").data("wid"))                  });
-        $("#main-content").on("click", ".cmd-undo-close",       function(){ undoCloseTab()                                                          });
+        $("#main-content").on("click", ".cmd-create-tab",       function(){ pCreateWindowTab($(this).closest(".window-lane").data("wid"))           });
         $("#main-content").on("click", ".cmd-copy-w-title-url", function(){ copyWindowTabTitleUrls($(this).closest(".window-lane").data("wid"))     });
         $("#main-content").on("click", ".cmd-mute-w-all",       function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), true)       });
         $("#main-content").on("click", ".cmd-unmute-w-all",     function(){ muteWindowTabs($(this).closest(".window-lane").data("wid"), false)      });
@@ -452,9 +451,16 @@
         $("#main-content").on("click", ".cmd-hide-w-all",       function(){ showWindowTabs($(this).closest(".window-lane").data("wid"), false)      });
         $("#main-content").on("click", ".cmd-pin-w-all",        function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), true)        });
         $("#main-content").on("click", ".cmd-unpin-w-all",      function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), false)       });
+        $("#main-content").on("click", ".cmd-close-w-tabs",     function(){ pCloseWindowTabs($(this).closest(".window-lane").data("wid"))           });
+
+        // Container command handlers.  Event propagation stopped by .container-topbar-menu.
+        $("#main-content").on("click", ".cmd-reload-c-tabs",    function(){ reloadContainerTabs($(this).closest(".container-lane").data("cid"))     });
+        $("#main-content").on("click", ".cmd-create-c-tab",     function(){ createContainerTab($(this).closest(".container-lane").data("cid"))      });
+        $("#main-content").on("click", ".cmd-group-c-tabs",     function(){ groupContainerTab($(this).closest(".container-lane").data("cid"))       });
+        $("#main-content").on("click", ".cmd-close-c-tabs",     function(){ closeContainerTab($(this).closest(".container-lane").data("cid"))       });
 
         // Tab command handlers
-        $("#main-content").on("click", ".cmd-close-tab",        function(){ closeTab($(this).closest(".tab-box").data("tid"))                       });
+        $("#main-content").on("click", ".cmd-close-tab",        function(){ pCloseTabs([ $(this).closest(".tab-box").data("tid") ])                 });
         $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTab($(this).closest(".tab-box").data("tid"))                      });
         $("#main-content").on("click", ".cmd-duplicate-tab",    function(){ duplicateTab($(this).closest(".tab-box").data("tid"))                   });
         $("#main-content").on("click", ".cmd-move-tab-new",     function(){ moveToNewWindow($(this).closest(".tab-box").data("tid"))                });
@@ -492,8 +498,8 @@
         // Events on the window lane
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
 
-        // Command containers stop event propagation
-        $("#main-content").on("click", ".window-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private",
+        // Command containers cancel/stop event propagation
+        $("#main-content").on("click", ".window-topbar-menu, .container-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private",
                                                                 function(e){ return stopEvent(e) });
         // Search handler
         $(".cmd-search").on("click",                            function(){ $(this).select()                                                        });
@@ -970,11 +976,11 @@
     }
 
     function toTabs(tids) {
-        return tids.map( tid => tabById[tid] );
+        return tids ? tids.map( tid => tabById[tid] ) : [];
     }
 
     function toTabIds(tabs) {
-        return tabs.map( tab => tab.id );
+        return tabs ? tabs.map( tab => tab.id ) : [];
     }
 
     function orderTabIndex(wid) {
@@ -1173,24 +1179,25 @@
     function renderWindowLane(w) {
         return `
               <div class="window-lane d-none" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
-                <div class="window-topbar" title="Window">
-                  <div class="window-title ${w.focused ? 'bold' : ''}" title="Window">WINDOW-TITLE</div>
+                <div class="window-topbar">
+                  <div class="window-title ${w.focused ? 'bold' : ''}" title="Click to active the window">WINDOW-TITLE</div>
                   <div class="dropdown dropdown-right window-topbar-menu">
                     <div class="btn-group" >
                       <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
                       <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
-                        <li class="menu-item" title="Reload tabs in window"> <a href="#" class="cmd-reload-w-tabs nowrap">Reload Tabs</a> </li>
-                        <li class="menu-item" title="Create tab in window"> <a href="#" class="cmd-create-tab nowrap">Ceate Tab</a> </li>
-                        <li class="menu-item" title="Undo the last close tab"> <a href="#" class="cmd-undo-close nowrap">Undo Close Tab</a> </li>
+                        <li class="menu-item" title="Reload tabs in window"><a href="#" class="cmd-reload-w-tabs nowrap">Reload Tabs</a> </li>
+                        <li class="menu-item" title="Create tab in window"> <a href="#" class="cmd-create-tab nowrap">Create Tab</a> </li>
                         <li class="divider"></li>
                         <li class="menu-item" title="Copy titles and Urls of tabs in window"> <a href="#" class="cmd-copy-w-title-url nowrap">Copy Titles & Urls</a> </li>
                         <li class="divider"></li>
-                        <li class="menu-item" title="Show tabs in window">   <a href="#" class="cmd-show-w-all nowrap">Show Tabs</a> </li>
-                        <li class="menu-item" title="Hide tabs in window">   <a href="#" class="cmd-hide-w-all nowrap">Hide Tabs</a> </li>
-                        <li class="menu-item" title="Mute tabs in window">   <a href="#" class="cmd-mute-w-all nowrap">Mute Tabs</a> </li>
-                        <li class="menu-item" title="Unmute tabs in window"> <a href="#" class="cmd-unmute-w-all nowrap">Unmute Tabs</a> </li>
-                        <li class="menu-item" title="Pin tabs in window">    <a href="#" class="cmd-pin-w-all nowrap">Pin Tabs</a> </li>
-                        <li class="menu-item" title="Unpin tabs in window">  <a href="#" class="cmd-unpin-w-all nowrap">Unpin Tabs</a> </li>
+                        <li class="menu-item" title="Show tabs in window">  <a href="#" class="cmd-show-w-all nowrap">Show Tabs</a> </li>
+                        <li class="menu-item" title="Hide tabs in window">  <a href="#" class="cmd-hide-w-all nowrap">Hide Tabs</a> </li>
+                        <li class="menu-item" title="Mute tabs in window">  <a href="#" class="cmd-mute-w-all nowrap">Mute Tabs</a> </li>
+                        <li class="menu-item" title="Unmute tabs in window"><a href="#" class="cmd-unmute-w-all nowrap">Unmute Tabs</a> </li>
+                        <li class="menu-item" title="Pin tabs in window">   <a href="#" class="cmd-pin-w-all nowrap">Pin Tabs</a> </li>
+                        <li class="menu-item" title="Unpin tabs in window"> <a href="#" class="cmd-unpin-w-all nowrap">Unpin Tabs</a> </li>
+                        <li class="divider"></li>
+                        <li class="menu-item" title="Close tabs in window"> <a href="#" class="cmd-close-w-tabs nowrap">Close All Tabs</a> </li>
                       </ul>
                     </div>
                   </div>
@@ -1312,15 +1319,37 @@
               </span>
             </div>
 
-            ${ containerIds.map( cid => containerById[cid] ).map( c => `
-                <div class="container-lane d-none" data-cid="${c.cookieStoreId}" style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(is_firefox_private(c.cookieStoreId))}">
-                  <div class="container-tab-title" title="${is_firefox_default(c.cookieStoreId) ? '' : 'Container'}">
-                    <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${is_firefox_default(c.cookieStoreId) ? 'hidden' : 'visible'};">
-                    <span class="container-name" style="color: ${c.colorCode}">CONTAINER-NAME</span>
-                  </div>
-                  <div class="tab-grid"></div>
+            ${ containerIds.map( cid => containerById[cid] ).map( c => renderContainerLane(c) ).join("\n") }
+        `;
+    }
+
+    function renderContainerLane(c) {
+        return `
+            <div class="container-lane d-none" data-cid="${c.cookieStoreId}" 
+                 style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(is_firefox_private(c.cookieStoreId))}">
+              <div class="container-topbar">
+                <div class="container-title" title="${is_firefox_default(c.cookieStoreId) ? '' : 'Container'}">
+                  <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${is_firefox_default(c.cookieStoreId) ? 'hidden' : 'visible'};">
+                  <span class="container-name" style="color: ${c.colorCode}">CONTAINER-NAME</span>
                 </div>
-            ` ).join("\n") }
+
+                <div class="dropdown dropdown-right container-topbar-menu">
+                  <div class="btn-group" >
+                    <a href="#" class="btn btn-primary dropdown-toggle container-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
+                    <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
+                      <li class="menu-item" title="Reload tabs in container"> <a href="#" class="cmd-reload-c-tabs nowrap">Reload Tabs</a> </li>
+                      <li class="menu-item" title="Create tab in container"> <a href="#" class="cmd-create-c-tab nowrap">Create Tab</a> </li>
+                      <li class="divider"></li>
+                      <li class="menu-item" title="Move all container tabs to its own window"> <a href="#" class="cmd-group-c-tabs nowrap">Group Tabs</a> </li>
+                      <li class="divider"></li>
+                      <li class="menu-item" title="Close all tabs in container"> <a href="#" class="cmd-close-c-tabs nowrap">Close Tabs</a> </li>
+                    </ul>
+                  </div>
+                </div>
+
+              </div>
+              <div class="tab-grid"></div>
+            </div>
         `;
     }
 
@@ -1879,7 +1908,8 @@
             let $newTabBox = $tabbox(newTab.id);
             let toWidth = $newTabBox.width();
             $tabbox(newTab.id).width(0).animate({ width: toWidth }, 500).effect( "bounce", {times:2, distance:5}, 200 );
-        }).then(() => browser.tabs.update(tiptapTid, { active: true }).then( () => browser.windows.update(tiptapWid, {focused: true}) ));
+            refocusTiptap();
+        });
         // Rely on tabs.onUpdated to add the newly created tab when the tab.url and tab.title are completely filled in.
     }
 
@@ -1894,7 +1924,7 @@
             cookieStoreId:  destCid,
             pinned:         srcTab.pinned,
             url:            srcTab.url,
-        }).then(() => browser.tabs.update(tiptapTid, { active: true }).then( () => browser.windows.update(tiptapWid, {focused: true}) ));
+        }).then(() => refocusTiptap());
         // Rely on tabs.onUpdated to add the newly created tab when the tab.url and tab.title are completely filled in.
     }
 
@@ -1915,7 +1945,11 @@
                 }
             });
     }
-        
+
+    function refocusTiptap() {
+        browser.tabs.update(tiptapTid, { active: true }).then( () => browser.windows.update(tiptapWid, {focused: true}) );
+    }
+
     // Command handlers
     function showAboutDlg() {
         let manifest = browser.runtime.getManifest();
@@ -1966,16 +2000,55 @@
         tabs.forEach( tab => browser.tabs.reload(tab.id) );
     }
 
-
-    function createWindow() {
-        browser.windows.create({ type: "normal" }).then( () => browser.windows.update(tiptapWid, { focused: true }) );
+    function reloadContainerTabs(cid) {
+        let tabs = effectiveContainerTabs(cid);
+        tabs.forEach( tab => browser.tabs.reload(tab.id) );
     }
 
-    function createTab(wid) {
-        browser.tabs.create({
-            active:         false,
-            windowId:       wid,
+    function pCreateWindow(incognito, url) {
+        return browser.windows.create({ 
+            type:       "normal",
+            incognito:  incognito,
+            url:        url,
         });
+    }
+
+    function pCreateWindowTab(wid) {
+        return browser.tabs.create({
+            active:     false,
+            windowId:   wid,
+        });
+    }
+
+    function createContainerTab(cid) {
+        // Find a window of a tab with the existing cid.
+        let tabs = toTabs(tabIdsByCid[cid]);
+        let existingWid = tabs.length > 0 ? tabs[0].windowId : null;
+        if (existingWid) {
+            browser.tabs.create({
+                active:         false,
+                windowId:       existingWid,
+                cookieStoreId:  cid,
+            });
+        } else {
+            pCreateWindow(is_firefox_private(cid)).then( w => browser.tabs.create({
+                active:         false,
+                windowId:       w.id,
+                cookieStoreId:  cid,
+            }) ).then( ()   => refocusTiptap() );
+        }
+    }
+
+    function groupContainerTab(cid) {
+        let tids = app.ensureVal(tabIdsByCid[cid], []);
+        if (tids.length > 0) {
+            let newWin;
+            pCreateWindow(is_firefox_private(cid))
+                .then( win  => newWin = win )
+                .then( ()   => Promise.all(tids.map( tid => browser.tabs.move(tid, { windowId: newWin.id, index: -1}) )) )
+                .then( ()   => pCloseWindowBlankTabs(newWin.id) );
+                //.then( ()   => pCloseRestOfWindowTabs(newWin.id, tids) );
+        }
     }
 
     function copyWindowTabTitleUrls(wid) {
@@ -2068,9 +2141,13 @@
         setupDragAndDrop();
     }
  
-    function closeTab(tid) {
-        removeTabBoxes([tid]);
-        browser.tabs.remove(tid);
+    function pCloseTabs(tabIdsToClose) {
+        if (tabIdsToClose && tabIdsToClose.length > 0) {
+            removeTabBoxes(tabIdsToClose);
+            return browser.tabs.remove(tabIdsToClose);
+        } else {
+            return Promise.resolve();
+        }
     }
 
     function closeOtherTabs(tid, whichSide) {
@@ -2080,11 +2157,25 @@
         }).then( win => {
             let index = win.tabs.findIndex(tab => tab.id == tid);
             let tabs = whichSide == "all" ? win.tabs : whichSide == "left" ? win.tabs.slice(0, index) : win.tabs.slice(index + 1);
-            let tabIdsToClose = tabs.filter( tab => tab.id != tid && !is_tiptaburl(tab.url) ).map( tab => tab.id );
-            removeTabBoxes(tabIdsToClose);
-            browser.tabs.remove(tabIdsToClose);
+            pCloseTabs( tabs.filter( tab => tab.id != tid && !is_tiptaburl(tab.url) ).map( tab => tab.id ) );
         });
     }
+
+    function pCloseWindowTabs(wid) {
+        return pCloseTabs(tabIdsByWid[wid]);
+    }
+
+    function pCloseWindowBlankTabs(wid) {
+        return browser.tabs.query({windowId: wid})
+            .then( tabs => tabs.filter( tab => tab.url == "about:newtab" || tab.url == "about:blank" ) )
+            .then( tabs => pCloseTabs(toTabIds(tabs) ) );
+    }
+
+    function closeContainerTab(cid) {
+        pCloseTabs(tabIdsByCid[cid]);
+    }
+
+//    function close
 
     function undoCloseTab() {
         browser.sessions.getRecentlyClosed().then( sessions => {
@@ -2170,7 +2261,7 @@
             if (ttTabIsActive) {
                 return browser.windows.update(tiptapWid, {focused: true});
             } else {
-                return browser.windows.update(tiptapWid, {focused: true}).then( () => browser.tabs.update(tiptapTid, {active: true}) );
+                refocusTiptap();
             }
         }
     }

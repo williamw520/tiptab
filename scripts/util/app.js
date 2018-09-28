@@ -40,17 +40,17 @@
     // util
     app.noop        = () => {};
     app.identity    = (obj) => obj;
-    app.json        = function(obj) { return JSON.stringify(obj, null, 4) };
-    app.has         = function(obj, key) { return obj != null && obj.hasOwnProperty(key) };
-    app.isDef       = function(val) { return typeof val !== "undefined" };
-    app.isStr       = function(obj) { return (typeof obj == "string" || obj instanceof String) };
+    app.json        = function(obj)         { return JSON.stringify(obj, null, 4) };
+    app.has         = function(obj, key)    { return obj != null && obj.hasOwnProperty(key) };
+    app.isDef       = function(val)         { return typeof val !== "undefined" };
+    app.isStr       = function(obj)         { return (typeof obj == "string" || obj instanceof String) };
     app.isArray     = Array.isArray || function(obj) { return OP.toString.call(obj) === "[object Array]" };
-    app.isFn        = function(obj) { return typeof obj === "function" };
-    app.isObj       = function(obj) { return typeof obj === "object" };
-    app.isNum       = function(obj) { return typeof obj === "number" };
-    app.isDate      = function(obj) { return obj instanceof Date || OP.toString.call(obj) === "[object Date]" };
-    app.alert       = function()    { alert(app.dump(Array.prototype.slice.call(arguments))) };
-    app.log         = function()    { console.log(app.dump(Array.prototype.slice.call(arguments))) };
+    app.isFn        = function(obj)         { return typeof obj === "function" };
+    app.isObj       = function(obj)         { return typeof obj === "object" };
+    app.isNum       = function(obj)         { return typeof obj === "number" };
+    app.isDate      = function(obj)         { return obj instanceof Date || OP.toString.call(obj) === "[object Date]" };
+    app.alert       = function()            { alert(app.dump(Array.prototype.slice.call(arguments))) };
+    app.log         = function()            { console.log(app.dump(Array.prototype.slice.call(arguments))) };
     app.ensureFn    = function(orgFn, defFn){ return app.isFn(orgFn) ? orgFn : defFn };
     app.defval      = function(val, dfVal)  { return typeof val === "undefined" ? dfVal : val }  // return default only if val undefined.  Return 0 or null correctly.
     app.ensureVal   = function(val, dfVal)  { return typeof val === "undefined" || val == null ? dfVal : val } // return default if val is undefined or null.
@@ -58,6 +58,7 @@
     app.setObjVal   = function(o, k, val)   { o[k] = val; return o }
     app.defer       = function(obj, fn)     { let args = AP.slice.call(arguments, 2); setTimeout(function() { fn.apply(obj, args) }, 0); };
     app.boolVal     = function(o, k)        { return app.has(o, k) ? o[k] : false }
+    app.asArray     = function()            { return [].slice.call(arguments) }
 
     // enhance String
     if (typeof SP.ltrim != "function")      SP.ltrim = function() { return this.replace(/^\s+/,'') };
