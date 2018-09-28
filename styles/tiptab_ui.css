@@ -624,7 +624,14 @@ a.disabled {
     border:             var(--img-border) solid #b0b0b0;
     box-shadow:         2px 1px #dddddd;
 }
-.container-tab-title {
+.container-topbar {
+    position:           relative;
+    height:             var(--lane-topbar-height);
+    margin-bottom:      var(--tab-gap);
+    background:         #f4f4f4;
+    border-bottom:      0.02rem solid #d0d0d0;
+}
+.container-title {
     display:            flex;
     align-items:        center;
     font-size:          85%;
@@ -632,6 +639,20 @@ a.disabled {
     padding:            0.1rem var(--tab-gap) 0.1rem var(--tab-gap);
     background:         #f4f4f4;
     border-bottom:      0.02rem solid #d0d0d0;
+}
+.container-topbar-menu {
+    position:           absolute;
+    top:                var(--lane-topbar-gap);
+    right:              var(--lane-topbar-gap);
+    line-height:        0;
+}
+.btn.container-menu-dropdown {
+    width:              var(--lane-btn-width);
+    height:             var(--lane-btn-height);
+    padding:            0 0 0.05rem 0;
+    display:            flex;
+    align-items:        center;
+    justify-content:    center;    
 }
 
 .cmd-search {
@@ -928,6 +949,11 @@ a.disabled {
     padding:            .4rem .4rem .5rem .4rem;
 }
 .window-topbar-menu .menu .menu-item > a {
+    font-size:          85%;
+    margin:             0 -.4rem;
+    padding:            .4rem .4rem .5rem .4rem;
+}
+.container-topbar-menu .menu .menu-item > a {
     font-size:          85%;
     margin:             0 -.4rem;
     padding:            .4rem .4rem .5rem .4rem;

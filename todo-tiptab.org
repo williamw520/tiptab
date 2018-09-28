@@ -1,6 +1,13 @@
 
 * Feature TODO
-** TODO Container cmd: Move all tabs of a container to its window, open tab in container
+** DONE Bug Fix: Activating the standalone TipTab window might close the wrong blank tab in the presence of other tab managing extensions.
+** DONE Window cmd: close all tabs in window.
+** DONE Container cmd menu.
+** DONE Container cmd: Create tab in container.
+** DONE Container cmd: Reload tabs in container.
+** DONE Container cmd: Close tabs in container.
+** DONE Container cmd: Group all tabs of a container to its own window.
+** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Refresh one tab onUpdated
 ** TODO Monitor container events and refresh container info/UI.
