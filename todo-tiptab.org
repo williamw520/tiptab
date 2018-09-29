@@ -1,12 +1,5 @@
 
 * Feature TODO
-** DONE Bug Fix: Activating the standalone TipTab window might close the wrong blank tab in the presence of other tab managing extensions.
-** DONE Window cmd: close all tabs in window.
-** DONE Container cmd menu.
-** DONE Container cmd: Create tab in container.
-** DONE Container cmd: Reload tabs in container.
-** DONE Container cmd: Close tabs in container.
-** DONE Container cmd: Group all tabs of a container to its own window.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Refresh one tab onUpdated
@@ -18,136 +11,146 @@
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
 
+* Release 2.8 Feature
+- Bug Fix: Activating the standalone TipTab window might close the wrong blank tab in the presence of other tab managing extensions.
+- Window cmd: close all tabs in window.
+- Container cmd menu.
+- Container cmd: Create tab in container.
+- Container cmd: Reload tabs in container.
+- Container cmd: Close tabs in container.
+- Container cmd: Group all tabs of a container to its own window.
+
+
 * Release 2.7 Feature
-** Bug Fix: blank saved search button when there's no saved search. 
-** Bug Fix: tab-able and focusable buttons for global commands.
+- Bug Fix: blank saved search button when there's no saved search. 
+- Bug Fix: tab-able and focusable buttons for global commands.
 
 * Release 2.6 Feature
-** DONE Clear search command.
-** DONE Open Tip Tab in new window, controlled by option.
-** DONE Create window command.
-** DONE Create tab command.
-** DONE Thumbnail popup when mouse is over the quarter circle at the lower-right corner.
-** DONE Saved searches as buttons at the search bar.
-** DONE Shortcut keys to saved searches, Ctrl+Shift+[1-8]
+- Clear search command.
+- Open Tip Tab in new window, controlled by option.
+- Create window command.
+- Create tab command.
+- Thumbnail popup when mouse is over the quarter circle at the lower-right corner.
+- Saved searches as buttons at the search bar.
+- Shortcut keys to saved searches, Ctrl+Shift+[1-8]
 
 * Release 2.5 Feature
-** DONE Preserve the input focus on the tab when activating it.
-** DONE Scale the window lane's buttons and title better.
-** DONE Scale the tab's buttons and title better.
-** DONE Make the active window's title bold.
-** DONE Add error message display area.
-** DONE Disable drag and drop on pinned tabs.
-** DONE Default search shortcut, with an extension command.  Custom search shortcut, in app.
-** DONE Remove Firefox's "_execute_browser_action" command for launching app, which doesn't seem to be working on all platforms.
-** DONE Add "activate" and "search" hotkey commands.
-** DONE Migrate to Firefox 60's command key feature to handle custom hotkey.
-** DONE Reformat the custom hotkey's shortcut string as Ctrl/Alt/Meta-Shift-XX.
-** DONE Handle the Mac control key for custom hotkey's shortcut, with MacCtrl.
-** DONE Remove the old handling custom hotkey with content script in pages.
-** DONE Revamp hotkey => app command => activation/focus.
+- Preserve the input focus on the tab when activating it.
+- Scale the window lane's buttons and title better.
+- Scale the tab's buttons and title better.
+- Make the active window's title bold.
+- Add error message display area.
+- Disable drag and drop on pinned tabs.
+- Default search shortcut, with an extension command.  Custom search shortcut, in app.
+- Remove Firefox's "_execute_browser_action" command for launching app, which doesn't seem to be working on all platforms.
+- Add "activate" and "search" hotkey commands.
+- Migrate to Firefox 60's command key feature to handle custom hotkey.
+- Reformat the custom hotkey's shortcut string as Ctrl/Alt/Meta-Shift-XX.
+- Handle the Mac control key for custom hotkey's shortcut, with MacCtrl.
+- Remove the old handling custom hotkey with content script in pages.
+- Revamp hotkey => app command => activation/focus.
 
 
 * Release 2.4 Feature
-** DONE User defined thumbnail dimensions.
-** DONE Add audio decoration.  Monitor audio playing.
-** DONE Sync tab display with the tabs moved by the user directly in the browser.
+- User defined thumbnail dimensions.
+- Add audio decoration.  Monitor audio playing.
+- Sync tab display with the tabs moved by the user directly in the browser.
 
 
 * Release 2.3 Feature
-** DONE Hide/show tab, on Firefox 61+.  Hide/show tabs in window.
-** DONE Active tab cannot be hidden; disable menu item.  Likewise, activating a tab (clicking it) would show it.
-** DONE Focus stays on Tip Tab page after duplicating a tab.
-** DONE Clicking on the status buttons of a tab changes the status.
-** DONE Change the decoration of an active tab from highlighted border shadow to bold title.
-** DONE More helpful message for empty view with no tab.
-** DONE Filter tab by status (hidden, muted, pinned).  Tri-state: none, muted, unmuted.
+- Hide/show tab, on Firefox 61+.  Hide/show tabs in window.
+- Active tab cannot be hidden; disable menu item.  Likewise, activating a tab (clicking it) would show it.
+- Focus stays on Tip Tab page after duplicating a tab.
+- Clicking on the status buttons of a tab changes the status.
+- Change the decoration of an active tab from highlighted border shadow to bold title.
+- More helpful message for empty view with no tab.
+- Filter tab by status (hidden, muted, pinned).  Tri-state: none, muted, unmuted.
 
 * Release 2.2 Feature
-** DONE Bug: Missing Options page in packaging for some platforms.
+- Bug: Missing Options page in packaging for some platforms.
 
 * Release 2.1 Feature
-** DONE Bug: When custom hotkey is not set, international key input might trigger the empty hotkey.
+- Bug: When custom hotkey is not set, international key input might trigger the empty hotkey.
 
 * Release 2.0 Feature
-** DONE Color the tab thumbnail border according to container's color.
-** DONE Color the tab thumbnail border according to tab's private window state.
-** DONE Color the window border according to window's private state.
-** DONE Color the container border according to container's private state.
-** DONE Status icon for private window.
-** DONE Status icon for pinned window.
-** DONE Status icon for muted window.
-** DONE Status icon for container, showing the container icon and name.
-** DONE Starting animation is showing full size thumbnail one by one (rather than zoom in each one).
-** DONE Disable dragging tab across normal and private windows.
-** DONE Show active tab
-** DONE Overlay controls on thumbnails - drag bar, menu, popup area.
-** DONE Delete tab
-** DONE Duplicate tab
-** DONE Reload tab
-** DONE Mute/unmute tab
-** DONE Pin/unpin tab
-** DONE Close window
-** DONE Close all other tabs
-** DONE Close left other tabs
-** DONE Close right other tabs
-** DONE Move to a new window
-** DONE Retrofit UI drawing architecture.
-** DONE Copy tab URL
-** DONE Hide the TipTab tab
-** DONE Custom thumbnail dimension: small, medium, or large.
-** DONE Display nested tab thumbnails within windows in grid.  Window lanes.
-** DONE Window command menu.
-** DONE Window command: Reload all tabs in window
-** DONE Window command: Undo tab close
-** DONE Window command: Mute all, unmute all.
-** DONE Window command: Pin all, unpin all.
-** DONE Window command: Copy all titles and urls
-** DONE Window commands applied to effective tabs after search filtering.
-** DONE Bottom status bar overlay.
-** DONE Refresh individual or group of UI items after commands.
-** DONE Save tab screenshot
-** DONE Footer window bar.  Selected windows to limit the ones whose tabs are shown.
-** DONE Footer container bar.  Selected containers to limit the ones whose tabs are shown.
-** DONE Show appropriate message on the empty pane, in case filtering/footer hide all the tabs.
-** DONE Preserve the last active tab of the TipTab's window.
-** DONE Setting support.  Option UI page.
-** DONE Keyboard navigation with the Tab key to select the next tab box and Enter to activate it.
-** DONE Keyboard navigation with the app hotkey and the custom hotkey to select the next tab box.
-** DONE Custom key binding for invocation hot key.
-** DONE New extension icon.
-** DONE Drag and drop to copy tab between containers.
-** DONE Use MacCtrl+Shift+F for app hotkey on Mac.
-** DONE Monitor tab events and refresh tab info/UI.
-** DONE Monitor window events and refresh window info/UI.
-** DONE Global menu, for Options page.
-** DONE Global menu, for commands on all tabs or on all windows.
-** DONE Show containers, even if they are empty, for drop and drag tabs into them.
-** DONE Bug: empty search text is not saved.  Refreshing the TipTab page gets back the old search text.
-** DONE Bug: drag and drop new tab into container doesn't initialize the tab menu handlers.
-** DONE Drop and drop from private window to normal
+- Color the tab thumbnail border according to container's color.
+- Color the tab thumbnail border according to tab's private window state.
+- Color the window border according to window's private state.
+- Color the container border according to container's private state.
+- Status icon for private window.
+- Status icon for pinned window.
+- Status icon for muted window.
+- Status icon for container, showing the container icon and name.
+- Starting animation is showing full size thumbnail one by one (rather than zoom in each one).
+- Disable dragging tab across normal and private windows.
+- Show active tab
+- Overlay controls on thumbnails - drag bar, menu, popup area.
+- Delete tab
+- Duplicate tab
+- Reload tab
+- Mute/unmute tab
+- Pin/unpin tab
+- Close window
+- Close all other tabs
+- Close left other tabs
+- Close right other tabs
+- Move to a new window
+- Retrofit UI drawing architecture.
+- Copy tab URL
+- Hide the TipTab tab
+- Custom thumbnail dimension: small, medium, or large.
+- Display nested tab thumbnails within windows in grid.  Window lanes.
+- Window command menu.
+- Window command: Reload all tabs in window
+- Window command: Undo tab close
+- Window command: Mute all, unmute all.
+- Window command: Pin all, unpin all.
+- Window command: Copy all titles and urls
+- Window commands applied to effective tabs after search filtering.
+- Bottom status bar overlay.
+- Refresh individual or group of UI items after commands.
+- Save tab screenshot
+- Footer window bar.  Selected windows to limit the ones whose tabs are shown.
+- Footer container bar.  Selected containers to limit the ones whose tabs are shown.
+- Show appropriate message on the empty pane, in case filtering/footer hide all the tabs.
+- Preserve the last active tab of the TipTab's window.
+- Setting support.  Option UI page.
+- Keyboard navigation with the Tab key to select the next tab box and Enter to activate it.
+- Keyboard navigation with the app hotkey and the custom hotkey to select the next tab box.
+- Custom key binding for invocation hot key.
+- New extension icon.
+- Drag and drop to copy tab between containers.
+- Use MacCtrl+Shift+F for app hotkey on Mac.
+- Monitor tab events and refresh tab info/UI.
+- Monitor window events and refresh window info/UI.
+- Global menu, for Options page.
+- Global menu, for commands on all tabs or on all windows.
+- Show containers, even if they are empty, for drop and drag tabs into them.
+- Bug: empty search text is not saved.  Refreshing the TipTab page gets back the old search text.
+- Bug: drag and drop new tab into container doesn't initialize the tab menu handlers.
+- Drop and drop from private window to normal
 
 * Release 1.3 Feature
-** DONE Initial zoom out of thumbnails.
-** DONE Prevent XSS attack by escaping unsafe text from tabs, windows, and containers.
+- Initial zoom out of thumbnails.
+- Prevent XSS attack by escaping unsafe text from tabs, windows, and containers.
 
 * Release 1.2 Feature
-** DONE Establish window lane end zone to drop tab at the end of window lane.
-** DONE Establish gap zone between tabs to drop in front of the tab.
+- Establish window lane end zone to drop tab at the end of window lane.
+- Establish gap zone between tabs to drop in front of the tab.
 
 * Release 1.1 Feature
-** DONE Drag and drop a tab to re-arrange its position within a window.
-** DONE Drag and drop a tab across windows to move it to a different window.
+- Drag and drop a tab to re-arrange its position within a window.
+- Drag and drop a tab across windows to move it to a different window.
 
 * Release 1.0 Feature
-** DONE Display tab thumbnails in grid.
-** DONE All tab pane.
-** DONE Tabs by window pane.
-** DONE Tabs by container pane.
-** DONE Search on tab titles and url to limit the tabs displayed.
-** DONE Tab preview on mouse hovering on thumbnail.
-** DONE Save and restore UI states.
-** DONE Keyboard shortcut for invoking extension.
+- Display tab thumbnails in grid.
+- All tab pane.
+- Tabs by window pane.
+- Tabs by container pane.
+- Search on tab titles and url to limit the tabs displayed.
+- Tab preview on mouse hovering on thumbnail.
+- Save and restore UI states.
+- Keyboard shortcut for invoking extension.
 
 
 * Documentation
