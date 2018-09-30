@@ -11,6 +11,9 @@
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
 
+* Release 2.9 Feature
+- Reduce extension package size by 20%.  Removed the Moment package.
+
 * Release 2.8 Feature
 - Bug Fix: Activating the standalone TipTab window might close the wrong blank tab in the presence of other tab managing extensions.
 - Window cmd: close all tabs in window.
@@ -19,7 +22,6 @@
 - Container cmd: Reload tabs in container.
 - Container cmd: Close tabs in container.
 - Container cmd: Group all tabs of a container to its own window.
-
 
 * Release 2.7 Feature
 - Bug Fix: blank saved search button when there's no saved search. 
