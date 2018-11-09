@@ -82,7 +82,7 @@
     function storage_onChanged(storageChange) {
         // Monitor settings storage change.
         if (app.has(storageChange, "tipTabSettings")) {
-            // log.info("storage_onChanged", ttSettingsNew);
+            // log.info("storage_onChanged", storageChange);
             ttSettings = storageChange.tipTabSettings.newValue;
             updateCustomHotKeys();
         }

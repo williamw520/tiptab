@@ -129,6 +129,7 @@
         Promise.resolve()
             //.then(() => log.info("Page initialization starts") )
             .then(() => preInit() )
+            .then(() => browser.runtime.getPlatformInfo().then( info => wwhotkey.setOS(info.os) ) )
             .then(() => settings.pLoad().then(tts => ttSettings = tts) )
             .then(() => thumbnailDimFromSetting(ttSettings) )
             .then(() => pixels_per_rem = getFontSizeRem() )
