@@ -34,8 +34,8 @@
     const VK_CTRL       = 0x11;
     const VK_ALT        = 0x12;
     const VK_META       = 0x5B;
-    const VK_WINDOWS    = 0x5B;       // Windows key on Windows
-    const VK_OPTION     = 0x12;       // Option key on Mac
+    const VK_WINDOWS    = 0x5B;       // The Windows key on Windows, same as Meta
+    const VK_OPTION     = 0x12;       // The Option key on Mac, same as Alt
     const VK_COMMAND    = 224;        // Command key on Mac (on Firefox it's 224).
 
     const MODIFIERS = [
@@ -46,8 +46,8 @@
         {   id: "alt",          name: "Alt",        vk_code: VK_ALT },
         {   id: "meta",         name: "Meta",       vk_code: VK_META },
         {   id: "windows",      name: "Windows",    vk_code: VK_WINDOWS },
-        {   id: "option",       name: "Option",     vk_code: VK_OPTION },
         {   id: "command",      name: "Command",    vk_code: VK_COMMAND },
+        {   id: "option",       name: "Option",     vk_code: VK_OPTION },
     ];
     const MODIFIER_ID_TO_VKCODE     = MODIFIERS.reduce( (map, item) => { map[item.id] = item.vk_code; return map; }, {});
     const VKCODE_TO_MODIFIER_NAME   = MODIFIERS.reduce( (map, item) => { map[item.vk_code] = item.name; return map; }, {});
@@ -118,9 +118,8 @@
     let platformOS = "";
 
     // Caller should call this when initializing the module with the value from browser.runtime.getPlatformInfo()
-    function setOS(os) {
-        platformOS = os;
-    }
+    function setOS(os)      {   platformOS = os             }
+    function isMac()        {   return platformOS == "mac"  }
 
     class ModifierKey {
         constructor(modifierIds) {
@@ -131,48 +130,84 @@
             }
         }
 
-        set shift(flag) { this.modVKCodes[VK_SHIFT] = flag  }
-        set ctrl(flag)  { this.modVKCodes[VK_CTRL]  = flag  }
-        set alt(flag)   { this.modVKCodes[VK_ALT]   = flag  }
-        set meta(flag)  { this.modVKCodes[VK_META]  = flag  }
-        get shift()     { return this.modVKCodes[VK_SHIFT]  }
-        get ctrl()      { return this.modVKCodes[VK_CTRL]   }
-        get alt()       { return this.modVKCodes[VK_ALT]    }
-        get meta()      { return this.modVKCodes[VK_META]   }
+        set shift(bool)     { this.modVKCodes[VK_SHIFT]     = bool  }
+        set ctrl(bool)      { this.modVKCodes[VK_CTRL]      = bool  }
+        set macctrl(bool)   { this.modVKCodes[VK_CTRL]      = bool  }
+        set alt(bool)       { this.modVKCodes[VK_ALT]       = bool  }
+        set meta(bool)      { this.modVKCodes[VK_META]      = bool  }
+        set windows(bool)   { this.modVKCodes[VK_WINDOWS]   = bool  }
+        set command(bool)   { this.modVKCodes[VK_COMMAND]   = bool  }
+        set option(bool)    { this.modVKCodes[VK_OPTION]    = bool  }
+        get shift()         { return this.modVKCodes[VK_SHIFT]      }
+        get ctrl()          { return this.modVKCodes[VK_CTRL]       }
+        get macctrl()       { return this.modVKCodes[VK_CTRL]       }
+        get alt()           { return this.modVKCodes[VK_ALT]        }
+        get meta()          { return this.modVKCodes[VK_META]       }
+        get windows()       { return this.modVKCodes[VK_WINDOWS]    }
+        get command()       { return this.modVKCodes[VK_COMMAND]    }
+        get option()        { return this.modVKCodes[VK_OPTION]     }
 
         fromEvent(event) {
             this.shift = event.shiftKey;
             this.ctrl = event.ctrlKey;
-            this.alt = event.altKey;
-            this.meta = event.metaKey;
-            // Windows key or Command key is not supported.
-            // if (event.key == "OS")          // Firefox won't set event.metaKey, instead set event.key as "OS"
-            //     this.meta = true;
+            if (isMac()) {
+                this.option = event.altKey;
+                this.command = event.metaKey;
+            } else {
+                this.alt = event.altKey;
+                this.meta = event.metaKey;
+            }
+            // For the Windows key, Firefox won't set event.metaKey, instead set event.key as "OS"
+            if (event.key == "OS") {
+                this.windows = true;
+            }
         }
 
         clear() {
             this.shift = false;
             this.ctrl = false;
+            this.macctrl = false;
             this.alt = false;
             this.meta = false;
+            this.windows = false;
+            this.option = false;
         }
 
         equals(obj2) {
-            return this.shift == obj2.shift && this.ctrl == obj2.ctrl && this.alt == obj2.alt && this.meta == obj2.meta;
+            return this.shift == obj2.shift
+                && this.ctrl == obj2.ctrl && this.macctrl == obj2.macctrl
+                && this.alt == obj2.alt
+                && this.meta == obj2.meta
+                && this.windows == obj2.windows
+                && this.option == obj2.opj;
         }
 
         hasKey() {
-            return this.shift || this.ctrl || this.alt || this.meta;
+            return this.shift || this.ctrl || this.macctrl || this.alt || this.meta || this.windows || this.option;
         }
 
         toString() {
+            return isMac() ? this.toMacString() : this.toOtherString();
+        }
+
+        toMacString() {
             let str = "";
-            if (this.ctrl)  str += (platformOS == "mac" ? "MacCtrl+" : "Ctrl+");
-            if (this.alt)   str += "Alt+";
-            if (this.meta)  str += "Meta+";
-            if (this.shift) str += "Shift+";
+            if (this.ctrl)                                  str += "MacCtrl+";
+            if (this.alt || this.option)                    str += "Option+";
+            if (this.meta || this.windows || this.command)  str += "Command+";
+            if (this.shift)                                 str += "Shift+";
             return str;
         }
+
+        toOtherString() {
+            let str = "";
+            if (this.ctrl)                                  str += "Ctrl+";
+            if (this.alt || this.option)                    str += "Alt+";
+            if (this.meta || this.windows || this.command)  str += "Meta+";
+            if (this.shift)                                 str += "Shift+";
+            return str;
+        }
+        
     }
 
 

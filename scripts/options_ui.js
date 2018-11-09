@@ -46,6 +46,7 @@
         // Page is loaded and ready for the script to run.
         Promise.resolve()
             .then(() => log.info("Page initialization starts") )
+            .then(() => browser.runtime.getPlatformInfo().then( info => wwhotkey.setOS(info.os) ) )
             .then(() => settings.pLoad().then(tts => {
                 orgSettings = tts;
                 ttSettings = Object.assign({}, orgSettings);
