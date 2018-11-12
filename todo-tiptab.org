@@ -11,6 +11,12 @@
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
 
+* Release 2.11 Feature
+- Misc clean up
+
+* Release 2.10 Feature
+- Handle the Command and Option keys correctly on the Mac platform for custom shortcuts.
+
 * Release 2.9 Feature
 - Reduce extension package size by 20%.  Removed the Moment package.
 
