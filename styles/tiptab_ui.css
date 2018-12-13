@@ -223,6 +223,9 @@ body {
     font-size:      1.4rem;
 }
 
+.rounded1 {
+  border-radius:    .1rem;
+}
 .rounded2 {
   border-radius:    .2rem;
 }
@@ -676,12 +679,19 @@ a.disabled {
     justify-content:    center;    
 }
 
+#searchbar {
+}
 .cmd-search {
     border:             .05rem solid #007bff;
     width:              10rem;
+    font-size:          0.7rem;
+    height:             1.4rem;
+    padding:            0.05rem 0.3rem;
 }
 .cmd-search:focus {
     background:         #ffffee;
+    border-color:       #5755d9; 
+    box-shadow:         0 0 0 .1rem rgba(87, 85, 217, .2);
 }
 
 .saved-search-bar {
@@ -775,7 +785,7 @@ a.disabled {
     opacity:            1;
 }
 .tab-box:focus {
-    box-shadow:         0 0 .1rem .1rem rgba(0, 0, 255, 1.0);
+    box-shadow:         0 0 .085rem .085rem rgba(0, 0, 192, 1.0);
     outline:            none;
 }
 .tab-box .selected {
