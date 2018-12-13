@@ -181,6 +181,20 @@ body {
     width:          6px;
 }
 
+/* Modify the badge for header-btn */
+.badge.header-btn[data-badge]::after {
+    /* background:     #4f9fef; */
+    background:     rgba(232, 86, 0, .9);
+    font-size:      .5rem;
+    min-width:      0.7rem;
+    height:         0.7rem;
+}
+.badge.header-btn:not([data-badge])::after,
+.badge.header-btn[data-badge=""]::after,
+.deselected.badge.header-btn[data-badge]::after {
+    display:        none;
+}
+
 /* Modify the badge for footer-btn */
 .badge.footer-btn[data-badge]::after {
     /* background:     #4f9fef; */
@@ -455,6 +469,13 @@ a.disabled {
     /* align-items: stretch; */
     flex-wrap: nowrap;
     /* justify-content: space-between; */
+}
+
+.btn.header-btn {
+    height:         1.3rem;
+    width:          1.4rem;
+    padding:        0;
+    line-height:    0;
 }
 
 .footer-bar {
@@ -754,8 +775,11 @@ a.disabled {
     opacity:            1;
 }
 .tab-box:focus {
-    box-shadow:         0 0 .2rem .1rem rgba(0, 0, 255, 1.0);
+    box-shadow:         0 0 .1rem .1rem rgba(0, 0, 255, 1.0);
     outline:            none;
+}
+.tab-box .selected {
+    
 }
 
 .tabbox-dummy {

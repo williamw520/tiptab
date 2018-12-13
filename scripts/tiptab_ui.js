@@ -94,6 +94,7 @@
     let currentLastActiveTabId = 0; // the previous active tab on the current window.
     let previousFocusedTid = 0;
     let searchSaving = false;
+    let dragMode = false;
 
     let uiState = {};
     let tabById = {};               // the only map holding the Tab objects.
@@ -425,6 +426,7 @@
         $("#global-cmds").on("click", ".cmd-refresh",           pReloadRedrawRefreshContent);
         $("#global-cmds").on("click", ".cmd-create-window",     function(){ pCreateWindow().then(() => refocusTiptap())     });
         $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                                  });
+        $("#global-cmds").on("click", ".cmd-drag-mode",         function(){ toggleDragMode()                                });
         $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(effectiveTabIds, true)                 });
         $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(effectiveTabIds, false)                });
         $("#global-cmds").on("click", ".cmd-close-ui",          function(){ pSendCmd({ cmd: "close-ui" })                   });
@@ -707,16 +709,19 @@
     }
 
     function refreshStaticUI() {
-        //log.info("refreshStaticUI");
+        log.info("refreshStaticUI");
 
         setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
 
+        // Restore search text from saved state.
         $(".cmd-search").val(uiState.searchTerms.join(" "));
     }
     
     function redrawRefreshControls() {
         // VBar buttons are always visible and no need to redraw.
+        
         refreshVBtnBarControls();
+        refreshHeaderControls();
         redrawFooterControls();     // footer controls are dynamic and need redrawing based on current state of the data.
         refreshFooterControls();
         redrawSavedSearches();
@@ -724,6 +729,7 @@
 
     function refreshControls() {
         refreshVBtnBarControls();
+        refreshHeaderControls();
         refreshFooterControls();
     }
 
@@ -749,6 +755,12 @@
             redrawContainerFooterBtns();
             break;
         }
+    }
+
+    function refreshHeaderControls() {
+        //$(".cmd-drag-mode").removeClass("btn-link").addClass(dragMode ? "" : "btn-link").data("badge", dragMode ? "${CHAR_CHECKMARK}" : "");
+        $(".cmd-drag-mode").removeClass("btn-link").addClass(dragMode ? "" : "btn-link");
+        $(".cmd-drag-mode").attr("data-badge", dragMode ? "+" : "");
     }
 
     function refreshFooterControls() {
@@ -1423,6 +1435,7 @@
         let isContainer = is_real_container(tab.cookieStoreId);
 
         // Note that the unsafe text of a tab's url are left out, and will be filled in later, in below.
+        // The outer div has its tabindex set to 2 to receive the tab focus event.  The search box has tabindex=1.
         return `
             <div class="tab-box ${css_tabbox(isPrivate)}" id="tid-${tab.id}" data-tid="${tab.id}" tabindex="2">
 
@@ -1590,6 +1603,11 @@
 
     function resetDragAndDrop() {
         $(".draggabled-item").draggable("destroy").removeClass("draggabled-item");
+    }
+
+    function toggleDragMode() {
+        dragMode = !dragMode;
+        refreshHeaderControls();
     }
 
     function setupDragAndDrop() {

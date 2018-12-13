@@ -1,5 +1,6 @@
 
 * Feature TODO
+** TODO Multi-tab selection for drag and drop to move multiple tabs at the same time.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Refresh one tab onUpdated
