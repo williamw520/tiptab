@@ -788,9 +788,6 @@ a.disabled {
     box-shadow:         0 0 .085rem .085rem rgba(0, 0, 192, 1.0);
     outline:            none;
 }
-.tab-box .selected {
-    
-}
 
 .tabbox-dummy {
     visibility:         hidden;
@@ -898,6 +895,7 @@ a.disabled {
     margin-left:        calc(var(--tab-topbar-gap)*1.5);
 }
 
+/* The top left corner commands on the tab's topbar */
 .tab-topbar-cmds {
     display:            flex;
     position:           absolute;
@@ -914,7 +912,6 @@ a.disabled {
     opacity:            var(--topbar-opacity-hover);
     box-shadow:         0 0 .1rem -.0rem rgba(0,0,0,0.75);
 }
-
 .tab-topbar-cmds .cmd-close-tab {
     font-size:          60%;
     width:              var(--topbar-btn-width);
@@ -925,6 +922,40 @@ a.disabled {
     justify-content:    center;    
 }
 
+/* The selection checkmark button for the tab-box */
+.tab-topbar-selection {
+    z-index:            1;
+    display:            flex;
+    position:           absolute;
+    top:                calc(var(--tab-topbar-gap));
+    left:               calc(var(--tab-topbar-gap)*1.2);
+    height:             var(--topbar-btn-height);
+    padding:            0;
+}
+.tab-topbar-selection .cmd-select-tab {
+    font-size:          60%;
+    width:              var(--topbar-btn-width);
+    height:             var(--topbar-btn-height);
+    padding:            0 0 0.02rem 0;
+    display:            flex;
+    align-items:        center;
+    justify-content:    center;    
+}
+.tab-box            .tab-topbar-selection {
+    display:            none;
+}
+.tab-box.selecting  .tab-topbar-selection {
+    display:            block;  /* toggle the display based on the .selecting class applied to .tab-box */
+}
+.tab-box            .tab-topbar-selection .icon-check {
+    display:            none;
+}
+.tab-box.selected   .tab-topbar-selection .icon-check {
+    color:              #aa0000;
+    display:            block;  /* toggle the display based on the .selected class applied to .tab-box */
+}
+
+/* The top right corner dropdown menu on the tab's topbar */
 .tab-topbar-menu {
     position:           absolute;
     top:                calc(var(--tab-topbar-gap));
@@ -932,10 +963,10 @@ a.disabled {
     line-height:        0;
     opacity:            var(--topbar-opacity);
 }
-.tab-topbar:hover ~ .tab-topbar-menu {
+.tab-box:not(.selecting) .tab-topbar:hover ~ .tab-topbar-menu {
     opacity:            var(--topbar-opacity-hover);
 }
-.tab-topbar-menu:hover {
+.tab-box:not(.selecting) .tab-topbar-menu:hover {
     opacity:            var(--topbar-opacity-hover);
 }
 

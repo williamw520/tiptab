@@ -411,6 +411,7 @@
     }
 
     function tabs_onMoved(tabId, moveInfo) {
+        log.info("tabs_onMoved tabId: " + tabId);
         return pReloadTabsWindowsAndContainers().then( () => redrawRefreshUIContent(false, false) );
     }
 
@@ -464,6 +465,7 @@
 
         // Tab command handlers
         $("#main-content").on("click", ".cmd-close-tab",        function(){ pCloseTabs([ $(this).closest(".tab-box").data("tid") ])                 });
+        $("#main-content").on("click", ".cmd-select-tab",       function(){ $(this).closest(".tab-box").toggleClass("selected")                     });
         $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTab($(this).closest(".tab-box").data("tid"))                      });
         $("#main-content").on("click", ".cmd-duplicate-tab",    function(){ duplicateTab($(this).closest(".tab-box").data("tid"))                   });
         $("#main-content").on("click", ".cmd-move-tab-new",     function(){ moveToNewWindow($(this).closest(".tab-box").data("tid"))                });
@@ -496,7 +498,9 @@
         $(".footer-bar").on("click", ".cmd-filter-by-pinned",   function(){ toggleFilterByStatus("filterByPinned")                                  });
 
         // Events on tab thumbnails
-        $("#main-content").on("click", ".tab-thumbnail",        function(e){ activateTid($(this).closest(".tab-box").data("tid")); return stopEvent(e) });
+        //$("#main-content").on("click", ".tab-thumbnail",        function(e){ activateTid($(this).closest(".tab-box").data("tid")); return stopEvent(e) });
+        $("#main-content").on("click", ".tab-thumbnail",        onThumbnailClicked);
+        
 
         // Events on the window lane
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
@@ -758,7 +762,6 @@
     }
 
     function refreshHeaderControls() {
-        //$(".cmd-drag-mode").removeClass("btn-link").addClass(dragMode ? "" : "btn-link").data("badge", dragMode ? "${CHAR_CHECKMARK}" : "");
         $(".cmd-drag-mode").removeClass("btn-link").addClass(dragMode ? "" : "btn-link");
         $(".cmd-drag-mode").attr("data-badge", dragMode ? "+" : "");
     }
@@ -1447,6 +1450,10 @@
                 <a href="#" class="btn cmd-close-tab" title="Close the tab" tabindex="-1"><i class="icon icon-cross"></i></a>
               </div>
 
+              <div class="tab-topbar-selection">
+                <a href="#" class="btn cmd-select-tab" title="select the tab" tabindex="-1"><i class="icon icon-check"></i></a>
+              </div>
+
               <div class="dropdown dropdown-right tab-topbar-menu" >
                 <div class="btn-group">
                   <a href="#" class="btn dropdown-toggle tab-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
@@ -1569,7 +1576,7 @@
     function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .4rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
     function border_color_private(isPrivate)    { return isPrivate ? "border-color: " + COLOR_PRIVATE + ";" : "" }
     function css_display(showing)               { return showing  ? "d-block" : "d-none" }
-    function css_tabbox(isPrivate)              { return isPrivate ? " droppable-private " : " droppable-normal " }
+    function css_tabbox(isPrivate)              { return (isPrivate ? " droppable-private " : " droppable-normal ") + (dragMode ? " selecting " : "") }
     function css_disabled_active(isActive)      { return isActive ? " disabled " : "" }
     function css_audible(tab)                   { return tab.audible ? "d-block blink-yellow" : "d-none" }
 
@@ -1608,6 +1615,11 @@
     function toggleDragMode() {
         dragMode = !dragMode;
         refreshHeaderControls();
+        if (dragMode) {
+            $(".tab-box").addClass("selecting");
+        } else {
+            $(".tab-box").removeClass("selecting").removeClass("selected");
+        }
     }
 
     function setupDragAndDrop() {
@@ -1791,10 +1803,27 @@
     }
 
     function dropInFrontOfTabInWindow($dest, event, ui) {
-        let srcTab      = tabById[ui.draggable.data("tid")];
-        let destTab     = tabById[$dest.data("tid")];
+        let srcTid      = ui.draggable.data("tid");
+        let destTid     = $dest.data("tid");
+
+        if (dragMode) {
+            let srcTids = $(".tab-box.selected").map( (i, elm) => $(elm).data("tid") ).get();
+            if (srcTids.indexOf(srcTid) < 0)
+                srcTids.unshift(srcTid);
+            toggleDragMode();
+            srcTids.forEach( (srcTid) => dropSrcTabInFrontOfTabInWindow(srcTid, destTid) );
+        } else {
+            dropSrcTabInFrontOfTabInWindow(srcTid, destTid);
+        }
+    }
+    
+    function dropSrcTabInFrontOfTabInWindow(srcTid, destTid) {
+        let srcTab      = tabById[srcTid];
+        let destTab     = tabById[destTid];
         let srcIdx      = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
         let destIdx     = tabIdsByWid[destTab.windowId].findIndex( tid => tid == destTab.id );
+        let $srcTabBox  = $tabbox(srcTab.id);
+        let $destTabBox = $tabbox(destTab.id);
         let srcPrivate  = is_firefox_private(tabById[srcTab.id].cookieStoreId);
         let destPrivate = is_firefox_private(tabById[destTab.id].cookieStoreId);
         let sameDomain  = srcPrivate == destPrivate;
@@ -1813,29 +1842,40 @@
                         orderTabIndex(destTab.windowId);
                     srcTab.windowId = destTab.windowId;
 
-                    let $srcTabBox  = $tabbox(srcTab.id);
-                    let $destTabBox = $tabbox(destTab.id);
                     $srcTabBox.detach();
                     $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
                     $srcTabBox.insertBefore($destTabBox);
                     let toWidth = $srcTabBox.width();
                     $srcTabBox.width(0).animate({ width: toWidth }, 500).effect( "bounce", {times:2, distance:5}, 200 );
                 } else {
-                    let $srcTabBox  = $tabbox(srcTab.id);
                     $srcTabBox.removeAttr("style");
                 }
             });
         } else {
             // Copy the tab in front of the destination tab.
             openInWindow(srcTab, destTab.windowId, destIdx);
-            let $srcTabBox  = $tabbox(srcTab.id);
             $srcTabBox.removeAttr("style");
         }
     }                                   
 
     function dropAtTheEndInWindow($dest, event, ui) {
-        let srcTab      = tabById[ui.draggable.data("tid")];
-        let destWid     = $dest.data("wid");  // data-wid on .drop-end-zone.
+        let srcTid      = ui.draggable.data("tid");     // the directly dragged src tab
+        let destWid     = $dest.data("wid");            // data-wid on .drop-end-zone.
+
+        if (dragMode) {
+            let srcTids = $(".tab-box.selected").map( (i, elm) => $(elm).data("tid") ).get();
+            if (srcTids.indexOf(srcTid) < 0)
+                srcTids.unshift(srcTid);
+            toggleDragMode();
+            srcTids.forEach( (srcTid) => dropSrcTabAtTheEndInWindow(srcTid, destWid, event) );
+        } else {
+            dropSrcTabAtTheEndInWindow(srcTid, destWid, event);
+        }
+    }
+    
+    function dropSrcTabAtTheEndInWindow(srcTid, destWid, event) {
+        let srcTab      = tabById[srcTid];
+        let $srcTabBox  = $tabbox(srcTab.id);
         let sameWin     = srcTab.windowId == destWid;
         let srcPrivate  = is_firefox_private(tabById[srcTab.id].cookieStoreId);
         let destPrivate = windowById[destWid].incognito;
@@ -1854,28 +1894,17 @@
                         orderTabIndex(destWid);
                     
                     srcTab.windowId = destWid;
-                    let $tabBox = $tabbox(srcTab.id);
-                    $tabBox.css({ top:"", left:"" });   // reset the dragging position
-                    if (!$tabBox.is(":last-child")) {
-                        $tabBox.detach();
-                        $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                        $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
-                            .effect( "bounce", {times:2, distance:5}, 200 );
-                    } else {
-                        $tabBox.detach();
-                        $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($tabBox);
-                        $tabBox.offset({left: event.pageX}).animate({ left: 0 }, 300)
-                            .effect( "bounce", {times:2, distance:5}, 200 );
-                    }
+                    $srcTabBox.detach();
+                    $srcTabBox.css({ top:"", left:"" });   // reset the dragging position
+                    $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($srcTabBox);
+                    $srcTabBox.offset({left: event.pageX}).animate({ left: 0 }, 300).effect( "bounce", {times:2, distance:5}, 200 );
                 } else {
-                    let $srcTabBox  = $tabbox(srcTab.id);
                     $srcTabBox.removeAttr("style");
                 }
             })
         } else {
             // Copy the tab to the end of th window
             openInWindow(srcTab, destWid, null);
-            let $srcTabBox  = $tabbox(srcTab.id);
             $srcTabBox.removeAttr("style");
         }
     }
@@ -2335,6 +2364,16 @@
         setCssVar("--img-height", height);
     }
 
+    function onThumbnailClicked(e) {
+        let $tbox = $(this).closest(".tab-box");
+        if (dragMode) {
+            $tbox.toggleClass("selected");
+        } else {
+            activateTid($tbox.data("tid"));
+        }
+        return stopEvent(e);
+    }
+    
     function activateTid(tid) {
         let tab = tabById[tid];
         tiptabWindowActive = false;
