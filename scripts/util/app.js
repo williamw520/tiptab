@@ -81,6 +81,16 @@
     app.flatten     = function(array)           { return [].concat.apply([], array) };
     app.addAt       = function(array, obj, i)   { if (i > -1) { array.splice(i, 0, obj) } else { array.push(obj) } }        // append at end for i < -1
     app.addAfter    = function(array, obj, i)   { if (i > -1) { array.splice(i + 1, 0, obj) } else { array.push(obj) } }
+    app.arrayUnique = function(array)           {
+        let seen = new Set();
+        return array.reduce( (array, x) => {
+            if (!seen.has(x)) {
+                seen.add(x);
+                array.push(x);  // preserve the original order of the array.
+            }
+            return array;
+        }, []);
+    }
 
     app.debounce = function(operationFunc, waitMS, resetWaitTime, context) {
         let timeoutId = null;

@@ -94,7 +94,7 @@
     let currentLastActiveTabId = 0; // the previous active tab on the current window.
     let previousFocusedTid = 0;
     let searchSaving = false;
-    let dragMode = false;
+    let dragSelectionMode = false;
 
     let uiState = {};
     let tabById = {};               // the only map holding the Tab objects.
@@ -411,7 +411,7 @@
     }
 
     function tabs_onMoved(tabId, moveInfo) {
-        log.info("tabs_onMoved tabId: " + tabId);
+        //log.info("tabs_onMoved tabId: " + tabId);
         return pReloadTabsWindowsAndContainers().then( () => redrawRefreshUIContent(false, false) );
     }
 
@@ -465,7 +465,7 @@
 
         // Tab command handlers
         $("#main-content").on("click", ".cmd-close-tab",        function(){ pCloseTabs([ $(this).closest(".tab-box").data("tid") ])                 });
-        $("#main-content").on("click", ".cmd-select-tab",       function(){ $(this).closest(".tab-box").toggleClass("selected")                     });
+        $("#main-content").on("click", ".cmd-select-tab",       function(e){ $(this).closest(".tab-box").toggleClass("selected");   return stopEvent(e)     });
         $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTab($(this).closest(".tab-box").data("tid"))                      });
         $("#main-content").on("click", ".cmd-duplicate-tab",    function(){ duplicateTab($(this).closest(".tab-box").data("tid"))                   });
         $("#main-content").on("click", ".cmd-move-tab-new",     function(){ moveToNewWindow($(this).closest(".tab-box").data("tid"))                });
@@ -498,7 +498,6 @@
         $(".footer-bar").on("click", ".cmd-filter-by-pinned",   function(){ toggleFilterByStatus("filterByPinned")                                  });
 
         // Events on tab thumbnails
-        //$("#main-content").on("click", ".tab-thumbnail",        function(e){ activateTid($(this).closest(".tab-box").data("tid")); return stopEvent(e) });
         $("#main-content").on("click", ".tab-thumbnail",        onThumbnailClicked);
         
 
@@ -713,7 +712,7 @@
     }
 
     function refreshStaticUI() {
-        log.info("refreshStaticUI");
+        // log.info("refreshStaticUI");
 
         setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
 
@@ -762,8 +761,8 @@
     }
 
     function refreshHeaderControls() {
-        $(".cmd-drag-mode").removeClass("btn-link").addClass(dragMode ? "" : "btn-link");
-        $(".cmd-drag-mode").attr("data-badge", dragMode ? "+" : "");
+        $(".cmd-drag-mode").removeClass("btn-link").addClass(dragSelectionMode ? "" : "btn-link");
+        $(".cmd-drag-mode").attr("data-badge", dragSelectionMode ? "+" : "");
     }
 
     function refreshFooterControls() {
@@ -1576,7 +1575,7 @@
     function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .4rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
     function border_color_private(isPrivate)    { return isPrivate ? "border-color: " + COLOR_PRIVATE + ";" : "" }
     function css_display(showing)               { return showing  ? "d-block" : "d-none" }
-    function css_tabbox(isPrivate)              { return (isPrivate ? " droppable-private " : " droppable-normal ") + (dragMode ? " selecting " : "") }
+    function css_tabbox(isPrivate)              { return (isPrivate ? " droppable-private " : " droppable-normal ") + (dragSelectionMode ? " selecting " : "") }
     function css_disabled_active(isActive)      { return isActive ? " disabled " : "" }
     function css_audible(tab)                   { return tab.audible ? "d-block blink-yellow" : "d-none" }
 
@@ -1613,9 +1612,9 @@
     }
 
     function toggleDragMode() {
-        dragMode = !dragMode;
+        dragSelectionMode = !dragSelectionMode;
         refreshHeaderControls();
-        if (dragMode) {
+        if (dragSelectionMode) {
             $(".tab-box").addClass("selecting");
         } else {
             $(".tab-box").removeClass("selecting").removeClass("selected");
@@ -1646,7 +1645,7 @@
                 return;
 
             $tb.draggable({
-                revert:         "invalid",
+                revert:         true,
                 revertDuration: 200,
                 zIndex:         100,
                 handle:         ".draggable-item",
@@ -1660,7 +1659,7 @@
                 },
                 stop:           function(event, ui){
                     $(".drop-tab-gap-zone, .drop-end-zone").droppable("destroy").remove();
-                    $(".tab-box.droppabled-item").droppable("destroy").removeClass("droppabled-item");
+                    $(".tab-box.droppabled-zone").droppable("destroy").removeClass("droppabled-zone");
                     enableOverlayAfterDelay(4000);
                 },
             });
@@ -1687,7 +1686,7 @@
                     $(".drop-end-zone").droppable({
                         accept:     ".tab-box",
                         classes:    { "ui-droppable-hover": "onhover-copy-ondrop" },
-                        create:     function(event, ui){ $(this).addClass("droppabled-item") },
+                        create:     function(event, ui){ $(this).addClass("droppabled-zone") },
                         drop:       function(event, ui){ dropInTheContainer($(this), event, ui) },
                     });
                 },
@@ -1719,7 +1718,7 @@
             $(".drop-tab-gap-zone[data-tid='" + tid  + "']").droppable({
                 accept:     ".tab-box",
                 classes:    { "ui-droppable-hover": sameDomain ? "onhover-move-in-gap-ondrop" : "onhover-copy-in-gap-ondrop" },
-                create:     function(event, ui){ $(this).addClass("droppabled-item") },
+                create:     function(event, ui){ $(this).addClass("droppabled-zone") },
                 drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), event, ui) },
             });
             
@@ -1735,7 +1734,7 @@
             $tabbox(tid).droppable({
                 accept:     ".tab-box",
                 classes:    { "ui-droppable-hover": sameDomain ? "onhover-move-in-border-ondrop" : "onhover-copy-in-border-ondrop" },
-                create:     function(event, ui){ $(this).addClass("droppabled-item") },
+                create:     function(event, ui){ $(this).addClass("droppabled-zone") },
                 drop:       function(event, ui){ dropInFrontOfTabInWindow($(this), event, ui) },
             });
         });
@@ -1771,7 +1770,7 @@
             $(".drop-end-zone[data-wid='" + w.id  + "']").droppable({
                 accept:     ".tab-box",
                 classes:    { "ui-droppable-hover": sameDomain ? "onhover-move-to-end-ondrop" : "onhover-copy-ondrop" },
-                create:     function(event, ui){ $(this).addClass("droppabled-item") },
+                create:     function(event, ui){ $(this).addClass("droppabled-zone") },
                 drop:       function(event, ui){ dropAtTheEndInWindow($(this), event, ui) },
             });
             
@@ -1787,7 +1786,7 @@
             let $container  = $(".container-lane[data-cid='" + c.cookieStoreId + "']");
             let $endzone    = $("<div class='drop-end-zone' data-cid='" + c.cookieStoreId + "'></div>");
             let $lastTab    = $container.find(".tab-thumbnail").last();
-            if ($lastTab.length) {
+            if ($lastTab.length) {
                 let endzoneLeft = $lastTab.offset().left + $lastTab.outerWidth() + 2;
                 $endzone.offset({ top: $lastTab.offset().top,  left: endzoneLeft })
                     .width($container.offset().left + $container.width() - endzoneLeft - 1)
@@ -1806,7 +1805,7 @@
         let srcTid      = ui.draggable.data("tid");
         let destTid     = $dest.data("tid");
 
-        if (dragMode) {
+        if (dragSelectionMode) {
             let srcTids = $(".tab-box.selected").map( (i, elm) => $(elm).data("tid") ).get();
             if (srcTids.indexOf(srcTid) < 0)
                 srcTids.unshift(srcTid);
@@ -1862,7 +1861,7 @@
         let srcTid      = ui.draggable.data("tid");     // the directly dragged src tab
         let destWid     = $dest.data("wid");            // data-wid on .drop-end-zone.
 
-        if (dragMode) {
+        if (dragSelectionMode) {
             let srcTids = $(".tab-box.selected").map( (i, elm) => $(elm).data("tid") ).get();
             if (srcTids.indexOf(srcTid) < 0)
                 srcTids.unshift(srcTid);
@@ -1911,8 +1910,23 @@
 
     // Need to do blocking wait until tabs.create() finish before finishing up the drop operation.
     function dropInTheContainer($dest, event, ui) {
-        let srcTab  = tabById[ui.draggable.data("tid")];
-        let destCid = $dest.data("cid");  // data-cid on .drop-end-zone.
+        let srcTid      = ui.draggable.data("tid");     // the directly dragged src tab
+        let destCid     = $dest.data("cid");            // data-cid on .drop-end-zone.
+
+        if (dragSelectionMode) {
+            // tabbox in container is cloned when dragged; use .ui-draggable-dragging to filter out the clone and get the original.
+            let srcTids = $(".tab-box.selected:not(.ui-draggable-dragging)").map( (i, elm) => $(elm).data("tid") ).get();
+            if (srcTids.indexOf(srcTid) < 0)
+                srcTids.unshift(srcTid);
+            toggleDragMode();
+            srcTids.forEach( (srcTid) => dropSrcTabInTheContainer(srcTid, destCid) );
+        } else {
+            dropSrcTabInTheContainer(srcTid, destCid);
+        }
+    }
+
+    function dropSrcTabInTheContainer(srcTid, destCid) {
+        let srcTab      = tabById[srcTid];
 
         if (is_firefox_private(srcTab.cookieStoreId)) {
             if (is_firefox_private(destCid)) {
@@ -2366,7 +2380,7 @@
 
     function onThumbnailClicked(e) {
         let $tbox = $(this).closest(".tab-box");
-        if (dragMode) {
+        if (dragSelectionMode) {
             $tbox.toggleClass("selected");
         } else {
             activateTid($tbox.data("tid"));
