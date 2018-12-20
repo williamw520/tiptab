@@ -1928,14 +1928,18 @@
 
         let destWids    = getDestContainerWindowIds(srcTids, destCid);
         let needNewDest = destWids.some( wid => wid == null );
-        let newDestWid  = null;
+        let newWidInfo  = { windowId: null, isNew: false };
 
         if (needNewDest) {
-            newDestWid = await pFindOrCreateContainerWindowId(destCid); // pick the first window with the container or create one.
+            newWidInfo  = await pFindOrCreateContainerWindowId(destCid);    // pick the first window with the container or create one.
         }
 
         for (let i = 0; i < srcTids.length; i++) {
-            await pDropSrcTabInTheContainer(srcTids[i], destCid, destWids[i] == null ? newDestWid : destWids[i]);
+            await pDropSrcTabInTheContainer(srcTids[i], destCid, destWids[i] == null ? newWidInfo.windowId : destWids[i]);
+        }
+
+        if (newWidInfo.isNew) {
+            await pCloseFirstBlankPrivateTab(newWidInfo.windowId);
         }
     }
 
@@ -1981,8 +1985,8 @@
 
     async function pOpenInPrivateWindow(srcTab, destWid) {
         if (!destWid) {
-            let privateWindow = await pFindOrCreatePrivateWindow(false);    // pick the first private window or create one.
-            destWid = privateWindow.id;
+            let wndInfo = await pFindOrCreatePrivateWindow(false);
+            destWid = wndInfo.window.id;
         }
         return browser.tabs.create({
             active:         true,
@@ -2012,7 +2016,8 @@
 
     async function pOpenInContainer(srcTab, destCid, destWid) {
         if (!destWid) {
-            let destWid = await pFindOrCreateContainerWindowId(destCid); // pick the first window with the container or create one.
+            let widInfo = await pFindOrCreateContainerWindowId(destCid);    // pick the first window with the container or create one.
+            destWid = widInfo.windowId;
         }
         return browser.tabs.create({
             active:         true,
@@ -2024,38 +2029,36 @@
         // Rely on tabs.onUpdated to add the newly created tab when the tab.url and tab.title are completely filled in.
     }
 
-    function pFindOrCreateContainerWindowId(cid) {
+    async function pFindOrCreateContainerWindowId(cid) {
         let containerIsPrivate = is_firefox_private(cid);
         if (containerIsPrivate) {
-            return pFindOrCreatePrivateWindow(false).then( w => w.id );
+            let wndInfo = await pFindOrCreatePrivateWindow(false);
+            return { windowId: wndInfo.window.id, isNew: wndInfo.isNew };
         } else {
-            return browser.tabs.query({})
-                .then( tabs => {
-                    let tabInTheContainer = tabs.find( tab => tab.cookieStoreId == cid );
-                    if (tabInTheContainer) {
-                        return tabInTheContainer.windowId;
-                    } else {
-                        return browser.windows.create({}).then( w => w.id );    // no window has a tab with the container Id; create a new window.
-                    }
-                });
+            return browser.tabs.query({}).then( tabs => {
+                let tabInTheContainer = tabs.find( tab => tab.cookieStoreId == cid );
+                if (tabInTheContainer) {
+                    return { windowId: tabInTheContainer.windowId, isNew: false };
+                } else {
+                    // no window has a tab with the container Id; create a new window.                        
+                    return browser.windows.create({}).then( newWindow => {
+                        return { windowId: newWindow.id, isNew: true };
+                    });
+                }
+            });
         }
     }
 
     function pFindOrCreatePrivateWindow(focused) {
         return browser.windows.getAll()
             .then( windows => windows.find( w => w.incognito ) )
-            .then( privateWindow => {
-                if (privateWindow) {
-                    return privateWindow;
+            .then( existingPrivateWindow => {
+                if (existingPrivateWindow) {
+                    return { window: existingPrivateWindow, isNew: false };
                 } else {
-                    return browser.windows.create({ incognito: true }).then( w => {
-                        // TODO: Firefox somehow doesn't support focused: false.
-                        // log.info("new privateWindow ", w);
-                        return browser.windows.update(w.id, { focused: focused })
-                            .then( w => {
-                                // log.info("update privateWindow ", w);
-                                return w;
-                            });
+                    // TODO: Firefox doesn't support 'focused' on window creation.
+                    return browser.windows.create({ incognito: true }).then( newWindow => {
+                        return { window: newWindow, isNew: true };
                     });
                 }
             });
@@ -2291,7 +2294,17 @@
         pCloseTabs(tabIdsByCid[cid]);
     }
 
-//    function close
+    function pCloseFirstBlankPrivateTab(wid) {
+        return browser.windows.get(wid, { populate: true }).then( wndInfo => {
+            if (wndInfo.tabs.length < 2)
+                return;
+            // Note: browser.windows.get is not reliable in getting the tab's url and title, which can come in much later.
+            let firstTab = wndInfo.tabs[0];
+            if (firstTab.url == "about:privatebrowsing")
+                return;
+            return pCloseTabs([firstTab.id]);
+        });
+    }
 
     function undoCloseTab() {
         browser.sessions.getRecentlyClosed().then( sessions => {

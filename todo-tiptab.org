@@ -3,7 +3,9 @@
 ** DONE Multi-tab selection for drag and drop to move multiple tabs at the same time.
 ** DONE Drag and drop multiple tabs across windows.
 ** DONE Drag and drop multiple tabs across containers.
-** TODO Bug: When drag and drop to the private container, each tab creates a new private window.  Reuse existing private window.
+** DONE Close the first blank tab of new window.
+** DONE Bug: When drag and drop to the private container, each tab creates a new private window.  Reuse existing private window.
+** TODO Bug: Group container tabs to a new window seems pointing to the last tab of the old window.
 ** TODO Bug: after dragging couple time, dragging the first tab in a window doesn't remove it from the src window.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
