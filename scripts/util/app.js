@@ -179,8 +179,48 @@
         return tokens.map( token => token.toLowerCase() );
     }
 
+    // deep copy
+    app.cloneObj = function(obj) {
+        if (obj === null)               return obj;
+        if (typeof obj !== "object")    return obj; // primitive
+        if (obj instanceof Date)        return new Date(obj.getTime());
+        if (Array.isArray(obj))         return obj.map( x => app.cloneObj(x) );
+        // clone an Object.
+        return Object.keys(obj).reduce( (newObj, key) => {
+            newObj[key] = app.cloneObj(obj[key]);
+            return newObj;
+        }, new obj.constructor());
+    }
+
+
     log.info("module loaded");
     return app;
 
 }(this, "app"));    // Pass in the global scope as 'this' scope.
+
+
+// Unit Tests
+let _RUNTEST_APP = false;
+if (_RUNTEST_APP) {
+    console.log("Run unit tests");
+
+    let obj1 = { a: 1, b: [2, 3], c: { x: 4, y: "y"} };
+    let obj2 = app.cloneObj(obj1);
+    
+    obj1.a = 10;
+    obj1.b[1] = 30;
+    obj1.c.x  = 40;
+    obj1.c.y  = "yy";
+    console.assert( obj2.a == 1 );
+    console.assert( obj2.b[1] == 3 );
+    console.assert( obj2.c.x == 4);
+    console.assert( obj2.c.y == "y");
+
+    obj1 = {};
+    obj2 = app.cloneObj(obj1);
+    obj1.a = 1;
+    console.assert( !obj2.hasOwnProperty("a") );
+    console.assert( Object.keys(obj2).length == 0 );
+
+}
 

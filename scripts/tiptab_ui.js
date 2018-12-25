@@ -382,38 +382,31 @@
     function tabs_onUpdated(tabId, info, tab) {
         // log.info("tabs_onUpdated ", tabId, info, tab);
 
-        // if (tab && tab.hasOwnProperty("url") && is_tiptaburl(tab.url))  // skip the TipTab tab itself.
-        //     return;
+        createTabDataAsNeeded(tab);
+        let oldTab = cloneTabData(tabId);   // save old tab before it being updated.
 
-        let refreshNeeded = 0;
-        createTabData(tab);                 // create the tab object if it doesn't exist.
+        // info has the property being updated.
         if (info.hasOwnProperty("url"))
             tabById[tabId].url = info.url;
         if (info.hasOwnProperty("title"))
             tabById[tabId].title = info.title;
-        if (info.hasOwnProperty("favIconUrl")) {
+        if (info.hasOwnProperty("favIconUrl"))
             tabById[tabId].favIconUrl = info.favIconUrl;
-            if (tab.url == "about:newtab") {
-                refreshNeeded++;
-            }
-        }
-        if (info.hasOwnProperty("audible")) {
-            let oldAudible = tabById[tabId].audible;
+        if (info.hasOwnProperty("audible"))
             tabById[tabId].audible = info.audible;
-            if (oldAudible != info.audible)
-                refreshNeeded++;
-        }
-        if (info.hasOwnProperty("status") && info.status == "complete") {
-            refreshNeeded++;
+        if (info.hasOwnProperty("pinned"))
+            tabById[tabId].pinned = info.pinned;
+        if (info.hasOwnProperty("mutedInfo"))
+            tabById[tabId].mutedInfo = info.mutedInfo;
+
+        if (isTabDataDiff(tab, oldTab) || (info.hasOwnProperty("status") && info.status == "complete")) {
+            refreshTabData(tabById[tabId]);
         }
 
-        if (refreshNeeded > 0)
-            refreshTabData(tabById[tabId]);
-        
     }
 
     function tabs_onMoved(tabId, moveInfo) {
-        //log.info("tabs_onMoved tabId: " + tabId);
+        // log.info("tabs_onMoved tabId: " + tabId);
         return pReloadTabsWindowsAndContainers().then( () => redrawRefreshUIContent(false, false) );
     }
 
@@ -866,7 +859,7 @@
             })
     }
 
-    function createTabData(newTab) {
+    function createTabDataAsNeeded(newTab) {
         if (tabById.hasOwnProperty(newTab.id))
             return;
         tabById[newTab.id] = newTab;
@@ -874,6 +867,18 @@
         app.addAt(tabIdsByCid[newTab.cookieStoreId], newTab.id, newTab.index);
         thumbnailsMap[newTab.id] = null;
         thumbnailsCapturing[newTab.id] = null;
+    }
+
+    function cloneTabData(tabId) {
+        return app.cloneObj(tabById[tabId]) || {};
+    }
+
+    function isTabDataDiff(tab, clone) {
+        return (tab["url"] != clone["url"] ||
+                tab["title"] != clone["title"] ||
+                tab["favIconUrl"] != clone["favIconUrl"] ||
+                tab["audible"] != clone["audible"] ||
+                isMuted(tab) != isMuted(clone) );
     }
 
     function refreshTabData(tab) {
@@ -2005,7 +2010,7 @@
             pinned:         srcTab.pinned,
             url:            srcTab.url,
         }).then( newTab => {
-            createTabData(newTab);
+            createTabDataAsNeeded(newTab);
             refreshTabData(newTab);
             let $newTabBox = $tabbox(newTab.id);
             let toWidth = $newTabBox.width();
@@ -2166,7 +2171,6 @@
                 .then( win  => newWin = win )
                 .then( ()   => Promise.all(tids.map( tid => browser.tabs.move(tid, { windowId: newWin.id, index: -1}) )) )
                 .then( ()   => pCloseWindowBlankTabs(newWin.id) );
-                //.then( ()   => pCloseRestOfWindowTabs(newWin.id, tids) );
         }
     }
 
@@ -2286,12 +2290,8 @@
 
     function pCloseWindowBlankTabs(wid) {
         return browser.tabs.query({windowId: wid})
-            .then( tabs => tabs.filter( tab => tab.url == "about:newtab" || tab.url == "about:blank" ) )
+            .then( tabs => tabs.filter( tab => tab.url == "about:newtab" || tab.url == "about:blank" || tab.url == "about:privatebrowsing" ) )
             .then( tabs => pCloseTabs(toTabIds(tabs) ) );
-    }
-
-    function closeContainerTab(cid) {
-        pCloseTabs(tabIdsByCid[cid]);
     }
 
     function pCloseFirstBlankPrivateTab(wid) {
@@ -2304,6 +2304,10 @@
                 return;
             return pCloseTabs([firstTab.id]);
         });
+    }
+
+    function closeContainerTab(cid) {
+        pCloseTabs(tabIdsByCid[cid]);
     }
 
     function undoCloseTab() {
