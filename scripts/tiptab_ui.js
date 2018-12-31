@@ -357,6 +357,7 @@
     }
 
     function transitionActiveTabs(newActiveTid) {
+        //log.info("transitionActiveTabs: ", newActiveTid, tabById[newActiveTid], tabById[newActiveTid].windowId, tabIdsByWid[tabById[newActiveTid].windowId]);
         let tibsOfNewWindow = tabIdsByWid[tabById[newActiveTid].windowId];
         let existingActiveId = tibsOfNewWindow.find( tid => tabById[tid].active );
         if (existingActiveId) {
@@ -381,6 +382,7 @@
 
     function tabs_onUpdated(tabId, info, tab) {
         // log.info("tabs_onUpdated ", tabId, info, tab);
+        log.info("tabs_onUpdated ", tabId, info);
 
         createTabDataAsNeeded(tab);
         let oldTab = cloneTabData(tabId);   // save old tab before it being updated.
@@ -400,13 +402,14 @@
             tabById[tabId].mutedInfo = info.mutedInfo;
 
         if (isTabDataDiff(tab, oldTab) || (info.hasOwnProperty("status") && info.status == "complete")) {
+            log.info("tab diff; refreshTabData called");
             refreshTabData(tabById[tabId]);
         }
 
     }
 
     function tabs_onMoved(tabId, moveInfo) {
-        // log.info("tabs_onMoved tabId: " + tabId);
+        log.info("tabs_onMoved tabId: " + tabId);
         return pReloadTabsWindowsAndContainers().then( () => redrawRefreshUIContent(false, false) );
     }
 
@@ -463,7 +466,7 @@
         $("#main-content").on("click", ".cmd-select-tab",       function(e){ $(this).closest(".tab-box").toggleClass("selected");   return stopEvent(e)     });
         $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTab($(this).closest(".tab-box").data("tid"))                      });
         $("#main-content").on("click", ".cmd-duplicate-tab",    function(){ duplicateTab($(this).closest(".tab-box").data("tid"))                   });
-        $("#main-content").on("click", ".cmd-move-tab-new",     function(){ moveToNewWindow($(this).closest(".tab-box").data("tid"))                });
+        $("#main-content").on("click", ".cmd-move-tab-new",     function(){ pMoveToNewWindow($(this).closest(".tab-box").data("tid"))                });
         $("#main-content").on("click", ".cmd-copy-tab-url",     function(){ copyTabUrl($(this).closest(".tab-box").data("tid"))                     });
         $("#main-content").on("click", ".cmd-save-tab-img",     function(){ saveTabImg($(this).closest(".tab-box").data("tid"))                     });
         $("#main-content").on("click", ".cmd-close-others",     function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "all")          });
@@ -1841,12 +1844,7 @@
             }
             return browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx}).then( movedTabs => {
                 if (movedTabs && movedTabs.length > 0 && (!sameWin || srcIdx != movedTabs[0].index)) {
-                    tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);                 // remove the moved tabId from source array
-                    tabIdsByWid[destTab.windowId].splice(destIdx, 0, srcTab.id);    // add the moved tabId to the destination array
-                    orderTabIndex(srcTab.windowId);
-                    if (destTab.windowId != srcTab.windowId)
-                        orderTabIndex(destTab.windowId);
-                    srcTab.windowId = destTab.windowId;
+                    moveTabDataToWindow(srcTab, destWid, destIdx);
 
                     $srcTabBox.detach();
                     $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
@@ -1891,15 +1889,8 @@
             // Move the tab to the end of th window
             return browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( movedTabs => {
                 if (movedTabs && movedTabs.length > 0 && (!sameWin || srcTab.index != movedTabs[0].index)) {
-                    // Move the tab to the end of the window lane.
-                    let srcIdx = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
-                    tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);
-                    tabIdsByWid[destWid].push(srcTab.id);
-                    orderTabIndex(srcTab.windowId);
-                    if (destWid != srcTab.windowId)
-                        orderTabIndex(destWid);
+                    moveTabDataToWindow(srcTab, destWid);
 
-                    srcTab.windowId = destWid;
                     $srcTabBox.detach();
                     $srcTabBox.css({ top:"", left:"" });   // reset the dragging position
                     $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($srcTabBox);
@@ -1914,6 +1905,25 @@
             return pOpenInWindow(srcTab, destWid, null).then( () => $srcTabBox.removeAttr("style") );
         }
     }
+
+    function moveTabDataToWindow(srcTab, destWid, destIdx) {
+        if (destIdx) {
+            // Move srcTab to just in front of position destIdx in destWid window lane.
+            tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);                 // remove the moved tabId from source array
+            tabIdsByWid[destWid].splice(destIdx, 0, srcTab.id);             // add the moved tabId to the destination array
+        } else {
+            // Move srcTab to the end of the window lane.
+            let srcIdx = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
+            tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);
+            tabIdsByWid[destWid].push(srcTab.id);
+        }
+
+        orderTabIndex(srcTab.windowId);
+        if (destWid != srcTab.windowId)
+            orderTabIndex(destWid);
+        srcTab.windowId = destWid;
+    }            
+    
 
     // Need to do blocking wait until tabs.create() finish before finishing up the drop operation.
     async function pDropInTheContainer($dest, event, ui) {
@@ -2169,8 +2179,10 @@
             let newWin;
             pCreateWindow(is_firefox_private(cid))
                 .then( win  => newWin = win )
+                .then( ()   => tabIdsByWid[newWin.id] = tids )
+                .then( ()   => tids.forEach( tid => moveTabDataToWindow(tabById[tid], newWin.id) ))
                 .then( ()   => Promise.all(tids.map( tid => browser.tabs.move(tid, { windowId: newWin.id, index: -1}) )) )
-                .then( ()   => pCloseWindowBlankTabs(newWin.id) );
+                .then( ()   => pCloseWindowBlankTabs(newWin.id) )
         }
     }
 
@@ -2228,8 +2240,8 @@
             .then( () => refreshTabBoxes(toTabIds(tabs), false) )
     }
 
-    function moveToNewWindow(tid) {
-        browser.windows.create({
+    function pMoveToNewWindow(tid) {
+        return browser.windows.create({
             tabId:  tid
         });
     }
