@@ -1680,7 +1680,7 @@
                 return;
 
             $tb.draggable({
-                revert:         true,
+                revert:         "invalid",          // revert only if dropped at outside of target dropzone
                 revertDuration: 200,
                 zIndex:         100,
                 handle:         ".draggable-item",
@@ -1869,7 +1869,7 @@
             }
             return browser.tabs.move(srcTab.id, { windowId: destTab.windowId, index: destIdx}).then( movedTabs => {
                 if (movedTabs && movedTabs.length > 0 && (!sameWin || srcIdx != movedTabs[0].index)) {
-                    moveTabDataToWindow(srcTab, destWid, destIdx);
+                    moveTabDataToWindow(srcTab, destTab.windowId, destIdx);
 
                     $srcTabBox.detach();
                     $srcTabBox.css({"top":"", "left":""});      // reset dragging position.
@@ -1915,11 +1915,12 @@
             return browser.tabs.move(srcTab.id, { windowId: destWid, index: -1}).then( movedTabs => {
                 if (movedTabs && movedTabs.length > 0 && (!sameWin || srcTab.index != movedTabs[0].index)) {
                     moveTabDataToWindow(srcTab, destWid);
-
                     $srcTabBox.detach();
-                    $srcTabBox.css({ top:"", left:"" });   // reset the dragging position
+                    $srcTabBox.css({ top:"", left:"" });                    // reset the dragging position
                     $(".window-lane[data-wid='" + destWid + "'] .tab-grid").append($srcTabBox);
-                    $srcTabBox.offset({left: event.pageX}).animate({ left: 0 }, 300).effect( "bounce", {times:2, distance:5}, 200 );
+                    $srcTabBox.offset({left: event.pageX})                  // move tabox to drop's X location
+                        .animate({ left: 0 }, 400)                          // slide back to its final location
+                        .effect( "bounce", {times:2, distance:5}, 200 );    // bounce a bit at the end
                 } else {
                     $srcTabBox.removeAttr("style");
                 }
@@ -1932,14 +1933,13 @@
     }
 
     function moveTabDataToWindow(srcTab, destWid, destIdx) {
+        let srcIdx = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
+        tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);             // remove the moved tabId from source array
         if (destIdx) {
             // Move srcTab to just in front of position destIdx in destWid window lane.
-            tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);                 // remove the moved tabId from source array
-            tabIdsByWid[destWid].splice(destIdx, 0, srcTab.id);             // add the moved tabId to the destination array
+            tabIdsByWid[destWid].splice(destIdx, 0, srcTab.id);
         } else {
             // Move srcTab to the end of the window lane.
-            let srcIdx = tabIdsByWid[srcTab.windowId].findIndex( tid => tid == srcTab.id );
-            tabIdsByWid[srcTab.windowId].splice(srcIdx, 1);
             tabIdsByWid[destWid].push(srcTab.id);
         }
 
