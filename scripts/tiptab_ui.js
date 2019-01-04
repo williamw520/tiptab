@@ -148,6 +148,7 @@
             .then(() => browser.windows.onRemoved.addListener(windows_onRemoved) )
             .then(() => browser.windows.onFocusChanged.addListener(windows_onFocusChanged) )
             .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
+            .then(() => browser.tabs.onCreated.addListener(tabs_onCreated) )
             .then(() => browser.tabs.onRemoved.addListener(tabs_onRemoved) )
             .then(() => browser.tabs.onUpdated.addListener(tabs_onUpdated) )
             .then(() => browser.tabs.onMoved.addListener(tabs_onMoved) )
@@ -363,10 +364,11 @@
         if (existingActiveId) {
             tabById[existingActiveId].active = false;
             tabById[newActiveTid].active = true;
-            refreshTabBoxes([existingActiveId, newActiveTid], false);
+            refreshTabActiveState(tabById[existingActiveId]);
+            refreshTabActiveState(tabById[newActiveTid]);
         } else {
             tabById[newActiveTid].active = true;
-            refreshTabBoxes([newActiveTid], false);
+            refreshTabActiveState(tabById[newActiveTid]);
         }
     }
 
@@ -380,32 +382,31 @@
         }
     }
 
-    function tabs_onUpdated(tabId, info, tab) {
-        // log.info("tabs_onUpdated ", tabId, info, tab);
-        log.info("tabs_onUpdated ", tabId, info);
-
-        createTabDataAsNeeded(tab);
-        let oldTab = cloneTabData(tabId);   // save old tab before it being updated.
-
-        // info has the property being updated.
-        if (info.hasOwnProperty("url"))
-            tabById[tabId].url = info.url;
-        if (info.hasOwnProperty("title"))
-            tabById[tabId].title = info.title;
-        if (info.hasOwnProperty("favIconUrl"))
-            tabById[tabId].favIconUrl = info.favIconUrl;
-        if (info.hasOwnProperty("audible"))
-            tabById[tabId].audible = info.audible;
-        if (info.hasOwnProperty("pinned"))
-            tabById[tabId].pinned = info.pinned;
-        if (info.hasOwnProperty("mutedInfo"))
-            tabById[tabId].mutedInfo = info.mutedInfo;
-
-        if (isTabDataDiff(tab, oldTab) || (info.hasOwnProperty("status") && info.status == "complete")) {
-            log.info("tab diff; refreshTabData called");
-            refreshTabData(tabById[tabId]);
+    function tabs_onCreated(tab) {
+        // log.info("tabs_onCreated ", tab.id);
+        let exists = createTabDataAsNeeded(tab);    // tabs_onUpdated(, "favIconUrl", ) will be called before tabs_onCreated!
+        if (!exists) {
+            renderNewTab(tab);
         }
+    }
 
+    const ATTRS_FOR_UPDATE = ["url", "title", "favIconUrl", "audible", "pinned", "mutedInfo", "hidden"];
+    
+    function tabs_onUpdated(tabId, info, tab) {
+        // log.info("tabs_onUpdated ", tabId, Object.keys(info));
+        let exists = createTabDataAsNeeded(tab);    // tabs_onUpdated(, "favIconUrl", ) will be called before tabs_onCreated!
+        if (!exists) {
+            renderNewTab(tabById[tabId]);
+        } else {
+            let attrsToUpdate = ATTRS_FOR_UPDATE.filter( attr => info.hasOwnProperty(attr) );   // info has the property being updated.
+            attrsToUpdate.forEach( attr => tabById[tabId][attr] = info[attr] );
+            if ((info.hasOwnProperty("status") && info.status == "complete")) {
+                refreshTabThumbnail(tab);
+            }
+            if (attrsToUpdate.length > 0) {
+                refreshTabAttributes(tab);
+            }
+        }
     }
 
     function tabs_onMoved(tabId, moveInfo) {
@@ -864,51 +865,49 @@
 
     function createTabDataAsNeeded(newTab) {
         if (tabById.hasOwnProperty(newTab.id))
-            return;
+            return true;
         tabById[newTab.id] = newTab;
         app.addAt(tabIdsByWid[newTab.windowId], newTab.id, newTab.index);
         app.addAt(tabIdsByCid[newTab.cookieStoreId], newTab.id, newTab.index);
         thumbnailsMap[newTab.id] = null;
         thumbnailsCapturing[newTab.id] = null;
+        updateEffectiveTabIds();
+        return false;
     }
 
     function cloneTabData(tabId) {
         return app.cloneObj(tabById[tabId]) || {};
     }
 
-    function isTabDataDiff(tab, clone) {
-        return (tab["url"] != clone["url"] ||
-                tab["title"] != clone["title"] ||
-                tab["favIconUrl"] != clone["favIconUrl"] ||
-                tab["audible"] != clone["audible"] ||
-                isMuted(tab) != isMuted(clone) );
+    function renderNewTab(tab) {
+        // TODO: render individual tab inserting the DOM by index position of the tab.
+        renderLanePaneUI(tab.windowId, tab.cookieStoreId);
+        refreshTabThumbnail(tab);
+        refreshTabAttributes(tab);
     }
-
-    function refreshTabData(tab) {
-        updateEffectiveTabIds();
-        renderTabData(tab.id);
-        if (tab.active)
-            transitionActiveTabs(tab.id);
-        if (ttSettings.realtimeUpdateThumbnail || !thumbnailsMap[tab.id])
+    
+    function refreshTabThumbnail(tab) {
+        if (ttSettings.realtimeUpdateThumbnail || !thumbnailsMap[tab.id]) {
             refreshThumbnail(tab.id, true);     // force recapturing image
+        } else {
+            refreshThumbnail(tab.id, false);
+        }
     }
  
-    function renderTabData(tid) {
+    function renderLanePaneUI(windowId, cookieStoreId) {
         //resetDragAndDrop();
-        let tab = tabById[tid];
         switch (uiState.displayType) {
-            // TODO: draw one tab instead of all.
         case DT_ALL_TABS:
             refreshAllTabsContent(false, false);
             effectiveTabIds.forEach( tid => refreshThumbnail(tid, false) );     // not force recapturing image
             break;
         case DT_WINDOW:
-            refreshWindowTabs(tab.windowId);
-            effectiveWindowTids(tab.windowId).forEach( tid => refreshThumbnail(tid, false) );
+            refreshWindowTabs(windowId);
+            effectiveWindowTids(windowId).forEach( tid => refreshThumbnail(tid, false) );
             break;
         case DT_CONTAINER:
-            refreshContainerTabs(tab.cookieStoreId, false);
-            effectiveContainerTids(tab.cookieStoreId).forEach( tid => refreshThumbnail(tid, false) );
+            refreshContainerTabs(cookieStoreId, false);
+            effectiveContainerTids(cookieStoreId).forEach( tid => refreshThumbnail(tid, false) );
             break;
         }
         setupDragAndDrop();
@@ -1178,8 +1177,7 @@
         let tabs = toTabs(effectiveTabIds);
         let html = renderTabGrid(tabs);                                     // unsafe text are left out.
         $(".all-tab-lane .tab-grid").html(html);
-        fillTabText(tabs);                                                  // fill in the unsafe text using escaped API.
-
+        refreshTabsAttributes(tabs);                                        // fill in the unsafe text using escaped API.
         effectiveTabIds.forEach( tid => refreshThumbnail(tid, forceRefreshImg) );
         if (zoomOut) {
             zoomOutAnimation(effectiveTabIds);
@@ -1205,7 +1203,7 @@
         return `
               <div class="window-lane d-none" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
                 <div class="window-topbar">
-                  <div class="window-title ${w.focused ? 'bold' : ''}" title="Click to active the window">WINDOW-TITLE</div>
+                  <div class="window-title" title="Click to active the window">WINDOW-TITLE</div>
                   <div class="dropdown dropdown-right window-topbar-menu">
                     <div class="btn-group" >
                       <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
@@ -1234,7 +1232,11 @@
 
     // Use html-escaped API to fill in unsafe text.
     function fillWindowText(windowIds) {
-        windowIds.map( wid => windowById[wid] ).forEach( w => $(".window-lane[data-wid='" + w.id + "'] .window-title").text(w.title) );
+        windowIds.map( wid => windowById[wid] ).forEach( w => $(".window-lane[data-wid='" + w.id + "'] .window-title")
+                                                         .text(w.title)
+                                                         .removeClass("bold")
+                                                         .addClass(w.focused ? "bold" : "")
+                                                       );
     }
 
     function showHideWindowLanes() {
@@ -1329,7 +1331,7 @@
         if (windowTabs.length > 0) {
             let html = renderTabGrid(windowTabs);                           // unsafe text are left out.
             $window_lane.find(".tab-grid").html(html);
-            fillTabText(windowTabs);                                        // fill in the unsafe text using escaped API.
+            refreshTabsAttributes(windowTabs);                              // fill in the unsafe text using escaped API.
         }
     }
 
@@ -1412,7 +1414,7 @@
         if (containerTabs.length > 0) {
             let html = renderTabGrid(containerTabs);                            // unsafe text are left out.
             $container_lane.find(".tab-grid").html(html);
-            fillTabText(containerTabs);                                         // fill in the unsafe text using escaped API.
+            refreshTabsAttributes(containerTabs);                               // fill in the unsafe text using escaped API.
         }
     }
 
@@ -1425,12 +1427,12 @@
     }
 
 
-    // Redraw the tab boxes, fill in the tab's text, and refresh their thumbnails.
-    function refreshTabBoxes(tids, forceRefreshImg) {
+    // Redraw/regenerate the tab boxes, fill in the tab's text, and refresh their thumbnails.
+    function redrawTabBoxes(tids, forceRefreshImg) {
         //resetDragAndDrop();
         let tabs = toTabs(tids);
         tabs.forEach( tab => $tabbox(tab.id).replaceWith(renderTabBox(tab, false)) );   // 1. Generate html, without the unsafe text rendered.
-        fillTabText(tabs);                                                              // 2. Fill in the unsafe text.
+        refreshTabsAttributes(tabs);                                                    // 2. Fill in the unsafe text.
         tids.forEach( tid => refreshThumbnail(tid, forceRefreshImg) );                  // 3. Render the thumbnail.
         setupDragAndDrop();                                                             // 4. Set up drag and drop.
     }
@@ -1440,7 +1442,7 @@
         return ` ${ tabs.map( tab => renderTabBox(tab) ).join("\n") } `;
     }
 
-    // Unsafe text of the tab are not rendered.  Caller needs to call fillTabText() later to fill in the unsafe text.
+    // Unsafe text of the tab are not rendered.  Caller needs to call refreshTabsAttributes() later to fill in the unsafe text.
     function renderTabBox(tab) {
         let c = containerById[tab.cookieStoreId];
         let isPrivate = is_firefox_private(tab.cookieStoreId);
@@ -1452,7 +1454,7 @@
             <div class="tab-box ${css_tabbox(isPrivate)}" id="tid-${tab.id}" data-tid="${tab.id}" tabindex="2">
 
               <div class="tab-topbar ${isDraggable(tab) ? 'draggable-item' : ''}" title="Drag the top bar to start drag and drop on the thumbnail.">
-                <div class="tab-title ${isTabActive(tab) ? 'bold' : ''}" title="TAB-TITLE">TAB-TITLE</div>
+                <div class="tab-title" title="TAB-TITLE">TAB-TITLE</div>
               </div>
 
               <div class="tab-topbar-cmds">
@@ -1467,15 +1469,15 @@
                 <div class="btn-group">
                   <a href="#" class="btn dropdown-toggle tab-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
                   <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
-                    <li class="menu-item"> <a href="#" class="cmd-reload-tab nowrap">Reload Tab</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-toggle-hidden nowrap ${css_disabled_active(tab.active)}">${tab.hidden ? "Show" : "Hide"} Tab</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-toggle-muted nowrap">${isMuted(tab) ? "Unmute" : "Mute"} Tab</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">${tab.pinned ? "Unpin" : "Pin"} Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-reload-tab    nowrap">Reload Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-hidden nowrap">Show/Hide Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-muted  nowrap">Mute/Unmute Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">Pin/Unpin Tab</a> </li>
                     <li class="divider"></li>
                     <li class="menu-item"> <a href="#" class="cmd-duplicate-tab nowrap">Duplicate Tab</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-move-tab-new nowrap">To New Window</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-copy-tab-url nowrap">Copy URL</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-save-tab-img nowrap">Save Image</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-move-tab-new  nowrap">To New Window</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-copy-tab-url  nowrap">Copy URL</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-save-tab-img  nowrap">Save Image</a> </li>
                     <li class="divider   ${is_by_window() ? 'd-block' : 'd-none'}"></li>
                     <li class="menu-item ${is_by_window() ? 'd-block' : 'd-none'}"> <a href="#" class="cmd-close-others nowrap">Close Other Tabs</a> </li>
                     <li class="menu-item ${is_by_window() ? 'd-block' : 'd-none'}"> <a href="#" class="cmd-close-left nowrap">Close Left Tabs</a> </li>
@@ -1489,12 +1491,12 @@
               </div>
 
               <div class="tab-status-bar">
-                <a href="#" class="btn status-private   ${css_display(isPrivate)}"      tabindex="-1" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
-                <a href="#" class="btn status-container ${css_display(isContainer)}"    tabindex="-1" title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
-                <a href="#" class="btn status-hidden    ${css_display(tab.hidden)}"     tabindex="-1" title="Tab is hidden"><img src="icons/hide-hidden.png"    ></a>
-                <a href="#" class="btn status-muted     ${css_display(isMuted(tab))}"   tabindex="-1" title="Tab is muted" ><img src="icons/mute-muted.png"     ></a>
-                <a href="#" class="btn status-audible   ${css_audible(tab)}"            tabindex="-1" title="Tab is playing sound"><img src="icons/audible.png" ></a>
-                <a href="#" class="btn status-pinned    ${css_display(tab.pinned)}"     tabindex="-1" title="Tab is pinned"><img src="icons/pin-unpinned.png"   ></a>
+                <a href="#" class="btn status-private"      tabindex="-1" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
+                <a href="#" class="btn status-container"    tabindex="-1" title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
+                <a href="#" class="btn status-hidden"       tabindex="-1" title="Tab is hidden"><img src="icons/hide-hidden.png"    ></a>
+                <a href="#" class="btn status-muted"        tabindex="-1" title="Tab is muted" ><img src="icons/mute-muted.png"     ></a>
+                <a href="#" class="btn status-audible"      tabindex="-1" title="Tab is playing sound"><img src="icons/audible.png" ></a>
+                <a href="#" class="btn status-pinned"       tabindex="-1" title="Tab is pinned"><img src="icons/pin-unpinned.png"   ></a>
               </div>
 
               <div class="tabbox-arc ${ttSettings.thumbnailPopup ? '' : 'hidden'}"></div>
@@ -1502,14 +1504,40 @@
         `;
     }
 
-    // Use html-escaped API to fill in unsafe text of the tabs.
-    function fillTabText(tabs) {
-        tabs.forEach( tab => $tabbox(tab.id).find(".tab-url").attr("href", tab.url).attr("title", tab.title).text(tab.title) );
-        tabs.forEach( tab => $tabbox(tab.id).find(".tab-title").attr("title", tab.title).text(tab.title) );
-        tabs.forEach( tab => $tabbox(tab.id).find(".status-container").attr("title", "Container: " + containerById[tab.cookieStoreId].name) );
+    // Refresh the UI on all tab's attributes, except thumbnail.  Use html-escaped API to fill in unsafe text of the tab.
+    function refreshTabsAttributes(tabs) {
+        tabs.forEach(refreshTabAttributes);
+    }
+
+    function refreshTabAttributes(tab) {
+        refreshTabText(tab);                    // url, title, container name
+        refreshTabActiveState(tab);
+        refreshTabMenu(tab);
+        refreshTabStatusBar(tab);
+    }
+    
+    // Use html-escaped API to fill in unsafe text of the tab.
+    function refreshTabText(tab) {
+        let $tab = $tabbox(tab.id);
+        $tab.find(".tab-title").attr("title", tab.title).text(tab.title);
+        $tab.find(".status-container").attr("title", "Container: " + containerById[tab.cookieStoreId].name);
+        //$tab.find(".tab-url").attr("href", tab.url).attr("title", tab.title).text(tab.title);
+    }
+
+    function refreshTabActiveState(tab) {
+        let $tab = $tabbox(tab.id);
+        $tab.find(".tab-title").removeClass("bold").addClass(isTabActive(tab) ? "bold" : "");
+    }
+
+    function refreshTabMenu(tab) {
+        let $tab = $tabbox(tab.id);
+        $tab.find(".cmd-toggle-hidden"  ).text((tab.hidden   ? "Show" : "Hide") + " Tab").removeClass("disabled").addClass(tab.active ? "disabled" : "");
+        $tab.find(".cmd-toggle-pinned"  ).text((tab.pinned   ? "Unpin" : "Pin") + " Tab");
+        $tab.find(".cmd-toggle-muted"   ).text((isMuted(tab) ? "Unmute" : "Mute") + " Tab");
     }
 
     function refreshTabStatusBar(tab) {
+
         let $statusbar = $tabbox(tab.id).find(".tab-status-bar");
 
         if (is_firefox_private(tab.cookieStoreId)) {
@@ -1537,9 +1565,9 @@
         }
 
         if (tab.audible) {
-            $statusbar.find(".status-audible").removeClass("d-none").addClass("d-block");
+            $statusbar.find(".status-audible").removeClass("d-none").addClass("d-block blink-yellow");
         } else {
-            $statusbar.find(".status-audible").removeClass("d-block").addClass("d-none");
+            $statusbar.find(".status-audible").removeClass("d-block blink-yellow").addClass("d-none");
         }
 
         if (tab.hidden) {
@@ -1584,10 +1612,7 @@
     function box_shadow_private(isPrivate)      { return isPrivate ? "box-shadow: 0 0 .4rem -.02rem rgba(0, 0, 0, 0.75);" : "" }
     function box_shadow_active(isActive)        { return isActive  ? "box-shadow: 0 0 .4rem -.02rem rgba(239, 196, 40, 1.00);" : "" }
     function border_color_private(isPrivate)    { return isPrivate ? "border-color: " + COLOR_PRIVATE + ";" : "" }
-    function css_display(showing)               { return showing  ? "d-block" : "d-none" }
     function css_tabbox(isPrivate)              { return (isPrivate ? " droppable-private " : " droppable-normal ") + (dragSelectionMode ? " selecting " : "") }
-    function css_disabled_active(isActive)      { return isActive ? " disabled " : "" }
-    function css_audible(tab)                   { return tab.audible ? "d-block blink-yellow" : "d-none" }
 
     function showErrorMsg(msg) {
         $(".error-display").show();
@@ -2021,7 +2046,8 @@
             url:            srcTab.url,
         }).then( newTab => {
             createTabDataAsNeeded(newTab);
-            refreshTabData(newTab);
+            renderNewTab(newTab);
+
             let $newTabBox = $tabbox(newTab.id);
             let toWidth = $newTabBox.width();
             $tabbox(newTab.id).width(0).animate({ width: toWidth }, 500).effect( "bounce", {times:2, distance:5}, 200 );
@@ -2195,49 +2221,23 @@
     }
 
     function muteTabs(tids, isMuting) {
-        Promise.all( tids.map( tid => browser.tabs.update(tid, { muted: isMuting }) ) )
-            .then( updatedTabs => updatedTabs.forEach( tab => tabById[tab.id].mutedInfo = tab.mutedInfo ) )
-            .then( () => refreshTabBoxes(tids, false) );
+        tids.forEach( tid => browser.tabs.update(tid, { muted: isMuting }) );
     }
 
     function muteWindowTabs(wid, isMuting) {
-        muteTabs(effectiveWindowTabs(wid), isMuting);
-    }
-
-    function muteWindowTabs(wid, isMuting) {
-        let tabs = wid ? effectiveWindowTabs(wid) : toTabs(effectiveTabIds);    // tabs of a window or all tabs.
-        Promise.all( tabs.map( tab => browser.tabs.update(tab.id, { muted: isMuting }) ) )
-            .then( updatedTabs => updatedTabs.forEach( tab => tabById[tab.id].mutedInfo = tab.mutedInfo ) )
-            .then( () => refreshTabBoxes(toTabIds(tabs), false) )
-    }
-
-    function showTabs(tids) {
-        browser.tabs.show(tids).then( () => {
-            toTabs(tids).forEach( tab => tab.hidden = false );
-            refreshTabBoxes(tids, false);
-        });
-    }
-
-    function hideTabs(tids) {
-        tids = toTabs(tids).filter( tab => !tab.active ).map( tab => tab.id );  // active tab cannot be hidden; skip.
-        browser.tabs.hide(tids).then( () => {
-            toTabs(tids).forEach( tab => tab.hidden = true );
-            refreshTabBoxes(tids, false);
-        });
+        muteTabs(effectiveWindowTids(wid), isMuting);
     }
 
     function showWindowTabs(wid, isShowing) {
+        let tids = effectiveWindowTids(wid);
         if (isShowing)
-            showTabs(effectiveWindowTids(wid));
+            browser.tabs.show(tids);
         else
-            hideTabs(effectiveWindowTids(wid));
+            browser.tabs.hide( toTabs(tids).filter( t => !t.active ).map( t => t.id ) );    // active tab cannot be hidden; skip.
     }
 
     function pinWindowTabs(wid, isPinning) {
-        let tabs = effectiveWindowTabs(wid);
-        Promise.all( tabs.map( tab => browser.tabs.update(tab.id, { pinned: isPinning }) ) )
-            .then( updatedTabs => updatedTabs.map( tab => tabById[tab.id].pinned = tab.pinned ) )
-            .then( () => refreshTabBoxes(toTabIds(tabs), false) )
+        effectiveWindowTids(wid).forEach( tid => browser.tabs.update(tid, { pinned: isPinning }) );
     }
 
     function pMoveToNewWindow(tid) {
@@ -2333,46 +2333,35 @@
         })
     }
 
+    // All the tab attribute toggling let tabs_onUpdated() to update the in-memory data structure and refresh tab UI.
+    
     function toggleTabProperty(tid, property) {
         browser.tabs.get(tid).then( tab => {
             let updateProp = {};
             updateProp[property] = !tab[property];
-            browser.tabs.update(tab.id, updateProp).then( tab => {
-                tabById[tid][property] = tab[property];
-                refreshTabBoxes([ tid ], false);
-            });
+            browser.tabs.update(tab.id, updateProp);
         });
     }
 
     function toggleTabMuted(tid) {
-        browser.tabs.get(tid).then( tab => {
-            browser.tabs.update(tab.id, {
-                muted: !isMuted(tab)
-            }).then( tab => {
-                tabById[tid].mutedInfo = tab.mutedInfo;
-                refreshTabBoxes([ tid ], false);
-            });
-        });
+        browser.tabs.get(tid).then( tab => browser.tabs.update(tab.id, { muted: !isMuted(tab) }) );
     }
 
     function toggleTabHidden(tid) {
         browser.tabs.get(tid).then( tab => {
             if (tab.hidden) {
-                showTabs([tab.id]);
+                browser.tabs.show(tab.id);
             } else {
-                hideTabs([tab.id]);
+                if (!tab.active)
+                    browser.tabs.hide(tab.id);  // active tab cannot be hidden; skip.
             }
         });
     }
 
     function toggleTabPinned(tid) {
-        browser.tabs.get(tid).then( tab => {
-            browser.tabs.update(tab.id, { pinned: !tab.pinned }).then( tab => {
-                tabById[tid].pinned = tab.pinned;
-                refreshTabBoxes([ tid ], false);
-            });
-        });
+        browser.tabs.get(tid).then( tab => browser.tabs.update(tab.id, { pinned: !tab.pinned }) );
     }
+
 
     function toggleFilterByWindow(wid) {
         uiState.windowsHiddenByUser[wid] = !app.boolVal(uiState.windowsHiddenByUser, wid);
