@@ -7,8 +7,9 @@
 ** DONE Bug: When drag and drop to the private container, each tab creates a new private window.  Reuse existing private window.
 ** DONE Bug: after dragging couple time, dragging the first tab in a window doesn't remove it from the src window.
 ** DONE Bug: Group container tabs to a new window seems pointing to the last tab of the old window.
-** TODO Bug: Drag and drop at-end or in-front of window has messed up UI animation.
-   Looks like tabs_onUpdated() is called during tab moving and interfered with animation.
+** DONE Bug: Drag and drop at-end or in-front of window has messed up UI animation.
+** DONE Dynamically capture new window creation under different circumstances.
+** DONE Update window title on tab title update.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Refresh one tab onUpdated

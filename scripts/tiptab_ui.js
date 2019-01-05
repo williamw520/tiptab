@@ -287,12 +287,10 @@
         }
     }
 
+    // Note: tabs_onCreated() can come before this.
     function windows_onCreated(win) {
         // log.info("windows_onCreated", win);
-        windowIds.push(win.id);
-        windowById[win.id] = win;
-        tabIdsByWid[win.id] = [];
-        addWindowLane(win);
+        createWindowDataAsNeeded(win.id, win, null);    // tabs_onCreated() can come before windows_onCreated; set up the window data structure.
     }
 
     // This should be called after tabs_onRemoved on all the tabs in the window.
@@ -359,16 +357,21 @@
 
     function transitionActiveTabs(newActiveTid) {
         //log.info("transitionActiveTabs: ", newActiveTid, tabById[newActiveTid], tabById[newActiveTid].windowId, tabIdsByWid[tabById[newActiveTid].windowId]);
-        let tibsOfNewWindow = tabIdsByWid[tabById[newActiveTid].windowId];
-        let existingActiveId = tibsOfNewWindow.find( tid => tabById[tid].active );
-        if (existingActiveId) {
-            tabById[existingActiveId].active = false;
-            tabById[newActiveTid].active = true;
-            refreshTabActiveState(tabById[existingActiveId]);
-            refreshTabActiveState(tabById[newActiveTid]);
-        } else {
-            tabById[newActiveTid].active = true;
-            refreshTabActiveState(tabById[newActiveTid]);
+        let newActiveTab        = tabById[newActiveTid];
+        let oldActiveTid        = tabIdsByWid[newActiveTab.windowId].find( tid => tabById[tid].active );
+        if (oldActiveTid && newActiveTid != oldActiveTid) {
+            tabById[oldActiveTid].active = false;
+            refreshTabActiveState(tabById[oldActiveTid]);
+        }
+        newActiveTab.active = true;
+        refreshTabActiveState(newActiveTab);
+        updateWindowTitle(newActiveTab);
+    }
+
+    function updateWindowTitle(tab) {
+        if (tab.active) {
+            windowById[tab.windowId].title = tab.title;
+            refreshWindowText(windowById[tab.windowId]);
         }
     }
 
@@ -393,7 +396,7 @@
     const ATTRS_FOR_UPDATE = ["url", "title", "favIconUrl", "audible", "pinned", "mutedInfo", "hidden"];
     
     function tabs_onUpdated(tabId, info, tab) {
-        // log.info("tabs_onUpdated ", tabId, Object.keys(info));
+        log.info("tabs_onUpdated ", tabId, Object.keys(info));
         let exists = createTabDataAsNeeded(tab);    // tabs_onUpdated(, "favIconUrl", ) will be called before tabs_onCreated!
         if (!exists) {
             renderNewTab(tabById[tabId]);
@@ -405,6 +408,9 @@
             }
             if (attrsToUpdate.length > 0) {
                 refreshTabAttributes(tab);
+            }
+            if (info.hasOwnProperty("title")) {
+                updateWindowTitle(tabById[tabId]);
             }
         }
     }
@@ -863,10 +869,40 @@
             })
     }
 
+    // tabs_onCreated() can come before windows_onCreated.  This needs to handle the out of order of creation events on window and tab.
+    function createWindowDataAsNeeded(wid, win, tab) {
+        let windowExists = windowById.hasOwnProperty(wid);
+        if (!windowExists) {
+            windowIds.push(wid);
+            tabIdsByWid[wid] = [];
+        }
+        if (!win) {
+            // Use the existing window object or create a new one as much as possible based on the tab object.
+            win = windowById[wid] || {
+                id:             tab.windowId,
+                focused:        false,
+                top:            0,
+                left:           0,
+                width:          tab.width,
+                height:         tab.height,
+                incognito:      tab.incognito,
+                type:           "normal",
+                state:          "normal",
+                alwaysOnTop:    false,
+                title:          tab.title
+            };
+        }
+        windowById[wid] = win;
+        if (!windowExists) {
+            addWindowLane(win);
+        }
+    }
+
     function createTabDataAsNeeded(newTab) {
         if (tabById.hasOwnProperty(newTab.id))
             return true;
         tabById[newTab.id] = newTab;
+        createWindowDataAsNeeded(newTab.windowId, null, newTab);    // tabs_onCreated() can come before windows_onCreated; set up the window data structure.
         app.addAt(tabIdsByWid[newTab.windowId], newTab.id, newTab.index);
         app.addAt(tabIdsByCid[newTab.cookieStoreId], newTab.id, newTab.index);
         thumbnailsMap[newTab.id] = null;
@@ -1124,7 +1160,7 @@
             break;
         case DT_WINDOW:
             $mainContent.html(renderWindowLanes());         // unsafe text are left out.
-            fillWindowText(windowIds);                      // fill in the unsafe text of the objects using html-escaped API.
+            refreshWindowsText(windowIds);                  // fill in the unsafe text of the objects using html-escaped API.
             showHideWindowLanes();
             break;
         case DT_CONTAINER:
@@ -1231,12 +1267,15 @@
     }
 
     // Use html-escaped API to fill in unsafe text.
-    function fillWindowText(windowIds) {
-        windowIds.map( wid => windowById[wid] ).forEach( w => $(".window-lane[data-wid='" + w.id + "'] .window-title")
-                                                         .text(w.title)
-                                                         .removeClass("bold")
-                                                         .addClass(w.focused ? "bold" : "")
-                                                       );
+    function refreshWindowsText(windowIds) {
+        windowIds.map( wid => windowById[wid] ).forEach(refreshWindowText);
+    }
+
+    function refreshWindowText(w) {
+        $(".window-lane[data-wid='" + w.id + "'] .window-title")
+            .text(w.title)
+            .removeClass("bold")
+            .addClass(w.focused ? "bold" : "");
     }
 
     function showHideWindowLanes() {
@@ -1258,7 +1297,7 @@
         if (uiState.displayType == DT_WINDOW) {
             let $mainContent = $("#main-content");
             $mainContent.append(renderWindowLane(win));     // render without the unsafe text.
-            fillWindowText([win.id]);                       // fill in the unsafe text of the objects using html-escaped API.
+            refreshWindowsText([win.id]);                   // fill in the unsafe text of the objects using html-escaped API.
             let $window_lane = $(".window-lane[data-wid='" + win.id + "']");
             $window_lane.removeClass("d-none");
             redrawFooterControls();
