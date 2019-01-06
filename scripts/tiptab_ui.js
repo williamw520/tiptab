@@ -396,7 +396,7 @@
     const ATTRS_FOR_UPDATE = ["url", "title", "favIconUrl", "audible", "pinned", "mutedInfo", "hidden"];
     
     function tabs_onUpdated(tabId, info, tab) {
-        log.info("tabs_onUpdated ", tabId, Object.keys(info));
+        //log.info("tabs_onUpdated ", tabId, Object.keys(info));
         let exists = createTabDataAsNeeded(tab);    // tabs_onUpdated(, "favIconUrl", ) will be called before tabs_onCreated!
         if (!exists) {
             renderNewTab(tabById[tabId]);

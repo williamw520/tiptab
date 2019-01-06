@@ -1,15 +1,6 @@
 
 * Feature TODO
-** DONE Multi-tab selection for drag and drop to move multiple tabs at the same time.
-** DONE Drag and drop multiple tabs across windows.
-** DONE Drag and drop multiple tabs across containers.
-** DONE Close the first blank tab of new window.
-** DONE Bug: When drag and drop to the private container, each tab creates a new private window.  Reuse existing private window.
-** DONE Bug: after dragging couple time, dragging the first tab in a window doesn't remove it from the src window.
-** DONE Bug: Group container tabs to a new window seems pointing to the last tab of the old window.
-** DONE Bug: Drag and drop at-end or in-front of window has messed up UI animation.
-** DONE Dynamically capture new window creation under different circumstances.
-** DONE Update window title on tab title update.
+** TODO Drag and drop multiple tabs across containers.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
 ** TODO Refresh one tab onUpdated
@@ -20,6 +11,17 @@
 ** TODO Show bookmarks as tab box, with saved thumbnails shown.
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
+
+* Release 2.12 Feature
+- Multi-tab selection for drag and drop to move multiple tabs at the same time.
+- Drag and drop multiple tabs across windows.
+- Close the first blank tab of new window.
+- Bug: When drag and drop to the private container, each tab creates a new private window.  Reuse existing private window.
+- Bug: after dragging couple time, dragging the first tab in a window doesn't remove it from the src window.
+- Bug: Group container tabs to a new window seems pointing to the last tab of the old window.
+- Bug: Drag and drop at-end or in-front of window has messed up UI animation.
+- Dynamically capture new window creation under different circumstances.
+- Update window title on tab title update.
 
 * Release 2.11 Feature
 - Misc clean up

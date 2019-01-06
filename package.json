@@ -1,0 +1,12 @@
+{
+    "name": "tiptab",
+    "description": "tiptab",
+    "version": "0.0.0",
+    "scripts": {},
+    "dependencies": {
+        "jquery": "3.2.1",
+        "jquery-ui-dist": "1.12.1",
+        "spectre.css": "0.5.7"
+    },
+    "devDependencies": {}
+}
