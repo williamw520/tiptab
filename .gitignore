@@ -1,6 +1,7 @@
 node_modules
 package-lock.json
 web-ext-artifacts
+pkg
 build
 dist
 *.zip
