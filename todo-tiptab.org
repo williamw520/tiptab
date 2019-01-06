@@ -12,16 +12,19 @@
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
 
-* Release 2.12 Feature
+* Release 2.14 Feature
 - Multi-tab selection for drag and drop to move multiple tabs at the same time.
 - Drag and drop multiple tabs across windows.
+- Drag and drop multiple tabs across containers.
+- Drag and drop multiple tabs across regular and private windows.
 - Close the first blank tab of new window.
+- Dynamically capture new window creation under different circumstances.
+- Update window title on tab title update.
 - Bug: When drag and drop to the private container, each tab creates a new private window.  Reuse existing private window.
 - Bug: after dragging couple time, dragging the first tab in a window doesn't remove it from the src window.
 - Bug: Group container tabs to a new window seems pointing to the last tab of the old window.
 - Bug: Drag and drop at-end or in-front of window has messed up UI animation.
-- Dynamically capture new window creation under different circumstances.
-- Update window title on tab title update.
+- 2.12 and 2.13 were discarded due to problems in addon submission procession.
 
 * Release 2.11 Feature
 - Misc clean up
