@@ -1,9 +1,9 @@
-node_modules
-package-lock.json
 web-ext-artifacts
-pkg
 build
 dist
+node_modules
+package-lock.json
+pkg
 *.zip
 *~
 \#*\#
@@ -12,3 +12,4 @@ GPATH
 GRTAGS
 GTAGS
 GTAGS-files
+.DS_Store
