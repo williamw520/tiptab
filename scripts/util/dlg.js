@@ -29,7 +29,7 @@
     let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
 
     var module = function() { };        // Module object to be returned; local reference to the package object for use below.
-    if (modulename)
+    if (scope && modulename)
         scope[modulename] = module;     // set module name in scope, otherwise caller sets the name with the returned module object.
 
     function setupDlg(dlgElementSelector, enterKeyToClose) {
@@ -39,8 +39,16 @@
             let inputValues = $modal.data("inputValues");
             Object.keys(inputValues).forEach( key => {
                 let $elem = $modal.find(key);
-                if ($elem.is("input") || $elem.is("textarea"))
+                if ($elem.is("input:radio")) {
+                    $elem.each( function() {
+                        if ($(this).is(":checked"))
+                            inputValues[key] = $(this).val();
+                    });
+                } else if ($elem.is("input:file")) {
+                    inputValues[key] = $elem.get(0).files;                  // return an array of File objects (HTML5 File type).
+                } else if ($elem.is("input") || $elem.is("textarea")) {
                     inputValues[key] = $elem.val();
+                }
             });
             return inputValues;
         }
@@ -72,7 +80,7 @@
         });
     }
 
-    function openDlg(dlgElementSelector, inputValues, elementPropertiesMap, focusSelector, onSubmit, onClose) {
+    function openDlg(dlgElementSelector, inputValues, htmlTexts, elementPropertiesMap, focusSelector, onSubmit, onClose) {
         let $modal = $(dlgElementSelector);
         for (let selectorKey in inputValues) {
             let $elem = $modal.find(selectorKey);
@@ -80,7 +88,13 @@
                 if ($elem.is("input") || $elem.is("textarea"))
                     $elem.val(inputValues[selectorKey]);
                 else
-                    $elem.text(inputValues[selectorKey]);
+                    $elem.text(inputValues[selectorKey]);   // safe text substitution
+            }
+        }
+        for (let selectorKey in htmlTexts) {
+            let $elem = $modal.find(selectorKey);
+            if ($elem.length) {
+                $elem.html(htmlTexts[selectorKey]);         // unsafe text substitution
             }
         }
         for (let selectorKey in (elementPropertiesMap || {})) {
@@ -97,14 +111,9 @@
         $modal.find(focusSelector).focus().select();
     }
 
-    function isHttpProt(prot) {
-        return prot == "https" || prot == "http";
-    }
-
     // Module export
     module.setupDlg = setupDlg;
     module.openDlg = openDlg;
-    module.isHttpProt = isHttpProt;
 
     log.info("module loaded");
     return module;
