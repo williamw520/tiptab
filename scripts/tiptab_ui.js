@@ -224,16 +224,14 @@ let the_module = (function() {
         });
     }
 
-    function pSaveUiStateNow() {
-        //log.info("pSaveUiStateNow");
+    function asyncSaveUiStateNow() {
+        //log.info("asyncSaveUiStateNow");
         if (uiState) {
-            return browser.storage.local.set({ "uiState": uiState });
-        } else {
-            return Promise.resolve();
+            browser.storage.local.set({ "uiState": uiState });
         }
     }
 
-    let dSaveUiState = app.debounce(pSaveUiStateNow, 5*1000, false);
+    let dSaveUiState = app.debounce(asyncSaveUiStateNow, 5*1000, false);
 
     function pLoadUiState() {
         //log.info("pLoadUiState");
@@ -534,7 +532,7 @@ let the_module = (function() {
         $(window).blur(function(){
             // log.info("window.blur, tiptabWindow shutdown");
             tiptabWindowActive = false;
-            pSaveUiStateNow();
+            asyncSaveUiStateNow();
         });
 
 
@@ -2172,7 +2170,7 @@ let the_module = (function() {
         uiState.displayType = displayType;
         redrawRefreshControls();
         redrawRefreshUIContent(false, false);
-        pSaveUiStateNow();
+        asyncSaveUiStateNow();
         focusSearch();
     }
 
@@ -2180,7 +2178,7 @@ let the_module = (function() {
     function setThumbnailSize(size) {
         uiState.thumbnailSize = size;
         resizeThumbnails();
-        pSaveUiStateNow();
+        asyncSaveUiStateNow();
         focusSearch();
     }
 
@@ -2536,7 +2534,7 @@ let the_module = (function() {
         let isEmpty = searchText.length == 0;
         uiState.searchTerms = searchText.split(" ");
         if (isEmpty) {
-            pSaveUiStateNow();   // cleared search text needs to be saved now to have a better user experience.
+            asyncSaveUiStateNow();   // cleared search text needs to be saved now to have a better user experience.
         } else {
             dSaveUiState();
         }
