@@ -175,11 +175,12 @@
 
         equals(obj2) {
             return this.shift == obj2.shift
-                && this.ctrl == obj2.ctrl && this.macctrl == obj2.macctrl
+                && this.ctrl == obj2.ctrl
+                && this.macctrl == obj2.macctrl
                 && this.alt == obj2.alt
                 && this.meta == obj2.meta
                 && this.windows == obj2.windows
-                && this.option == obj2.opj;
+                && this.option == obj2.option;
         }
 
         hasKey() {
