@@ -106,11 +106,6 @@ let the_module = (function() {
             case "dbg-test":
                 log.info(msg);
                 break;
-            case "hotkey":
-                // deprecated
-                log.info("from content_inject hotkey, command: " + msg.arg);
-                pActivateTipTabUI(msg.arg);
-                break;
             case "last-active-tab":
                 if (sendResponse) {
                     // log.info("from tiptap_ui, last-active-tab");
