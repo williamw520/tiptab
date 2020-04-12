@@ -18,14 +18,12 @@
 */
 
 // wwhotkey module, for detecting multiple key pressed.
-(function(scope, modulename) {
+let the_module = (function() {
     "use strict";
 
-    // No import.  No dependency.
+    const module = { NAME: "wwhotkey" };
 
-    var module = function() { };       // Module object to be returned; local reference to the package object for use below.
-    if (modulename)
-        scope[modulename] = module;    // set module name in scope, otherwise caller sets the name with the returned module object.
+    // keypress related defines
 
     const MIN_MODIFIERS = 1;
     const MAX_MODIFIERS = 6;
@@ -341,7 +339,10 @@
 
     return module;
 
-}(this, "wwhotkey"));    // Pass in the global scope as 'this' scope.
+}());
+
+export default the_module;
+
 
 
 // Unit Tests
@@ -350,7 +351,9 @@ if (_RUNTEST_WWHOTKEY) {
     function json(obj)  { return JSON.stringify(obj, null, 4) };
     function has(a, b)  { return a.indexOf(b) > -1 };
 
-    console.log("Running unit tests");
+    console.log("#### Running wwhotkey unit tests #### ");
+
+    let wwhotkey = the_module;
 
     // console.log(json( wwhotkey.KeySeq.ofKeySeq() ));
     // console.log(json( wwhotkey.KeySeq.ofKeySeq("shift+b") ));

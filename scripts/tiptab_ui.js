@@ -17,23 +17,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-(function(scope, modulename) {
+// Non-ES6 global includes:
+// <script src="/pkg/jquery/jquery.min.js"></script>
+// <script src="/pkg/jquery-ui/jquery-ui.min.js"></script>
+// <script src="/pkg/spark-md5/spark-md5.min.js"></script>
+
+// ES6 imports
+import logger from "/scripts/util/logger.js";
+import appcfg from "/scripts/util/appcfg.js";
+import app from "/scripts/util/app.js";
+import db from "/scripts/util/db.js";
+import ringbuf from "/scripts/util/ringbuf.js";
+import wwhotkey from "/scripts/util/wwhotkey.js";
+import settings from "/scripts/settings.js";
+import dlg from "/scripts/util/dlg.js";
+
+
+let the_module = (function() {
     "use strict";
 
-    // Imports:
-    // import logger
-    // import appcfg
-    // import app
-    // import dlg
-    // import settings
-    // import wwhotkey
+    const module = { NAME: "tiptab_ui" };
+    const log = new logger.Logger(appcfg.APPNAME, module.NAME, appcfg.LOGLEVEL);
+
     let TipTabSettings = settings.TipTabSettings;
-
-    let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
-
-    var module = function() { };    // Module object to be returned; local reference to the package object for use below.
-    if (modulename)
-        scope[modulename] = module; // set module name in scope, otherwise caller sets the name with the returned module object.
 
     const tiptabUrl = browser.extension.getURL("tiptab.html");
     function is_tiptaburl(url) { return url.startsWith(tiptabUrl) };    // sometimes # is added to the end of the url; just check prefix.
@@ -2602,6 +2608,7 @@
     log.info("module loaded");
     return module;
 
-}(this, "tiptab_ui"));    // Pass in the global scope as 'this' scope.
+}());
 
+export default the_module;
 

@@ -17,22 +17,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// app module
 
-(function(scope, modulename) {
+// ES6 imports
+import logger from "/scripts/util/logger.js";
+import appcfg from "/scripts/util/appcfg.js";
+
+
+// app module
+let the_module = (function() {
     "use strict";
 
-    var app = function() { };       // Module object to be returned; local reference to the package object for use below.
-    if (modulename)
-        scope[modulename] = app;    // set module name in scope, otherwise caller sets the name with the returned module object.
+    const module = { NAME: "app" };
+    const log = new logger.Logger(appcfg.APPNAME, module.NAME, appcfg.LOGLEVEL);
 
-    // Imports:
-    // import logger
-    // import appcfg
-
-    let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
-
-    let GS = scope;                 // global scope
+    let app = module;
     let SP = String.prototype;
     let AP = Array.prototype;
     let OP = Object.prototype;
@@ -196,13 +194,17 @@
     log.info("module loaded");
     return app;
 
-}(this, "app"));    // Pass in the global scope as 'this' scope.
+}());
+
+export default the_module;
 
 
 // Unit Tests
 let _RUNTEST_APP = false;
 if (_RUNTEST_APP) {
-    console.log("Run unit tests");
+    console.log("Run app unit tests");
+
+    let app = the_module;
 
     let obj1 = { a: 1, b: [2, 3], c: { x: 4, y: "y"} };
     let obj2 = app.cloneObj(obj1);

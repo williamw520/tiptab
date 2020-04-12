@@ -17,25 +17,23 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Options module
 
-(function(scope, modulename) {
+// ES6 imports
+import logger from "/scripts/util/logger.js";
+import appcfg from "/scripts/util/appcfg.js";
+import app from "/scripts/util/app.js";
+import wwhotkey from "/scripts/util/wwhotkey.js";
+import settings from "/scripts/settings.js";
+
+
+// options module
+let the_module = (function() {
     "use strict";
 
-    // Imports:
-    // import logger
-    // import appcfg
-    // import app
-    // import wwhotkey
-    // import settings
+    const module = { NAME: "options" };
+    const log = new logger.Logger(appcfg.APPNAME, module.NAME, appcfg.LOGLEVEL);
+
     let TipTabSettings = settings.TipTabSettings;
-
-    let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
-
-    var module = function() { };    // Module object to be returned; local reference to the package object for use below.
-    if (modulename)
-        scope[modulename] = module; // set module name in scope, otherwise caller sets the name with the returned module object.
-
     let orgSettings = TipTabSettings.ofLatest();
     let ttSettings  = TipTabSettings.ofLatest();
     let hasChanged  = false;
@@ -273,5 +271,7 @@
     log.info("module loaded");
     return module;
 
-}(this, "options_ui"));     // Pass in the global scope as 'this' scope.
+}());
+
+export default the_module;
 

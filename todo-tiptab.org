@@ -1,5 +1,6 @@
 
 * Feature TODO
+** DONE Migration to ES6 module system.
 ** TODO Cache thumbnails in database.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T

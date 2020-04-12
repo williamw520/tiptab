@@ -17,20 +17,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// dlg module
+import logger from "/scripts/util/logger.js";
+import appcfg from "/scripts/util/appcfg.js";
 
-(function(scope, modulename) {
+
+// dlg module
+let the_module = (function() {
     "use strict";
 
-    // Imports:
-    // import logger
-    // import appcfg
+    const module = { NAME: "dlg" };
+    const log = new logger.Logger(appcfg.APPNAME, module.NAME, appcfg.LOGLEVEL);
 
-    let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
-
-    var module = function() { };        // Module object to be returned; local reference to the package object for use below.
-    if (scope && modulename)
-        scope[modulename] = module;     // set module name in scope, otherwise caller sets the name with the returned module object.
 
     function setupDlg(dlgElementSelector, enterKeyToClose) {
         let $modal = $(dlgElementSelector);
@@ -118,5 +115,7 @@
     log.info("module loaded");
     return module;
 
-}(this, "dlg"));    // Pass in the global scope as 'this' scope.
+}());
+
+export default the_module;
 

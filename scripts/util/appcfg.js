@@ -17,26 +17,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import logger from "/scripts/util/logger.js";
+
+
 // appcfg module, app global constants and settings.
-(function(scope, modulename) {
+let the_module = (function() {
     "use strict";
 
-    // Imports:
-    // import logger
-    let Logger = logger.Logger;
-    
-    var module = function() { };       // Module object to be returned.
-    if (modulename)
-        scope[modulename] = module;    // set module name in scope, otherwise caller sets the name with the returned module object.
+    const module = { NAME: "appcfg" };
 
     // Module export
     module.APPNAME = "tiptab";
     //module.LOGLEVEL = logger.LOG;
     module.LOGLEVEL = logger.WARN;
 
-    let log = new logger.Logger(module.APPNAME, modulename, module.LOGLEVEL);
+    const log = new logger.Logger(module.APPNAME, module.NAME, module.LOGLEVEL);
     log.info("module loaded");
     return module;
 
-}(this, "appcfg"));      // Pass in the global scope as 'this' scope.
+}());
+
+export default the_module;
 

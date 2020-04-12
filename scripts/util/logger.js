@@ -19,14 +19,10 @@
 
 // logger module, for lightweight logging.
 // With prefix on app name and module name for easier filtering when viewing the log.
-(function(scope, modulename) {
+let the_module = (function() {
     "use strict";
 
-    var logger = function() { };       // Module object to be returned; local reference to the package object for use below.
-    if (modulename)
-        scope[modulename] = logger;    // set module name in scope, otherwise caller sets the name with the returned module object.
-
-    // No import.  No dependency.
+    const module = { NAME: "logger" };
 
     // Log levels
     const NONE = 0;
@@ -35,53 +31,92 @@
     const INFO = 3;
     const LOG = 4;      // this is the finest logging level, like debug.
 
+    const LEVELS = [NONE, ERROR, WARN, INFO, LOG];
+    const LEVEL_NAMES = ["NONE", "ERROR", "WARN", "INFO", "LOG"];
+
+
     class Logger {
         constructor(app, module, level) {
             this._app = app;
             this._module = module;
-            this._level = level;
+            this._levelFn = (typeof level === "function") ? level : () => level;
+            this._tagtime = {};                 // benchmark tagged times
+            this._tagtime[""] = Date.now();     // set up the default empty benchmark tag.
         }
 
-        get app()       { return this._app      }
-        get module()    { return this._module   }
-        get level()     { return this._level    }
-        get _logNone()  { return this._level == NONE    }
-        get _logError() { return this._level >= ERROR   }
-        get _logWarn()  { return this._level >= WARN    }
-        get _logInfo()  { return this._level >= INFO    }
-        get _logLog()   { return this._level >= LOG     }
+        get app()       { return this._app              }
+        get module()    { return this._module           }
+        get level()     { return this._levelFn()        }
+        get _logNone()  { return this.level == NONE     }
+        get _logError() { return this.level >= ERROR    }
+        get _logWarn()  { return this.level >= WARN     }
+        get _logInfo()  { return this.level >= INFO     }
+        get _logLog()   { return this.level >= LOG      }
 
-        error(...a)     { if (this._logError) console.error(this._fmt(a))    };
-        warn(...a)      { if (this._logWarn)  console.warn(this._fmt(a))     };
-        info(...a)      { if (this._logInfo)  console.info(this._fmt(a))     };
-        log(...a)       { if (this._logLog)   console.log(this._fmt(a))      };
-        dump()          { return this._fmtarr(Array.prototype.slice.call(arguments)) }     // dump the arguments to string/json
+        // Log and return the first argument.
+        error(...a)     { if (this._logError) console.error(this._fmt(a));  return this._1st(a);    };
+        warn(...a)      { if (this._logWarn)  console.warn(this._fmt(a));   return this._1st(a);    };
+        info(...a)      { if (this._logInfo)  console.info(this._fmt(a));   return this._1st(a);    };
+        log(...a)       { if (this._logLog)   console.log(this._fmt(a));    return this._1st(a);    };
+        out(...a)       { console.log(this._fmt(a));                        return this._1st(a);    };
+        // Log and return the 2nd argument.
+        error2(...a)    { if (this._logError) console.error(this._fmt(a));  return this._2nd(a);    };
+        warn2(...a)     { if (this._logWarn)  console.warn(this._fmt(a));   return this._2nd(a);    };
+        info2(...a)     { if (this._logInfo)  console.info(this._fmt(a));   return this._2nd(a);    };
+        log2(...a)      { if (this._logLog)   console.log(this._fmt(a));    return this._2nd(a);    };
+        out2(...a)      { console.log(this._fmt(a));                        return this._2nd(a);    };
+
+        dump()          { return this._fmtarr(Array.prototype.slice.call(arguments)) }  // dump the arguments to string/json
+
+        // Simple tag-based benchmark functions.
+        bench(msg)      { this.tagTime("", msg) }                                       // benchmark on the default empty tag
+        tagOn(tag, msg) {                                                               // start benchmark on the tag, reset timer.
+            delete this._tagtime[tag];
+            this.tagTime(tag, msg);
+        }
+        tagTime(tag, msg) {                                                             // benchmark on the tag, report lapsed time, and update tag timer.
+            let now  = Date.now();
+            let last = this._tagtime[tag] || now;
+            this._tagtime[""] = this._tagtime[tag] = now;                               // update time on the tag and the default empty tag.
+            if (this._logInfo)
+                console.log( this._prefix() + " - " + tag + " " + (now - last) + "ms - " + msg );
+        }
 
         // With prefix on app name and module name for easier filtering when viewing the log.
-        _fmt(a)         { return this.app + ":" + this.module + " - " + this._fmtarr(a) }
+        _prefix()       { return this.app + ":" + this.module };
+        _fmt(a)         { return this._prefix() + " - " + this._fmtarr(a) }
         _fmtarr(a)      { return !a || !a.length ? "" : a.length == 1 ? this._fmtobj(a[0]) : "[" + [].map.call(a, o => this._fmtobj(o) + "\r\n").join(", ") + "]" }
         _fmtobj(obj)    { return this._json(obj instanceof Error ? this._fromerr(obj) : obj) }
         _fromerr(e)     { return {error: e.name, msg: e.message, file: e.fileName || "", line: e.lineNumber || "", stack: e.stack ? e.stack.split("\n") : "" } }
         _json(obj)      { return JSON.stringify(obj, null, 4) };
+        _1st(a)         { return a && a.length > 0 ? a[0] : null }
+        _2nd(a)         { return a && a.length > 1 ? a[1] : null }
+
     }
 
+    // Module public symbols.
+    module.NONE = NONE;
+    module.ERROR = ERROR;
+    module.WARN = WARN;
+    module.INFO = INFO;
+    module.LOG = LOG;
+    module.LEVELS = LEVELS;
+    module.LEVEL_NAMES = LEVEL_NAMES;
+    module.Logger = Logger;
 
-    // Module export
-    logger.NONE = NONE;
-    logger.ERROR = ERROR;
-    logger.WARN = WARN;
-    logger.INFO = INFO;
-    logger.LOG = LOG;
-    logger.Logger = Logger;
-    return logger;
+    return module;
 
-}(this, "logger"));    // Pass in the global scope as 'this' scope.
+}());
+
+export default the_module;
 
 
 // Unit Tests
 let _RUNTEST_LOGGER = false;
 if (_RUNTEST_LOGGER) {
     console.log("Run unit tests");
+
+    let logger = the_module;
 
     let none = new logger.Logger("LoggerTests", "TestNone", logger.NONE);
     none.error("none not shown");
@@ -112,6 +147,12 @@ if (_RUNTEST_LOGGER) {
     log.warn("warn shown");
     log.info("info shown");
     log.log("log shown");
+
+    let logFn = new logger.Logger("LoggerTests", "TestLog", () => logger.LOG);
+    logFn.error("error shown");
+    logFn.warn("warn shown");
+    logFn.info("info shown");
+    logFn.log("again log shown");
 
     console.log(log.dump(1, 2, 3));
     console.log(log.dump({ foo: 'a', bar: 'b', baz: [1, 2, 3] }));

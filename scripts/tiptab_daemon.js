@@ -17,25 +17,36 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+// Not sure when the browser delivers the onInstalled event.  Just set it up as early as possible.
+let gJustInstalled = false;
+browser.runtime.onInstalled.addListener(function(info){
+    // console.log("runtime.onInstalled", info);
+    gJustInstalled = info.reason == "install" || info.reason == "update";
+});
+
+// Non-ES6 global includes:
+// <script src="/pkg/spark-md5/spark-md5.min.js"></script>
+
+// ES6 imports
+import logger from "/scripts/util/logger.js";
+import appcfg from "/scripts/util/appcfg.js";
+import app from "/scripts/util/app.js";
+import db from "/scripts/util/db.js";
+import ringbuf from "/scripts/util/ringbuf.js";
+import wwhotkey from "/scripts/util/wwhotkey.js";
+import settings from "/scripts/settings.js";
+
+
 // module tiptab_daemon, background script.
-(function(scope, modulename) {
+let the_module = (function() {
     "use strict";
 
-    // Imports:
-    // import logger
-    // import appcfg
-    // import app
-    // import ringbuf
-    // import wwhotkey
-    // import settings
+    const module = { NAME: "tiptab_daemon" };
+    const log = new logger.Logger(appcfg.APPNAME, module.NAME, appcfg.LOGLEVEL);
+
     let RingBuf = ringbuf.RingBuf;
     let TipTabSettings = settings.TipTabSettings;
-
-    let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
-
-    let module = function() { };        // Module object to be returned.
-    if (modulename)
-        scope[modulename] = module;     // set module name in scope, otherwise caller sets the name with the returned module object.
 
     const MAX_ACTIVATED_HISTORY = 10;
     const TIPTAB_URL = browser.extension.getURL("tiptab.html");
@@ -195,5 +206,7 @@
     log.info("module loaded");
     return module;
 
-}(this, "tiptab_daemon"));    // Pass in the global scope as 'this' scope.
+}());
+
+export default the_module;
 

@@ -17,13 +17,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import logger from "/scripts/util/logger.js";
+import appcfg from "/scripts/util/appcfg.js";
+
+
 // ringbuf module, fixed size circular buffer.
-(function(scope, modulename) {
+let the_module = (function() {
     "use strict";
 
-    let module = function() { };        // Module object to be returned.
-    if (scope && modulename)
-        scope[modulename] = module;     // set module name in scope, otherwise caller sets the name with the returned module object.
+    const module = { NAME: "ringbuf" };
+    const log = new logger.Logger(appcfg.APPNAME, module.NAME, appcfg.LOGLEVEL);
 
     class RingBuf {
 
@@ -66,24 +69,22 @@
             return this;
         }
 
-        get capacity()      { return this._items.length                         }   // total size of the buffer.
-        get length()        { return this._head - this._tail                    }   // number of items saved; iterate from index 0 to length-1.
-        get empty()         { return this.length == 0                           }
-        get full()          { return this.length == this.capacity               }
-        get oldestIndex()   { return this.empty ? -1 : 0                        }   // usually 0, -1 for empty.
-        get newestIndex()   { return this.length - 1                            }   // usually length-1, -1 for empty.
+        get capacity()      { return this._items.length             }               // total size of the buffer.
+        get length()        { return this._head - this._tail        }               // number of items saved; iterate from index 0 to length-1.
+        get empty()         { return this.length == 0               }
+        get full()          { return this.length == this.capacity   }
+        get oldestIndex()   { return this.empty ? -1 : 0            }               // usually 0, -1 for empty.
+        get newestIndex()   { return this.length - 1                }               // usually length-1, -1 for empty.
 
-        clear()             { this._tail = this._head = 0; return this          }   // reset the buffer.
+        clear()             { this._tail = this._head = 0; return this          }
         get(index)          { return this._items[this.pos(index)]               }   // get item at index between [0 to length-1]
         set(index, obj)     { this._items[this.pos(index)] = obj; return this   }   // set item at index between [0 to length-1]
-        oldest()            { return this.get(this.oldestIndex)                 }   // get the oldest item at tail
-        newest()            { return this.get(this.newestIndex)                 }   // get the newest item at head
-        fromOldest(offset)  { return this.get(this.oldestIndex + offset)        }   // get the offseted item from tail
-        fromNewest(offset)  { return this.get(this.newestIndex - offset)        }   // get the offseted item from head
-        validIndex(index)   { return index >= 0 && index < this.length          }
+        oldest()            { return this.get(this.oldestIndex)                 }
+        newest()            { return this.get(this.newestIndex)                 }
         pos(index)          { return (this._tail + index) % this.capacity       }   // get the array position from index
+//        trimHead(index)     { this._head = this.pos(index); return this         }   // set head at between [0 to length-1]
 
-        // Push new item at the head.  Remove the oldest item at the tail if buffer is full.
+        // Push the item as the newest item at the head.  Remove the oldest item at the tail if buffer is full.
         push(item) {
             if (this.full)
                 this._advanceTail();    // advance tail to drop off the oldest item to make room.
@@ -91,6 +92,10 @@
             return this;
         }
 
+        // Push the items into the ring buf.  Remove the older items at the tail if buffer is full.
+        // The items at the beginning of the array are pushed as the older items at the tail,
+        // and the items at the end of the array are pushed as the newer items at the head.
+        // Passing the array returned from toArray() will preserve the old items.
         pushItems(items) {
             items.forEach(item => this.push(item));
             return this;
@@ -128,32 +133,43 @@
             return array;
         }
 
-        // Convert the items into an array starting from the oldest item at the tail to the newest item at the head.
-        toArray() {
+        // Convert the items into an array starting from the oldest item at the tail to the newest item at the head at the end of the array.
+        // If matcherFn is passed in, apply it to each item to test for inclusion in the result array.
+        // Passing the returned array to pushItems() will restore the old state.
+        toArray(matcherFn) {
             let array = [];
             for (let i = 0; i < this.length; i++)
                 array.push(this.get(i));
-            return array;
+            matcherFn = matcherFn || ((x) => true);
+            return array.filter(matcherFn);
         }
 
-        // Convert the items into an array starting from the newest item at the head to the oldest item at the tail.
-        toArrayNewest() {
-            return this.toArray().reverse();
+        // Convert the items into an array starting from the newest item at the head to the oldest item at the tail at the end of the array.
+        toArrayNewest(matcherFn) {
+            return this.toArray(matcherFn).reverse();
         }
 
-        // Find the index to an item using the filterFn, iterating from oldest to newest.  Index can be used in get()/set().
-        findIndex(filterFn) {
+        // Find the index to an item using the matcherFn, iterating from oldest to newest.  Index can be used in get()/set().
+        findIndex(matcherFn) {
             for (let i = 0; i < this.length; i++) {
-                if (filterFn(this.get(i)))
+                if (matcherFn(this.get(i)))
                     return i;
             }
             return -1;
         }
 
-        // Find an item using the filterFn.
-        find(filterFn) {
-            let index = this.findIndex(filterFn);
+        // Find an item using the matcherFn.
+        find(matcherFn) {
+            let index = this.findIndex(matcherFn);
             return index > -1 ? this.get(index) : null;
+        }
+
+        deleteItems(matcherFn) {
+            let notMatcherFn = (x) => !matcherFn(x);
+            let remainingItems = this.toArrayNewest( notMatcherFn );
+            let deleted = remainingItems.length != this.length;
+            this.clear().pushItems(remainingItems);
+            return deleted;
         }
 
         fillToCapacity(item) {
@@ -170,9 +186,28 @@
 
     }
 
-    // Module export
+    function withNewCapacity(ringBuf, capacity) {
+        // Too difficult to ensure correctness of _head and _tail positions when expanding or shrinking the _items array.
+        // Create a new RingBuf with the new capacity and copy from the old RingBuf.
+        if (ringBuf.capacity == capacity)
+            return Object.assign({}, ringBuf);          // return a shallow clone
+        let oldestToNewestItems = ringBuf.toArray();
+        if (ringBuf.capacity < capacity)
+            Array(capacity - ringBuf.capacity).forEach( () => oldestToNewestItems.unshift(null) );  // prepend N slots at front.
+        if (ringBuf.capacity > capacity)
+            oldestToNewestItems.splice(0, ringBuf.capacity - capacity);                             // truncate N slots from front.
+        return new RingBuf(capacity).pushItems(oldestToNewestItems);
+    }
+
+
+    // Module public symbols.
     module.RingBuf = RingBuf;
+    module.withNewCapacity = withNewCapacity;
+
+    log.info("module loaded");
     return module;
 
-}(this, "ringbuf"));    // Pass in the global scope as 'this' scope.
+}());
+
+export default the_module;
 

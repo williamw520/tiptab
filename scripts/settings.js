@@ -17,20 +17,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Setting module
+import logger from "/scripts/util/logger.js";
+import appcfg from "/scripts/util/appcfg.js";
 
-(function(scope, modulename) {
+
+// Setting module
+let the_module = (function() {
     "use strict";
 
-    // Imports:
-    // import logger
-    // import appcfg
-
-    let log = new logger.Logger(appcfg.APPNAME, modulename, appcfg.LOGLEVEL);
-
-    let module = function() { };        // Module object to be returned.
-    if (scope && modulename)
-        scope[modulename] = module;     // set module name in scope, otherwise caller sets the name with the returned module object.
+    const module = { NAME: "settings" };
+    const log = new logger.Logger(appcfg.APPNAME, module.NAME, appcfg.LOGLEVEL);
 
 
     class TipTabSettings {
@@ -203,5 +199,8 @@
     log.info("module loaded");
     return module;
 
-}(this, "settings"));   // Pass in the global scope as 'this' scope.
+}());
+
+export default the_module;
+
 
