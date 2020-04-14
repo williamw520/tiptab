@@ -22,6 +22,7 @@
 
 import logger from "/scripts/util/logger.js";
 import appcfg from "/scripts/util/appcfg.js";
+import dbutil from "/scripts/util/dbutil.js";
 
 
 // db module
@@ -35,26 +36,6 @@ let the_module = (function() {
     const INDEXED_DB_VERSION = 1;
 
     let openedDB;       // cached opened db
-
-
-    // The IndexedDb API is kind of fucked up.  Add adaptors to make it easier to use.
-
-    // Adaptor to turn a request into a promise.
-    function pRequest(req) {
-        return new Promise(function(resolve, reject) {
-            req.onsuccess   = event => resolve(event.target.result);    // pRequest(req).then( result )
-            req.onerror     = event => reject(event.target.error);      // pRequest(req).catch( error )
-        });
-    }
-
-    // Adaptor to turn a transaction into a promise.
-    function pTransaction(tx) {
-        return new Promise(function(resolve, reject) {
-            tx.oncomplete   = event => resolve(event.target.result);    // pRequest(req).then( result )
-            tx.onerror      = event => reject(event.target.error);      // pRequest(req).catch( error )
-            tx.onabort      = event => reject(event.target.error);      // pRequest(req).catch( error )
-        });
-    }
 
 
     // Create the IndexedDb database and table schema as needed.
@@ -71,7 +52,7 @@ let the_module = (function() {
                 store.createIndex("timestamp", "timestamp", { unique: false });
             }
         };
-        return pRequest(req);
+        return dbutil.pRequest(req);
     }
 
     function pOpenDB() {
@@ -101,53 +82,39 @@ let the_module = (function() {
         let tx      = db.transaction(["tabImage", "imageLastUse"], "readwrite");
         let imStore = tx.objectStore("tabImage");
         let luStore = tx.objectStore("imageLastUse");
-        await pRequest(imStore.add({ key: urlhash,  image: imageDataUrl }));    // store mapping of url-hash to image
-        await pRequest(luStore.put({ key: urlhash,  timestamp: new Date() }));  // store mapping of url-hash to last-use timestamp; garbage collection will use the timestamp.
-        return pTransaction(tx).then( () => urlhash );
+        await dbutil.pRequest(imStore.put({ key: urlhash,  image: imageDataUrl }));    // store mapping of url-hash to image
+        await dbutil.pRequest(luStore.put({ key: urlhash,  timestamp: new Date() }));  // store mapping of url-hash to last-use timestamp; garbage collection will use the timestamp.
+        return dbutil.pTransaction(tx).then( () => urlhash );
     }
 
-    async function pTxRead(storeNames, pTxProcessor) {
-        let db = await pOpenDB();
-        let tx = db.transaction(storeNames, "readonly");
-        let valueObj = await pTxProcessor(tx);
-        await pTransaction(tx);
-        return valueObj;
-    }
-
-    async function pGetRecord(storeName, key) {
-        return pTxRead(storeName, tx => pRequest(tx.objectStore(storeName).get(key)));
-    }
-
-    function pGetRecordValue(storeName, key, fieldName) {
-        return pGetRecord(storeName, key).then(record => record ? record[fieldName] : null);
-    }
-
-    function pGetImage(tabUrl) {
+    function pGetTabImage(tabUrl) {
+        log.timeSet("pGetTabImage", "start");
         let urlhash = new SparkMD5().append(tabUrl).end();
-        return pGetRecordValue("tabImage", urlhash, "image");
+        return dbutil.pGetRecordField(pOpenDB, "tabImage", urlhash, "image")
+            .then( x => (log.timeOn("pGetRecordField", "done"), x) );
     }
 
     function pGetImageLastUse(tabUrl) {
         let urlhash = new SparkMD5().append(tabUrl).end();
-        return pGetRecord("imageLastUse", urlhash).then( lu => lu ? lu.timestamp : null );
+        return dbutil.pGetRecord(pOpenDB, "imageLastUse", urlhash).then( lu => lu ? lu.timestamp : null );
     }
 
     async function pClearImageDb() {
         let db      = await pOpenDB();
         let tx      = db.transaction(["tabImage", "imageLastUse"], "readwrite");
-        await pRequest(tx.objectStore("tabImage").clear());
-        await pRequest(tx.objectStore("imageLastUse").clear());
-        return pTransaction(tx);
+        await dbutil.pRequest(tx.objectStore("tabImage").clear());
+        await dbutil.pRequest(tx.objectStore("imageLastUse").clear());
+        return dbutil.pTransaction(tx);
     }
 
     async function pExportImageDb() {
         let db      = await pOpenDB();
         let tx      = db.transaction(["tabImage", "imageLastUse"], "readonly");
         let result  = {
-            "tabImage":     await pRequest(tx.objectStore("tabImage").getAll()),
-            "imageLastUse": await pRequest(tx.objectStore("imageLastUse").getAll()),
+            "tabImage":     await dbutil.pRequest(tx.objectStore("tabImage").getAll()),
+            "imageLastUse": await dbutil.pRequest(tx.objectStore("imageLastUse").getAll()),
         };
-        return pTransaction(tx).then( () => result );
+        return dbutil.pTransaction(tx).then( () => result );
     }
 
     function validateImportImageDb(dbJson) {
@@ -161,19 +128,8 @@ let the_module = (function() {
         let db      = await pOpenDB();
         let tx      = db.transaction(stores, "readwrite");
         // TODO: get imageLastUse first and merge the timestamps.
-        return Promise.all( stores.map( table => pBatchPuts(tx.objectStore(table), dbRecordsJson[table]) ) )
-            .then(() => pTransaction(tx));
-    }
-
-    async function pBatchPuts(store, records) {
-        return new Promise(function(resolve, reject) {
-            // Sequential batch inserts in IndexedDB have very poor performance if the onsuccess event of each put is handled.
-            // Skip handling the onsuccess events for all puts except the last one.
-            let req;
-            records.forEach( record => req = store.put(record) );
-            req.onsuccess   = event => resolve(event.target.result);    // pBatchPuts(...).then( result )
-            req.onerror     = event => reject(event.target.error);      // pBatchPuts(...).catch( error )
-        });
+        return Promise.all( stores.map( table => dbutil.pBatchPuts(tx.objectStore(table), dbRecordsJson[table]) ) )
+            .then(() => dbutil.pTransaction(tx));
     }
 
 
@@ -181,7 +137,7 @@ let the_module = (function() {
     module.pOpenDB = pOpenDB;
     module.closeDB = closeDB;
     module.pSaveTabImage = pSaveTabImage;
-    module.pGetImage = pGetImage;
+    module.pGetTabImage = pGetTabImage;
     module.pGetImageLastUse = pGetImageLastUse;
     module.pClearImageDb = pClearImageDb;
     module.pExportImageDb = pExportImageDb;

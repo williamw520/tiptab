@@ -32,7 +32,6 @@ browser.runtime.onInstalled.addListener(function(info){
 import logger from "/scripts/util/logger.js";
 import appcfg from "/scripts/util/appcfg.js";
 import app from "/scripts/util/app.js";
-import db from "/scripts/util/db.js";
 import ringbuf from "/scripts/util/ringbuf.js";
 import wwhotkey from "/scripts/util/wwhotkey.js";
 import settings from "/scripts/settings.js";

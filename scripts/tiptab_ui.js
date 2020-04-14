@@ -140,6 +140,7 @@ let the_module = (function() {
             .then(() => settings.pLoad().then(tts => ttSettings = tts) )
             .then(() => thumbnailDimFromSetting(ttSettings) )
             .then(() => pixels_per_rem = getFontSizeRem() )
+            .then(() => db.pOpenDB() )
             .then(() => pGetCurrnetTab() )
             .then(() => pGetCurrentLastActiveTab() )
             .then(() => generateUILayout() )
@@ -477,7 +478,7 @@ let the_module = (function() {
         $("#main-content").on("click", ".cmd-select-tab",       function(e){ $(this).closest(".tab-box").toggleClass("selected");   return stopEvent(e)     });
         $("#main-content").on("click", ".cmd-reload-tab",       function(){ reloadTab($(this).closest(".tab-box").data("tid"))                      });
         $("#main-content").on("click", ".cmd-duplicate-tab",    function(){ duplicateTab($(this).closest(".tab-box").data("tid"))                   });
-        $("#main-content").on("click", ".cmd-move-tab-new",     function(){ pMoveToNewWindow($(this).closest(".tab-box").data("tid"))                });
+        $("#main-content").on("click", ".cmd-move-tab-new",     function(){ pMoveToNewWindow($(this).closest(".tab-box").data("tid"))               });
         $("#main-content").on("click", ".cmd-copy-tab-url",     function(){ copyTabUrl($(this).closest(".tab-box").data("tid"))                     });
         $("#main-content").on("click", ".cmd-save-tab-img",     function(){ saveTabImg($(this).closest(".tab-box").data("tid"))                     });
         $("#main-content").on("click", ".cmd-close-others",     function(){ closeOtherTabs($(this).closest(".tab-box").data("tid"), "all")          });
@@ -486,6 +487,7 @@ let the_module = (function() {
         $("#main-content").on("click", ".cmd-toggle-muted",     function(){ toggleTabMuted($(this).closest(".tab-box").data("tid"))                 });
         $("#main-content").on("click", ".cmd-toggle-hidden",    function(){ toggleTabHidden($(this).closest(".tab-box").data("tid"))                });
         $("#main-content").on("click", ".cmd-toggle-pinned",    function(){ toggleTabPinned($(this).closest(".tab-box").data("tid"))                });
+        $("#main-content").on("click", ".cmd-discard-tab",      function(){ discardTab($(this).closest(".tab-box").data("tid"))                     });
 
         // Tab status click handlers
         $("#main-content").on("click", ".status-pinned",        function(e){ toggleTabPinned($(this).closest(".tab-box").data("tid"));  return stopEvent(e) });
@@ -529,8 +531,9 @@ let the_module = (function() {
             tiptabWindowActive = true;
         });
 
+        // Blur event is fired whenever window loses focus.
         $(window).blur(function(){
-            // log.info("window.blur, tiptabWindow shutdown");
+            log.info("window.blur, tiptabWindow shutdown");
             tiptabWindowActive = false;
             asyncSaveUiStateNow();
         });
@@ -1516,6 +1519,7 @@ let the_module = (function() {
                     <li class="menu-item"> <a href="#" class="cmd-toggle-hidden nowrap">Show/Hide Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-toggle-muted  nowrap">Mute/Unmute Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">Pin/Unpin Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-discard-tab   nowrap">Discard Tab</a> </li>
                     <li class="divider"></li>
                     <li class="menu-item"> <a href="#" class="cmd-duplicate-tab nowrap">Duplicate Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-move-tab-new  nowrap">To New Window</a> </li>
@@ -1627,19 +1631,35 @@ let the_module = (function() {
             return;
 
         if (thumbnailsMap[tid] && !forceRefreshImg) {
+            // For other redrawing cases, use the image cached in memory.
             renderThumbnail(tid, thumbnailsMap[tid]);
         } else {
-            thumbnailsCapturing[tid] = true;
-            browser.tabs.captureTab(tid, CAPTURE_OPTS)
-                .then( thumbnail => {
-                    thumbnailsMap[tid] = thumbnail;
-                    thumbnailsCapturing[tid] = false;
-                    renderThumbnail(tid, thumbnailsMap[tid]);
-                })
-                .catch( e => {
-                    thumbnailsCapturing[tid] = false;
+            let tab = tabById[tid];
+            if (tab.discarded) {
+                db.pGetTabImage(tab.url).then( thumbnail => {
+                    if (thumbnail) {
+                        thumbnailsMap[tid] = thumbnail;
+                        renderThumbnail(tid, thumbnail);
+                    } else {
+                        pCaptureTab(tid).then( () => renderThumbnail(tid, thumbnailsMap[tid]) );
+                    }
                 });
+            } else {
+                pCaptureTab(tid).then( () => renderThumbnail(tid, thumbnailsMap[tid]) );
+            }
         }
+    }
+
+    function pCaptureTab(tid) {
+        thumbnailsCapturing[tid] = true;
+        return browser.tabs.captureTab(tid, CAPTURE_OPTS).then( thumbnail => {
+            thumbnailsMap[tid] = thumbnail;
+            thumbnailsCapturing[tid] = false;
+            db.pSaveTabImage(tabById[tid].url, thumbnail);
+        }).catch( e => {
+            log.error("captureTab error or pSaveTabImage error: ", e);
+            thumbnailsCapturing[tid] = false;
+        });
     }
 
     function $tabimg(tid) {
@@ -2399,6 +2419,10 @@ let the_module = (function() {
                     browser.tabs.hide(tab.id);  // active tab cannot be hidden; skip.
             }
         });
+    }
+
+    function discardTab(tid) {
+        browser.tabs.discard(tid);
     }
 
     function toggleTabPinned(tid) {

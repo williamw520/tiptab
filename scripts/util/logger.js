@@ -69,12 +69,12 @@ let the_module = (function() {
         dump()          { return this._fmtarr(Array.prototype.slice.call(arguments)) }  // dump the arguments to string/json
 
         // Simple tag-based benchmark functions.
-        bench(msg)      { this.tagTime("", msg) }                                       // benchmark on the default empty tag
-        tagOn(tag, msg) {                                                               // start benchmark on the tag, reset timer.
+        bench(msg)      { this.timeOn("", msg) }                                        // benchmark on the default empty tag
+        timeSet(tag, msg)   {                                                           // start benchmark on the tag, reset timer.
             delete this._tagtime[tag];
-            this.tagTime(tag, msg);
+            this.timeOn(tag, msg);
         }
-        tagTime(tag, msg) {                                                             // benchmark on the tag, report lapsed time, and update tag timer.
+        timeOn(tag, msg)    {                                                           // benchmark on the tag, report lapsed time, and update tag timer.
             let now  = Date.now();
             let last = this._tagtime[tag] || now;
             this._tagtime[""] = this._tagtime[tag] = now;                               // update time on the tag and the default empty tag.
