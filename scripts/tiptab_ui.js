@@ -168,6 +168,7 @@ let the_module = (function() {
     });
 
     function preInit() {
+//        db.pDeleteDB(true);
     }
 
     function postInit() {
@@ -844,7 +845,7 @@ let the_module = (function() {
     function pReloadTabsWindowsAndContainers() {
         return browser.tabs.query({})
             .then( tabs => {
-                // tabs            = tabs.filter( tab => !is_tiptaburl(tab.url) );     // get rid of the TipTab tab.
+                //tabs            = tabs.filter( tab => !is_tiptaburl(tab.url) );     // get rid of the TipTab tab.
                 tabById         = tabs.reduce( (map, tab) => { map[tab.id] = tab; return map }, {} );
                 return tabs;
             }).then( tabs => {
@@ -1636,10 +1637,10 @@ let the_module = (function() {
         } else {
             let tab = tabById[tid];
             if (tab.discarded) {
-                db.pGetTabImage(tab.url).then( thumbnail => {
-                    if (thumbnail) {
-                        thumbnailsMap[tid] = thumbnail;
-                        renderThumbnail(tid, thumbnail);
+                db.pGetTabImage(tab.url).then( record => {
+                    if (record) {
+                        thumbnailsMap[tid] = record.image;
+                        renderThumbnail(tid, thumbnailsMap[tid]);
                     } else {
                         pCaptureTab(tid).then( () => renderThumbnail(tid, thumbnailsMap[tid]) );
                     }

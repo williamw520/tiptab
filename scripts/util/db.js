@@ -44,12 +44,9 @@ let the_module = (function() {
         req.onupgradeneeded = event => {
             log.info("onupgradeneeded");
             let db = event.target.result;
-            if (!db.objectStoreNames.contains("tabImage")) {
-                let store = db.createObjectStore("tabImage", { keyPath: "key" });   // Don't change any of the key fieldname; Firefox doesn't seem to like it.
-            }
-            if (!db.objectStoreNames.contains("imageLastUse")) {
-                let store = db.createObjectStore("imageLastUse", { keyPath: "key" });
-                store.createIndex("timestamp", "timestamp", { unique: false });
+            if (!db.objectStoreNames.contains("TabImage")) {
+                let store = db.createObjectStore("TabImage", { keyPath: "key" });   // Don't change any of the key fieldname; Firefox doesn't seem to like it.
+                store.createIndex("updated", "updated", { unique: false });
             }
         };
         return dbutil.pRequest(req);
@@ -70,6 +67,16 @@ let the_module = (function() {
         }
     }
 
+    function pDeleteDB(reallyDeleteIt) {
+        if (reallyDeleteIt) {
+            let req = window.indexedDB.deleteDatabase(INDEXED_DB_NAME);
+            return dbutil.pRequest(req);
+        } else {
+            return Promise.resolve();
+        }
+    }
+
+
     async function pSaveTabImage(tabUrl, imageDataUrl, dryRun) {
         if (!(tabUrl && imageDataUrl.startsWith("data:image/"))) {
             return Promise.resolve(null);
@@ -79,55 +86,45 @@ let the_module = (function() {
             return Promise.resolve(urlhash);
         }
         let db      = await pOpenDB();
-        let tx      = db.transaction(["tabImage", "imageLastUse"], "readwrite");
-        let imStore = tx.objectStore("tabImage");
-        let luStore = tx.objectStore("imageLastUse");
-        await dbutil.pRequest(imStore.put({ key: urlhash,  image: imageDataUrl }));    // store mapping of url-hash to image
-        await dbutil.pRequest(luStore.put({ key: urlhash,  timestamp: new Date() }));  // store mapping of url-hash to last-use timestamp; garbage collection will use the timestamp.
+        let tx      = db.transaction(["TabImage"], "readwrite");
+        let imStore = tx.objectStore("TabImage");
+        let ts      = new Date();
+        await dbutil.pRequest(imStore.put({ key: urlhash,  image: imageDataUrl,  updated: ts }));   // store mapping of url-hash to image
         return dbutil.pTransaction(tx).then( () => urlhash );
     }
 
     function pGetTabImage(tabUrl) {
         log.timeSet("pGetTabImage", "start");
         let urlhash = new SparkMD5().append(tabUrl).end();
-        return dbutil.pGetRecordField(pOpenDB, "tabImage", urlhash, "image")
-            .then( x => (log.timeOn("pGetRecordField", "done"), x) );
-    }
-
-    function pGetImageLastUse(tabUrl) {
-        let urlhash = new SparkMD5().append(tabUrl).end();
-        return dbutil.pGetRecord(pOpenDB, "imageLastUse", urlhash).then( lu => lu ? lu.timestamp : null );
+        return dbutil.pGetRecord(pOpenDB, "TabImage", urlhash)
+            .then( x => (log.timeOn("pGetTabImage", "done"), x) );
     }
 
     async function pClearImageDb() {
         let db      = await pOpenDB();
-        let tx      = db.transaction(["tabImage", "imageLastUse"], "readwrite");
-        await dbutil.pRequest(tx.objectStore("tabImage").clear());
-        await dbutil.pRequest(tx.objectStore("imageLastUse").clear());
+        let tx      = db.transaction(["TabImage"], "readwrite");
+        await dbutil.pRequest(tx.objectStore("TabImage").clear());
         return dbutil.pTransaction(tx);
     }
 
     async function pExportImageDb() {
         let db      = await pOpenDB();
-        let tx      = db.transaction(["tabImage", "imageLastUse"], "readonly");
+        let tx      = db.transaction(["TabImage"], "readonly");
         let result  = {
-            "tabImage":     await dbutil.pRequest(tx.objectStore("tabImage").getAll()),
-            "imageLastUse": await dbutil.pRequest(tx.objectStore("imageLastUse").getAll()),
+            "TabImage":     await dbutil.pRequest(tx.objectStore("TabImage").getAll()),
         };
         return dbutil.pTransaction(tx).then( () => result );
     }
 
     function validateImportImageDb(dbJson) {
-        if (!dbJson["tabImage"]) throw Error("Favicon data 'tabImage' is not found.");
-        if (!dbJson["imageLastUse"]) throw Error("Favicon data 'imageLastUse' is not found.");
+        if (!dbJson["TabImage"]) throw Error("Favicon data 'TabImage' is not found.");
         return dbJson;
     }
     
     async function pImportImageDb(dbRecordsJson) {
-        let stores  = ["tabImage", "imageLastUse"];
+        let stores  = ["TabImage"];
         let db      = await pOpenDB();
         let tx      = db.transaction(stores, "readwrite");
-        // TODO: get imageLastUse first and merge the timestamps.
         return Promise.all( stores.map( table => dbutil.pBatchPuts(tx.objectStore(table), dbRecordsJson[table]) ) )
             .then(() => dbutil.pTransaction(tx));
     }
@@ -136,9 +133,9 @@ let the_module = (function() {
     // Module export
     module.pOpenDB = pOpenDB;
     module.closeDB = closeDB;
+    module.pDeleteDB = pDeleteDB;
     module.pSaveTabImage = pSaveTabImage;
     module.pGetTabImage = pGetTabImage;
-    module.pGetImageLastUse = pGetImageLastUse;
     module.pClearImageDb = pClearImageDb;
     module.pExportImageDb = pExportImageDb;
     module.pImportImageDb = pImportImageDb;

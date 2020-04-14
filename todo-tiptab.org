@@ -2,6 +2,7 @@
 * Feature TODO
 ** DONE Migration to ES6 module system.
 ** DONE Use thumbnails cached in database to draw discarded tabs.
+** TODO Garbage collect old cached thumbnails.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
