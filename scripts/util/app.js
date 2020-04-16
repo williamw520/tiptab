@@ -190,6 +190,17 @@ let the_module = (function() {
         }, new obj.constructor());
     }
 
+    app.subtractMonth = function(date) {
+        var m = date.getMonth();
+        date.setMonth(date.getMonth() - 1);
+
+        // If still in same month, set date to last day of previous month
+        if (date.getMonth() == m)
+            date.setDate(0);
+        date.setHours(0, 0, 0);
+        date.setMilliseconds(0);
+        return date;
+    }
 
     log.info("module loaded");
     return app;

@@ -2,6 +2,9 @@
 * Feature TODO
 ** DONE Migration to ES6 module system.
 ** DONE Use thumbnails cached in database to draw discarded tabs.
+** DONE Clean up permission usage.  Remove unneeded permissions.
+** TODO Text based tab view.
+** TODO Tab tree view based on tab creator.
 ** TODO Garbage collect old cached thumbnails.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
@@ -180,7 +183,9 @@
 
 
 * Documentation
-** Permissions
+** Permission Usage
+*** <all_urls>
+    The "<all_urls>" permission is required for capturing the image of a tab.
 *** tabs
     The "tabs" permission is required in order to get and set the url, title, and favIconUrl properties of a tab.
 *** storage
