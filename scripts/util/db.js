@@ -23,6 +23,7 @@
 import logger from "/scripts/util/logger.js";
 import appcfg from "/scripts/util/appcfg.js";
 import dbutil from "/scripts/util/dbutil.js";
+import app from "/scripts/util/app.js";
 
 
 // db module
@@ -100,6 +101,25 @@ let the_module = (function() {
             .then( x => (log.timeOn("pGetTabImage", "done"), x) );
     }
 
+    // Set fromDate to null to start from the beginning of time.
+    // Set toDate to null to the most recent time.
+    async function pQueryByRange(rangeFrom, rangeTo, fields) {
+        let records = [];
+        await dbutil.pIterateByRange(pOpenDB, "TabImage", "updated", "readonly", rangeFrom, rangeTo, (cursor) => {
+            records.push(fields ? app.pick(cursor.value, ...fields) : cursor.value);   // accumulate the records, with the selected fields.
+        });
+        return records;
+    }
+
+    async function pDeleteByRange(rangeFrom, rangeTo) {
+        let deletedCount = 0;
+        await dbutil.pIterateByRange(pOpenDB, "TabImage", "updated", "readwrite", rangeFrom, rangeTo, (cursor) => {
+            cursor.delete();
+            deletedCount++;
+        });
+        return deletedCount;
+    }
+
     async function pClearImageDb() {
         let db      = await pOpenDB();
         let tx      = db.transaction(["TabImage"], "readwrite");
@@ -136,6 +156,8 @@ let the_module = (function() {
     module.pDeleteDB = pDeleteDB;
     module.pSaveTabImage = pSaveTabImage;
     module.pGetTabImage = pGetTabImage;
+    module.pQueryByRange = pQueryByRange;
+    module.pDeleteByRange = pDeleteByRange;
     module.pClearImageDb = pClearImageDb;
     module.pExportImageDb = pExportImageDb;
     module.pImportImageDb = pImportImageDb;

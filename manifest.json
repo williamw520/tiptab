@@ -28,7 +28,8 @@
         "contextualIdentities",
         "sessions",
         "downloads",
-        "tabHide"
+        "tabHide",
+        "alarms"
     ],
 
     "background": {

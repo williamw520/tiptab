@@ -128,6 +128,40 @@ let the_module = (function() {
         });
     }
 
+    // Access the inner value of nested objects by the list of keys.
+    app.byKeys = function(nestedObj, ...keys)  {
+        for (let i = 0; i < keys.length; i++) {
+            let key = keys[i];
+            if (key in nestedObj) {
+                nestedObj = nestedObj[key];
+            } else {
+                return; // not found
+            }
+        }
+        return nestedObj;
+    }
+
+    app.reduceToMap = function(array, reduceFn) {
+        return array.reduce( (map, item, index) => {
+            reduceFn(map, item, index);
+            return map;
+        }, {});
+    };
+
+    app.pick = function(obj, ...keys) {
+        return app.reduceToMap(keys, (map, key) => map[key] = obj[key]);
+    }
+
+    app.range = function*(begin, end, step = 1) {
+        if (end === undefined) {
+            end = begin;
+            begin = 0;
+        }
+        for (let i = begin; step > 0 ? i < end : i > end; i += step) {
+            yield i;
+        }
+    }    
+
     app.fmtPlural = function(count, baseWord, pluralWord) {
         return count <= 1 ? baseWord : (pluralWord ? pluralWord : baseWord + "s");
     }
@@ -136,12 +170,20 @@ let the_module = (function() {
         return count + " " + app.fmtPlural(count, baseWord, pluralWord);
     }
 
+    app.formatId = function(strId) {
+        return strId.replace(/[\W_]/g, '_');    // convert all non-alphanumeric and non-underscore to underscore.
+    }
+
     app.padDigit5 = function(number) {
         return number <= 99999 ? ("0000"+number).slice(-5) : number;
     }
 
     app.pad = function(str, width=2, ch="0") {
-        return (String(ch).repeat(width) + String(str)).slice(String(str).length)
+        return (String(ch).repeat(width) + String(str)).slice(String(str).length)   // left padding
+    }
+
+    app.rpad = function(str, width=2, ch=" ") {
+        return (String(str) + String(ch).repeat(width)).slice(0, Math.max(String(str).length, width))
     }
 
     app.hasAll = function(str, tokens, asLowerCase) {
@@ -159,6 +201,16 @@ let the_module = (function() {
         return tokens.some(token => token.length == 0 || str == token);
     }
 
+    app.matchAnyFields = function(obj1, obj2, fieldKeys) {
+        let matchedKeys = fieldKeys.filter( key => obj1[key] === obj2[key] );
+        return matchedKeys.length > 0 || fieldKeys.length == 0;
+    }
+
+    app.matchAllFields = function(obj1, obj2, fieldKeys) {
+        let matchedKeys = fieldKeys.filter( key => obj1[key] === obj2[key] );
+        return matchedKeys.length == fieldKeys.length;
+    }
+
     app.cmpStr = function(s1, s2) {
         if (s1 < s2) return -1;
         if (s1 > s2) return 1;
@@ -173,8 +225,55 @@ let the_module = (function() {
         return (a1.length == a2.length) && a1.every( (v,i) => v === a2[i] );
     }
 
+    app.startsWithAny = function(str, list) {
+        return (str && list) ? list.some( item => str.startsWith(item) ) : false;
+    }
+
     app.toLower = function(tokens) {
         return tokens.map( token => token.toLowerCase() );
+    }
+
+    app.arrayToObj = function(array, keyField, valueField) {
+        return array.reduce( (obj, item) => {
+            obj[item[keyField]] = item[valueField];
+            return obj;
+        }, {});
+    }
+
+    // See https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
+    const invalidFilenameChars = /<|>|\:|"|\/|\\|\||\?|\*/g;
+
+    app.normalizeFilename = function(fileName, replacementChar) {
+        return fileName.replace(invalidFilenameChars, replacementChar || "");
+    }
+
+    // Match any if items is empty.
+    app.AnySet = class extends Set {
+        constructor(items) {
+            super(items);
+            this.matchAny = !items || items.length == 0;
+        }
+        has(item) {
+            return this.matchAny || super.has(item);
+        }
+    }
+
+    app.pReadFile = function(html5File) {
+        return new Promise(function(resolve, reject) {
+            let asyncReader = new FileReader();
+            asyncReader.onerror = event => reject(event.target.error);
+            asyncReader.onabort = event => reject(event.target.error);
+            asyncReader.onload  = event => resolve(event.target.result);
+            asyncReader.readAsText(html5File);
+        })
+    }
+
+    // Placeholder object to be placed at a variable, to throw error if accessed.
+    app.uninitializedGuard = function(message) {
+        return new Proxy({}, {
+            get: function(target, name, receiver)        { throw Error("Object has not been initialized.  " + message) },
+            set: function(target, name, value, receiver) { throw Error("Object has not been initialized.  " + message) },
+        });
     }
 
     // deep copy
@@ -190,16 +289,13 @@ let the_module = (function() {
         }, new obj.constructor());
     }
 
-    app.subtractMonth = function(date) {
-        var m = date.getMonth();
-        date.setMonth(date.getMonth() - 1);
+    const DATE_MILLISECONDS = 24*60*60*1000;
 
-        // If still in same month, set date to last day of previous month
-        if (date.getMonth() == m)
-            date.setDate(0);
-        date.setHours(0, 0, 0);
-        date.setMilliseconds(0);
-        return date;
+    // Use -days to offset back to a previous date.
+    app.offsetByDays = function(date, days) {
+        let newDate = new Date();
+        newDate.setTime(date.getTime() + DATE_MILLISECONDS * days);
+        return newDate;
     }
 
     log.info("module loaded");

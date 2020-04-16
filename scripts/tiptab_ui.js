@@ -177,6 +177,11 @@ let the_module = (function() {
         //     let itemInfo = $(this).prop("tagName") + ", id: " + $(this).attr("id") + ", class: " + $(this).attr("class") + ", tabindex: " + $(this).attr("tabindex");
         //     log.info(itemInfo);
         // });
+        //db.pQueryByRange().then( records => log.info( records.map( r => app.pick(r, "key", "updated") ) ) );
+        //db.pQueryByRange(null, null, ["updated"]).then( records => log.info( records ) );
+        //db.pQueryByRange(null, app.offsetByDays(new Date(), -1)).then( records => log.info( records.map( r => app.pick(r, "key", "updated") ) ) );
+        // db.pQueryBRange(null, app.offsetByDays(new Date(), -1), ["key", "updated"]).then( records => log.info( records ) );
+        //db.pDeleteByRange(null, app.offsetByDays(new Date(), -1)).then( count => log.info( count ) );
     }
 
     function pGetCurrnetTab() {

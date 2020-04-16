@@ -81,6 +81,26 @@ let the_module = (function() {
         });
     }
 
+    // Set rangeFrom to null to include every record from beginning.
+    // Set rangeTo to null to include every record upto the last.
+    async function pIterateByRange(pDbGetter, storeName, indexName, txMode, rangeFrom, rangeTo, cursorStepHandlerFn) {
+        let db              = await pDbGetter();
+        let tx              = db.transaction([storeName], txMode);
+        let store           = tx.objectStore(storeName);
+        let index           = store.index(indexName);
+        let range           = rangeFrom && rangeTo ? IDBKeyRange.bound(rangeFrom, rangeTo) :
+                              rangeFrom            ? IDBKeyRange.lowerBound(rangeFrom) :
+                              rangeTo              ? IDBKeyRange.upperBound(rangeTo) : null;
+        let cursorRequest   = index.openCursor(range);
+        let stepFn          = function(cursor){
+            if (!cursor)
+                return;                                     // end of cursor iteration; end of recursion; return the final records[].
+            cursorStepHandlerFn(cursor);                    // step handler handler
+            cursor.continue();
+            return pRequest(cursorRequest).then(stepFn);    // call stepFn recursively within the next promise.
+        };
+        return pRequest(cursorRequest).then(stepFn);        // start the cursor iteration.
+    }
 
     // Module export
     module.pRequest = pRequest;
@@ -88,6 +108,7 @@ let the_module = (function() {
     module.pGetRecord = pGetRecord;
     module.pGetRecordField = pGetRecordField;
     module.pBatchPuts = pBatchPuts;
+    module.pIterateByRange = pIterateByRange;
 
     log.info("module loaded");
     return module;

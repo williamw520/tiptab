@@ -34,6 +34,7 @@ import appcfg from "/scripts/util/appcfg.js";
 import app from "/scripts/util/app.js";
 import ringbuf from "/scripts/util/ringbuf.js";
 import wwhotkey from "/scripts/util/wwhotkey.js";
+import db from "/scripts/util/db.js";
 import settings from "/scripts/settings.js";
 
 
@@ -64,10 +65,11 @@ let the_module = (function() {
             .then(() => browser.commands.onCommand.addListener(commands_onCommand) )
             .then(() => browser.tabs.onActivated.addListener(tabs_onActivated) )
             .then(() => browser.storage.onChanged.addListener(storage_onChanged) )
+            .then(() => setupAlarms() )
             .then(() => setupMessageHandlers() )
             .then(() => updateCustomHotKeys() )
             //.then(() => log.info("tiptab_daemon init done ----------------------------------------------- ") )
-            .catch( e => console.warn(dump(e)) )
+            .catch( e => console.warn(log.dump(e)) )
     }
 
     function browserAction_onClicked() {
@@ -96,6 +98,16 @@ let the_module = (function() {
             ttSettings = storageChange.tipTabSettings.newValue;
             updateCustomHotKeys();
         }
+    }
+
+    function setupAlarms() {
+        browser.alarms.create("tiptab-gc",  { periodInMinutes: 15 });
+
+        browser.alarms.onAlarm.addListener(function(alarmInfo){
+            if (alarmInfo.name == "tiptab-gc") {
+                gcOldImages();
+            }
+        });
     }
 
     function setupMessageHandlers() {
@@ -195,6 +207,11 @@ let the_module = (function() {
         updateCustomHotKey("search",    ttSettings.enableCustomHotKey ? ttSettings.searchHotKey : "");
     }
 
+    function gcOldImages() {
+        let deleteDaysAgo = 30;
+        db.pDeleteByRange(null, app.offsetByDays(new Date(), -deleteDaysAgo));
+    }
+    
     init();
 
     log.info("module loaded");
