@@ -520,6 +520,7 @@ let the_module = (function() {
 
         // Events on the window lane
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
+        $("#main-content").on("click", ".window-lane .tab-grid",function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
 
         // Command containers cancel/stop event propagation
         $("#main-content").on("click", ".window-topbar-menu, .container-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private",

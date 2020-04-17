@@ -4,7 +4,7 @@
 ** DONE Use thumbnails cached in database to draw discarded tabs.
 ** DONE Clean up permission usage.  Remove unneeded permissions.
 ** DONE Garbage collect old cached thumbnails.
-** TODO Click on anywhere in a window section should activate the window.
+** DONE Click on anywhere in a window section should activate the window.
 ** TODO Bigger font for tab title.
 ** TODO Text based tab view.
 ** TODO Tab tree view based on tab creator.
