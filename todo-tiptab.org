@@ -5,7 +5,7 @@
 ** DONE Clean up permission usage.  Remove unneeded permissions.
 ** DONE Garbage collect old cached thumbnails.
 ** DONE Click on anywhere in a window section should activate the window.
-** TODO Bigger font for tab title.
+** DONE Bigger font for tab title.
 ** TODO Text based tab view.
 ** TODO Tab tree view based on tab creator.
 ** TODO Drag and drop multiple tabs across containers.

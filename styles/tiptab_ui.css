@@ -888,7 +888,7 @@ a.disabled {
 }
 
 .tab-topbar .tab-title {
-    font-size:          90%;
+    font-size:          100%;
     white-space:        nowrap;
     overflow:           hidden;
     text-overflow:      ellipsis;
