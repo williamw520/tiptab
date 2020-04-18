@@ -1095,7 +1095,8 @@ let the_module = (function() {
             matchTabByWindowOrContainer(tab) &&
             matchHidden(tab) &&
             matchMuted(tab) &&
-            matchPinned(tab);
+            matchPinned(tab) &&
+            !is_tiptaburl(tab.url);
     }
 
     function matchHidden(tab) {
