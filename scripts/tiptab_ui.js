@@ -48,11 +48,13 @@ let the_module = (function() {
     const DT_ALL_TABS = "all-tabs";
     const DT_WINDOW = "by-window";
     const DT_CONTAINER = "by-container";
+    const DT_TEXT = "by-text";
     const DT_ALL_WINDOWS = "all-windows"
-    const displayTypes = [DT_ALL_TABS, DT_WINDOW, DT_CONTAINER, DT_ALL_WINDOWS];
+    const displayTypes = [DT_ALL_TABS, DT_WINDOW, DT_CONTAINER, DT_TEXT, DT_ALL_WINDOWS];
     function is_all_tabs()      { return uiState.displayType == DT_ALL_TABS }
     function is_by_window()     { return uiState.displayType == DT_WINDOW }
     function is_by_container()  { return uiState.displayType == DT_CONTAINER }
+    function is_by_text()       { return uiState.displayType == DT_TEXT }
     function is_all_windows()   { return uiState.displayType == DT_ALL_WINDOWS }
 
     // Overlay animation parameters
@@ -454,6 +456,7 @@ let the_module = (function() {
         $(".v-btn-bar").on("click", ".cmd-all-tabs",            function(){ selectDisplayType(DT_ALL_TABS)                  });
         $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_WINDOW)                    });
         $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_CONTAINER)                 });
+        $(".v-btn-bar").on("click", ".cmd-by-text",             function(){ selectDisplayType(DT_TEXT)                      });
         $(".v-btn-bar").on("click", ".cmd-all-windows",         function(){ selectDisplayType(DT_ALL_WINDOWS)               });
         $(".v-btn-bar").on("click", ".cmd-small-size",          function(){ setThumbnailSize(0)                             });
         $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                             });
@@ -522,6 +525,12 @@ let the_module = (function() {
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
         $("#main-content").on("click", ".window-lane .tab-grid",function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
 
+
+        // Events on the tabtext view
+        $("#main-content").on("click", ".tabtext-window",       function(){ activateWindow($(this).data("wid"))                                     });
+        $("#main-content").on("click", ".tabtext-tab-line",     function(e){ activateTid($(this).data("tid")); return stopEvent(e);                 });
+
+        
         // Command containers cancel/stop event propagation
         $("#main-content").on("click", ".window-topbar-menu, .container-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private",
                                                                 function(e){ return stopEvent(e) });
@@ -771,6 +780,7 @@ let the_module = (function() {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
         case DT_WINDOW:
+        case DT_TEXT:
             redrawWindowFooterBtns();
             break;
         case DT_CONTAINER:
@@ -796,6 +806,7 @@ let the_module = (function() {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
         case DT_WINDOW:
+        case DT_TEXT:
             refreshWindowFooterBtns();
             break;
         case DT_CONTAINER:
@@ -959,6 +970,9 @@ let the_module = (function() {
             refreshContainerTabs(cookieStoreId, false);
             effectiveContainerTids(cookieStoreId).forEach( tid => refreshThumbnail(tid, false) );
             break;
+        case DT_TEXT:
+            refreshAllTextContent(false, false);
+            break;
         }
         setupDragAndDrop();
     }
@@ -1068,6 +1082,8 @@ let the_module = (function() {
             return !app.boolVal(uiState.windowsHiddenByUser, tab.windowId);
         case DT_CONTAINER:
             return !app.boolVal(uiState.containersHiddenByUser, tab.cookieStoreId);
+        case DT_TEXT:
+            break;
         }
         return true;
     }
@@ -1075,7 +1091,11 @@ let the_module = (function() {
     function filterTab(tab, filterTokens) {
         let titleMatched = app.hasAll(tab.title, filterTokens, true);
         let urlMatched = app.hasAll(tab.url, filterTokens, true);
-        return (titleMatched || urlMatched) && matchTabByWindowOrContainer(tab) && matchHidden(tab) && matchMuted(tab) && matchPinned(tab);
+        return (titleMatched || urlMatched) &&
+            matchTabByWindowOrContainer(tab) &&
+            matchHidden(tab) &&
+            matchMuted(tab) &&
+            matchPinned(tab);
     }
 
     function matchHidden(tab) {
@@ -1121,6 +1141,7 @@ let the_module = (function() {
     function effectiveContainerTabs(cid) {
         return toTabs(effectiveContainerTids(cid));
     }
+
 
     function redrawRefreshContentOnFiltering() {
         updateEffectiveTabIds();
@@ -1182,6 +1203,9 @@ let the_module = (function() {
             fillContainerText(containerIds);                // fill in the unsafe text of the objects using html-escaped API.
             showHideContainerLanes();
             break;
+        case DT_TEXT:
+            $mainContent.html(renderAllTextLane());
+            break;
         case DT_ALL_WINDOWS:
             renderAllWindows();
             break;
@@ -1202,10 +1226,78 @@ let the_module = (function() {
         case DT_CONTAINER:
             refreshContainersContent(forceRefreshImg, zoomOut);
             break;
+        case DT_TEXT:
+            refreshAllTextContent();
+            break;
         case DT_ALL_WINDOWS:
             refreshAllWindowsContent(forceRefreshImg, zoomOut);
             break;
         }
+    }
+
+
+    function renderAllTextLane() {
+        return `
+            <div class="content-title-bar">
+              <span class="content-title">all tabs by text</span>
+              <span class="error-display">
+                <i class="icon icon-cross" style="margin-top:-0.15rem;"></i>
+                <span class="error-msg"></span>
+              </span>
+            </div>
+            <div class="all-text-lane">
+              <div class="tab-text-tree"></div>
+            </div>
+        `;
+    }
+
+    function refreshAllTextContent() {
+        let html = renderTabTextTree();                                     // unsafe text are left out.
+        $(".all-text-lane .tab-text-tree").html(html);
+        refreshTabTextAttributes();                                         // fill in the unsafe text using escaped API.
+    }
+
+    function renderTabTextTree() {
+        return `${ windowIds.map( wid => 
+                    {
+                        let effectiveTids = effectiveWindowTids(wid);
+                        return effectiveTids.length == 0 ? "" : renderTabTextOfWindow(wid, effectiveTids);
+                    }).join("\n") 
+                }`;
+    }
+
+    function renderTabTextOfWindow(wid, effectiveTids) {
+        let w = windowById[wid];
+        return `
+            <div class="tabtext-window" data-wid="${wid}">Window: <span class="tabtext-window-title">PLACEHOLDER:w.title</span> </div>
+            <div class="tabtext-tabs">
+                ${ effectiveTids.map( tid => renderTabTextOfTab(tid) ).join("\n") }
+            </div>
+        `;
+    }
+
+    function renderTabTextOfTab(tid) {
+        let tab = tabById[tid];
+        return `
+            <div class="tabtext-tab-line" data-tid="${tid}">
+                <img  class="tabtext-tab-favicon" src="PLACEHOLDER:tab.favIconUrl">
+                <a class="tabtext-tab-title" href="javascript:void(0)" >PLACEHOLDER:tab.title</a>
+            </div>
+        `;
+    }
+
+    function refreshTabTextAttributes() {
+        $(".tab-text-tree .tabtext-window").each(function(){
+            let wid = $(this).data("wid");
+            $(this).find(".tabtext-window-title").text(windowById[wid].title);
+        });
+        
+        $(".tab-text-tree .tabtext-tab-line").each(function(){
+            let tid = $(this).data("tid");
+            let tab = tabById[tid];
+            $(this).find(".tabtext-tab-favicon").attr("src", tabById[tid].favIconUrl);
+            $(this).find(".tabtext-tab-title"  ).text(tab.title).addClass(tab.active ? "bold" : "");
+        });
     }
     
     function renderAllTabLane() {
@@ -1735,6 +1827,8 @@ let the_module = (function() {
             break;
         case DT_CONTAINER:
             setupDragAndDropForDT_Container();
+            break;
+        case DT_TEXT:
             break;
         case DT_ALL_WINDOWS:
             break;
@@ -2542,6 +2636,8 @@ let the_module = (function() {
     }
 
     function activateTab(tab) {
+        if (!tab)
+            return;                     // tab could have been closed.
         previousFocusedTid = tab.id;
         browser.tabs.update(tab.id, { active: true }).then( () => browser.windows.update(tab.windowId, {focused: true}) );
     }
