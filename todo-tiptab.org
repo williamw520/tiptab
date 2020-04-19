@@ -6,8 +6,8 @@
 ** DONE Garbage collect old cached thumbnails.
 ** DONE Click on anywhere in a window section should activate the window.
 ** DONE Bigger font for tab title.
-** TODO Text based tab view.
-** TODO Tab tree view based on tab creator.
+** DONE Text based tab view.
+** DONE Tab tree view based on tab creator.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.

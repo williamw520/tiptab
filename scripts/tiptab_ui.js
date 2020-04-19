@@ -971,7 +971,7 @@ let the_module = (function() {
             effectiveContainerTids(cookieStoreId).forEach( tid => refreshThumbnail(tid, false) );
             break;
         case DT_TEXT:
-            refreshAllTextContent(false, false);
+            refreshAllTextContent();
             break;
         }
         setupDragAndDrop();
@@ -1269,19 +1269,23 @@ let the_module = (function() {
 
     function renderTabTextOfWindow(wid, effectiveTids) {
         let w = windowById[wid];
+        let indentStack = [];
         return `
             <div class="tabtext-window" data-wid="${wid}">Window: <span class="tabtext-window-title">PLACEHOLDER:w.title</span> </div>
             <div class="tabtext-tabs">
-                ${ effectiveTids.map( tid => renderTabTextOfTab(tid) ).join("\n") }
+                ${ effectiveTids.map( tid => renderTabTextOfTab(tid, indentStack) ).join("\n") }
             </div>
         `;
     }
 
-    function renderTabTextOfTab(tid) {
+    function renderTabTextOfTab(tid, indentStack) {
         let tab = tabById[tid];
+        indentStack.popUntil(tab.openerTabId).push(tab.id);
+        let indent = indentStack.length - 1;
+        let margin = (indent * 1.4) + "rem";
         return `
             <div class="tabtext-tab-line" data-tid="${tid}">
-                <img  class="tabtext-tab-favicon" src="PLACEHOLDER:tab.favIconUrl">
+                <img  class="tabtext-tab-favicon" src="PLACEHOLDER:tab.favIconUrl" style="margin-left: ${margin}">
                 <a class="tabtext-tab-title" href="javascript:void(0)" >PLACEHOLDER:tab.title</a>
             </div>
         `;

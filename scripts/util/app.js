@@ -74,6 +74,7 @@ let the_module = (function() {
     if (typeof AP.second != "function")     AP.second   = function() { return this.length > 1 ? this[1] : null };
     if (typeof AP.third != "function")      AP.third    = function() { return this.length > 2 ? this[2] : null };
     if (typeof AP.last != "function")       AP.last     = function() { return this.length > 0 ? this[this.length - 1] : null };
+    if (typeof AP.popUntil != "function")   AP.popUntil = function(x){ this.length = this.lastIndexOf(x) + 1; return this };
 
     app.arrayMove   = function(array, from, to) { array.splice(to, 0, array.splice(from, 1)[0]); return array };
     app.flatten     = function(array)           { return [].concat.apply([], array) };
