@@ -73,6 +73,13 @@
     --status-bar-opacity:   0.7;
 }
 
+:root {
+    /* Customize the browser's scrollbar.
+    /* scrollbar-color: rgb(210,210,210) rgb(46,54,69) !important; */
+    scrollbar-width:    auto;
+}
+
+
 html {
     /* font-size controls the root em (rem) unit size.  Set this to control the size of all components. */
     font-size:      16px;
@@ -458,7 +465,7 @@ a.disabled {
 .header-bar {
     position:       fixed;
     height:         var(--header-height);
-    width:          100%;
+    width:          100vw;                  /* use 100% viewport to avoid the scrollbar changing the width. */
     padding:        0;
     background:     #fdfdfd;
     border-bottom:  0.02rem solid #b0b0b0;
@@ -541,7 +548,7 @@ a.disabled {
     width:          var(--left-pane-width);
     top:            var(--header-height);
     left:           0;
-    z-index:        1;
+    z-index:        1000;
     overflow-x:     hidden; /* Disable horizontal scroll */
     overflow-y:     hidden; /* Disable vertical scroll */
 }
