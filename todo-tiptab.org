@@ -10,7 +10,9 @@
 ** DONE Tab tree view based on tab creator.
 ** DONE Remove filtered by window and filtered by container at the footer.
 ** DONE Add show-empty-window and show-empty-container command to sidebar.
-** TODO Move filtered by Hidden/muted/pinned from footer to header.
+** DONE Move filtered by hidden/muted/pinned from footer to header.
+** DONE Simplify show/hide the hidden/muted/pinned filter.
+** TODO Add filtered by audio playing.
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Minimize windows.
 ** TODO Minimize containers.

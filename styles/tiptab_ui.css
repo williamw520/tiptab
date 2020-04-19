@@ -195,17 +195,17 @@ body {
     display:        none;
 }
 
-/* Modify the badge for footer-btn */
-.badge.footer-btn[data-badge]::after {
+/* Modify the badge for btn-img */
+.badge.btn-img[data-badge]::after {
     /* background:     #4f9fef; */
     background:     rgba(232, 86, 0, .9);
     font-size:      .5rem;
     min-width:      0.7rem;
     height:         0.7rem;
 }
-.badge.footer-btn:not([data-badge])::after,
-.badge.footer-btn[data-badge=""]::after,
-.deselected.badge.footer-btn[data-badge]::after {
+.badge.btn-img:not([data-badge])::after,
+.badge.btn-img[data-badge=""]::after,
+.deselected.badge.btn-img[data-badge]::after {
     display:        none;
 }
 
@@ -504,32 +504,14 @@ a.disabled {
     flex-direction: row;
     align-items:    center;
 }
-.btn.footer-btn {
+
+.btn.btn-img {
     height:         1.3rem;
     width:          1.4rem;
     padding:        0;
     line-height:    0;
-    margin-left:    0.4rem;
-    margin-right:   0.4rem;
-    margin-top:     0.2rem;
 }
-
-.footer-bar .status-filter-btns {
-    display:        flex;
-    flex-direction: row;
-    align-items:    center;
-}
-.cmd-filter-by-hidden img {
-    margin-top:     1px;
-    width:          14px;
-    height:         14px;
-}
-.cmd-filter-by-muted img {
-    margin-top:     0px;
-    width:          14px;
-    height:         14px;
-}
-.cmd-filter-by-pinned img {
+.btn.btn-img img {
     margin-top:     1px;
     width:          14px;
     height:         14px;
