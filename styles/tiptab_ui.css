@@ -518,7 +518,7 @@ a.disabled {
 }
 
 .v-container {
-    height:         100vh;
+    height:         100%;
     width:          100%;
     display:        flex;
     flex-direction: column;
@@ -529,13 +529,21 @@ a.disabled {
     display:        flex;       /* start the inner h-container */
     flex-direction: row;
     padding-top:    var(--header-height);
+    height:         100%;
 }
 .h-container .mid-pane {
     flex:           1;
+    margin-left:    var(--left-pane-width);
 }
 .h-container .left-pane {
-    order:          -1;         /* put the nav on the left */
-    flex:           0 0 var(--left-pane-width);
+    position:       fixed;      /* fixed position at left */
+    height:         100%;
+    width:          var(--left-pane-width);
+    top:            var(--header-height);
+    left:           0;
+    z-index:        1;
+    overflow-x:     hidden; /* Disable horizontal scroll */
+    overflow-y:     hidden; /* Disable vertical scroll */
 }
 .h-container .right-pane {
     flex:           0 0 var(--right-pane-width);
