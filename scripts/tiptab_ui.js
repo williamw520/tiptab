@@ -261,8 +261,8 @@ let the_module = (function() {
         uiState.displayType = state.displayType || DT_ALL_TABS;
         uiState.searchTerms = state.searchTerms || [];
         uiState.thumbnailSize = state.thumbnailSize || 0;
-        uiState.windowsHiddenByUser = state.windowsHiddenByUser || {};          // a flag means the window is deselected.
-        uiState.containersHiddenByUser = state.containersHiddenByUser || {};    // a flag means the container is deselected.
+        uiState.windowsMinimized = state.windowsMinimized || {};                // a flag means the window is minimized.
+        uiState.containerMinimized = state.containerMinimized || {};            // a flag means the container is minimized.
         uiState.filterByHidden = state.filterByHidden || 0;
         uiState.filterByMuted = state.filterByMuted || 0;
         uiState.filterByPinned = state.filterByPinned || 0;
@@ -511,8 +511,6 @@ let the_module = (function() {
         $("body").on("focus", "[tabindex]:not([disabled]):not([tabindex='-1'])", function(){ previousFocusedTid = $(this).data("tid")               });
 
         // Footer command handlers
-        $(".footer-bar").on("click", ".cmd-filter-by-window",   function(){ toggleFilterByWindow($(this).data("wid"))                               });
-        $(".footer-bar").on("click", ".cmd-filter-by-container",function(){ toggleFilterByContainer($(this).data("cid"))                            });
         $(".footer-bar").on("click", ".cmd-filter-by-hidden",   function(){ toggleFilterByStatus("filterByHidden")                                  });
         $(".footer-bar").on("click", ".cmd-filter-by-muted",    function(){ toggleFilterByStatus("filterByMuted")                                   });
         $(".footer-bar").on("click", ".cmd-filter-by-pinned",   function(){ toggleFilterByStatus("filterByPinned")                                  });
@@ -779,12 +777,12 @@ let the_module = (function() {
     function redrawFooterControls() {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
+            break;
         case DT_WINDOW:
+            break;
         case DT_TEXT:
-            redrawWindowFooterBtns();
             break;
         case DT_CONTAINER:
-            redrawContainerFooterBtns();
             break;
         }
     }
@@ -805,12 +803,12 @@ let the_module = (function() {
         
         switch (uiState.displayType) {
         case DT_ALL_TABS:
+            break;
         case DT_WINDOW:
+            break;
         case DT_TEXT:
-            refreshWindowFooterBtns();
             break;
         case DT_CONTAINER:
-            refreshContainerFooterBtns();
             break;
         }
     }
@@ -1079,9 +1077,7 @@ let the_module = (function() {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
         case DT_WINDOW:
-            return !app.boolVal(uiState.windowsHiddenByUser, tab.windowId);
         case DT_CONTAINER:
-            return !app.boolVal(uiState.containersHiddenByUser, tab.cookieStoreId);
         case DT_TEXT:
             break;
         }
@@ -1395,7 +1391,7 @@ let the_module = (function() {
 
     function showHideWindowLane(wid) {
         let windowTids = effectiveWindowTids(wid);
-        let isVisible = !app.boolVal(uiState.windowsHiddenByUser, wid) && (ttSettings.showEmptyWindows || windowTids.length > 0);
+        let isVisible = (ttSettings.showEmptyWindows || windowTids.length > 0);
         let $window_lane = $(".window-lane[data-wid='" + wid + "']");
         if (isVisible)
             $window_lane.removeClass("d-none");
@@ -1418,38 +1414,6 @@ let the_module = (function() {
 
     function removeWindowLane(wid) {
         $(".window-lane[data-wid='" + wid + "']").animate({ height: 0 }, 600, function(){ $(this).remove() });
-    }
-
-    function redrawWindowFooterBtns() {
-        $(".window-filter-btns").html(
-            `${ windowIds.map( wid => windowById[wid] ).map( w => `
-                <button class="cmd-filter-by-window btn footer-btn badge" data-wid="${w.id}" data-badge="${CHAR_CHECKMARK}" tabindex="-1"></button>
-                ` ).join("\n") }`
-        );
-    }
-
-    function refreshWindowFooterBtns() {
-        windowIds.map( wid => windowById[wid] ).forEach( w => {
-            $(".cmd-filter-by-window[data-wid='" + w.id + "']")
-                .attr("title", "Filter by window: " + w.title).text(titleLetter(w.title))
-                .removeClass("deselected").addClass(app.boolVal(uiState.windowsHiddenByUser, w.id) ? "" : "deselected");
-        });
-    }
-
-    function redrawContainerFooterBtns() {
-        $(".window-filter-btns").html(
-            `${ containerIds.map( cid => containerById[cid] ).map( c => `
-                <button class="cmd-filter-by-container btn footer-btn badge" data-cid="${c.cookieStoreId}" data-badge="${CHAR_CHECKMARK}" style="color: ${c.colorCode}" tabindex="-1"></button>
-                ` ).join("\n") }`
-        );
-    }
- 
-    function refreshContainerFooterBtns() {
-        containerIds.map( cid => containerById[cid] ).forEach( c => {
-            $(".cmd-filter-by-container[data-cid='" + c.cookieStoreId + "']")
-                .attr("title", "Filter by container: " + c.name).text(titleLetter(c.name))
-                .removeClass("deselected").addClass(uiState.containersHiddenByUser[c.cookieStoreId] ? "" : "deselected");
-        });
     }
 
     function titleLetter(title, defaultLetter) {
@@ -1541,7 +1505,7 @@ let the_module = (function() {
 
     function showHideContainerLane(cid) {
         let containerTids = effectiveContainerTids(cid);
-        let isVisible = !uiState.containersHiddenByUser[cid] && (ttSettings.showEmptyContainers || containerTids.length > 0);
+        let isVisible = (ttSettings.showEmptyContainers || containerTids.length > 0);
         let $container_lane = $(".container-lane[data-cid='" + cid + "']");
         if (isVisible)
             $container_lane.removeClass("d-none");
@@ -2535,20 +2499,6 @@ let the_module = (function() {
         browser.tabs.get(tid).then( tab => browser.tabs.update(tab.id, { pinned: !tab.pinned }) );
     }
 
-
-    function toggleFilterByWindow(wid) {
-        uiState.windowsHiddenByUser[wid] = !app.boolVal(uiState.windowsHiddenByUser, wid);
-        dSaveUiState();
-        refreshFooterControls();
-        redrawRefreshContentOnFiltering();
-    }
-
-    function toggleFilterByContainer(cid) {
-        uiState.containersHiddenByUser[cid] = !app.boolVal(uiState.containersHiddenByUser, cid);
-        dSaveUiState();
-        refreshFooterControls();
-        redrawRefreshContentOnFiltering();
-    }
 
     function toggleFilterByStatus(fieldNameOfFilterBy) {
         uiState[fieldNameOfFilterBy] = ((uiState[fieldNameOfFilterBy] || 0) + 1) % 3;
