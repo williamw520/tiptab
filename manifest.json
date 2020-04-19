@@ -9,7 +9,7 @@
     "applications": {
         "gecko": {
             "id": "tiptab@william.wong",
-            "strict_min_version": "61.0"
+            "strict_min_version": "67.0"
         }
     },
 
