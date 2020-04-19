@@ -1357,12 +1357,12 @@ let the_module = (function() {
                         <li class="divider"></li>
                         <li class="menu-item" title="Copy titles and Urls of tabs in window"> <a href="#" class="cmd-copy-w-title-url nowrap">Copy Titles & Urls</a> </li>
                         <li class="divider"></li>
-                        <li class="menu-item" title="Show tabs in window">  <a href="#" class="cmd-show-w-all nowrap">Show Tabs</a> </li>
-                        <li class="menu-item" title="Hide tabs in window">  <a href="#" class="cmd-hide-w-all nowrap">Hide Tabs</a> </li>
                         <li class="menu-item" title="Mute tabs in window">  <a href="#" class="cmd-mute-w-all nowrap">Mute Tabs</a> </li>
                         <li class="menu-item" title="Unmute tabs in window"><a href="#" class="cmd-unmute-w-all nowrap">Unmute Tabs</a> </li>
                         <li class="menu-item" title="Pin tabs in window">   <a href="#" class="cmd-pin-w-all nowrap">Pin Tabs</a> </li>
                         <li class="menu-item" title="Unpin tabs in window"> <a href="#" class="cmd-unpin-w-all nowrap">Unpin Tabs</a> </li>
+                        <li class="menu-item" title="Show tabs in window">  <a href="#" class="cmd-show-w-all nowrap">Show Tabs</a> </li>
+                        <li class="menu-item" title="Hide tabs in window">  <a href="#" class="cmd-hide-w-all nowrap">Hide Tabs</a> </li>
                         <li class="divider"></li>
                         <li class="menu-item" title="Close tabs in window"> <a href="#" class="cmd-close-w-tabs nowrap">Close All Tabs</a> </li>
                       </ul>
@@ -1585,9 +1585,9 @@ let the_module = (function() {
                   <a href="#" class="btn dropdown-toggle tab-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
                   <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
                     <li class="menu-item"> <a href="#" class="cmd-reload-tab    nowrap">Reload Tab</a> </li>
-                    <li class="menu-item"> <a href="#" class="cmd-toggle-hidden nowrap">Show/Hide Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-toggle-muted  nowrap">Mute/Unmute Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-toggle-pinned nowrap">Pin/Unpin Tab</a> </li>
+                    <li class="menu-item"> <a href="#" class="cmd-toggle-hidden nowrap">Show/Hide Tab</a> </li>
                     <li class="menu-item"> <a href="#" class="cmd-discard-tab   nowrap">Discard Tab</a> </li>
                     <li class="divider"></li>
                     <li class="menu-item"> <a href="#" class="cmd-duplicate-tab nowrap">Duplicate Tab</a> </li>
@@ -1609,10 +1609,10 @@ let the_module = (function() {
               <div class="tab-status-bar">
                 <a href="#" class="btn status-private"      tabindex="-1" title="Tab is in a private window"><img src="icons/eyepatch.png" ></a>
                 <a href="#" class="btn status-container"    tabindex="-1" title="CONTAINER-NAME" style="background: ${c.colorCode}"><img src="${c.iconUrl}"></a>
-                <a href="#" class="btn status-hidden"       tabindex="-1" title="Tab is hidden"><img src="icons/hide-hidden.png"    ></a>
                 <a href="#" class="btn status-muted"        tabindex="-1" title="Tab is muted" ><img src="icons/mute-muted.png"     ></a>
                 <a href="#" class="btn status-audible"      tabindex="-1" title="Tab is playing sound"><img src="icons/audible.png" ></a>
                 <a href="#" class="btn status-pinned"       tabindex="-1" title="Tab is pinned"><img src="icons/pin-unpinned.png"   ></a>
+                <a href="#" class="btn status-hidden"       tabindex="-1" title="Tab is hidden"><img src="icons/hide-hidden.png"    ></a>
               </div>
 
               <div class="tabbox-arc ${ttSettings.thumbnailPopup ? '' : 'hidden'}"></div>
@@ -1647,9 +1647,9 @@ let the_module = (function() {
 
     function refreshTabMenu(tab) {
         let $tab = $tabbox(tab.id);
-        $tab.find(".cmd-toggle-hidden"  ).text((tab.hidden   ? "Show" : "Hide") + " Tab").removeClass("disabled").addClass(tab.active ? "disabled" : "");
         $tab.find(".cmd-toggle-pinned"  ).text((tab.pinned   ? "Unpin" : "Pin") + " Tab");
         $tab.find(".cmd-toggle-muted"   ).text((isMuted(tab) ? "Unmute" : "Mute") + " Tab");
+        $tab.find(".cmd-toggle-hidden"  ).text((tab.hidden   ? "Show" : "Hide") + " Tab").removeClass("disabled").addClass(tab.active ? "disabled" : "");
     }
 
     function refreshTabStatusBar(tab) {
