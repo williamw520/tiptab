@@ -83,9 +83,10 @@ let the_module = (function() {
     // Chars
     const CHAR_CHECKMARK = "&#x2713;";
 
-    const ICON_MUTED  = ["icons/mute-all.png", "icons/mute-muted.png",  "icons/mute-unmuted.png"];
-    const ICON_PINNED = ["icons/pin-all.png",  "icons/pin-pinned.png",  "icons/pin-unpinned.png"];
-    const ICON_HIDDEN = ["icons/hide-all.png", "icons/hide-hidden.png", "icons/hide-shown.png"];
+    const ICON_MUTED    = ["icons/mute-all.png", "icons/mute-muted.png",  "icons/mute-unmuted.png"];
+    const ICON_PINNED   = ["icons/pin-all.png",  "icons/pin-pinned.png",  "icons/pin-unpinned.png"];
+    const ICON_HIDDEN   = ["icons/hide-all.png", "icons/hide-hidden.png", "icons/hide-shown.png"];
+    const ICON_AUDIBLE  = ["icons/audio-all.png", "icons/audio-audible.png", "icons/audio-inaudible.png"];
 
     // Module variables.
     let tiptabWindowActive = true;  // setupDOMListeners() is called too late after the window has been in focus.  Assume window is active on startup.
@@ -269,6 +270,7 @@ let the_module = (function() {
         uiState.filterByMuted = state.filterByMuted || 0;
         uiState.filterByPinned = state.filterByPinned || 0;
         uiState.filterByHidden = state.filterByHidden || 0;
+        uiState.filterByAudible = state.filterByAudible || 0;
 
         uiState.savedSearch = (state.savedSearch && app.isArray(state.savedSearch)) ? state.savedSearch : [];
         if (uiState.savedSearch.length < MAX_SAVED_SEARCHES) {
@@ -515,6 +517,7 @@ let the_module = (function() {
         $("body").on("focus", "[tabindex]:not([disabled]):not([tabindex='-1'])", function(){ previousFocusedTid = $(this).data("tid")               });
 
         // Footer command handlers
+        $(".header-bar").on("click", ".cmd-filter-by-audible",  function(){ toggleFilterByStatus("filterByAudible")                                 });
         $(".header-bar").on("click", ".cmd-filter-by-muted",    function(){ toggleFilterByStatus("filterByMuted")                                   });
         $(".header-bar").on("click", ".cmd-filter-by-pinned",   function(){ toggleFilterByStatus("filterByPinned")                                  });
         $(".header-bar").on("click", ".cmd-filter-by-hidden",   function(){ toggleFilterByStatus("filterByHidden")                                  });
@@ -799,13 +802,10 @@ let the_module = (function() {
     }
 
     function refreshHeaderControls() {
-        log.info(uiState.filterByMuted);
-        // $(".cmd-filter-by-muted").toggleClass("active", uiState.filterByMuted != 0);
-        // $(".cmd-filter-by-pinned").toggleClass("active", uiState.filterByPinned != 0);
-        // $(".cmd-filter-by-hidden").toggleClass("active", uiState.filterByHidden != 0);
-        $(".cmd-filter-by-muted img" ).attr("src", ICON_MUTED[uiState.filterByMuted]);
-        $(".cmd-filter-by-pinned img").attr("src", ICON_PINNED[uiState.filterByPinned]);
-        $(".cmd-filter-by-hidden img").attr("src", ICON_HIDDEN[uiState.filterByHidden]);
+        $(".cmd-filter-by-audible img").attr("src", ICON_AUDIBLE[uiState.filterByAudible]);
+        $(".cmd-filter-by-muted img"  ).attr("src", ICON_MUTED[uiState.filterByMuted]);
+        $(".cmd-filter-by-pinned img" ).attr("src", ICON_PINNED[uiState.filterByPinned]);
+        $(".cmd-filter-by-hidden img" ).attr("src", ICON_HIDDEN[uiState.filterByHidden]);
 
         $(".cmd-drag-mode").removeClass("btn-link").addClass(dragSelectionMode ? "" : "btn-link");
         $(".cmd-drag-mode").attr("data-badge", dragSelectionMode ? "+" : "");
@@ -1097,10 +1097,11 @@ let the_module = (function() {
     }
 
     function matchTabByFilteringStatus(tab) {
-        let filteringEnabled = (uiState.filterByMuted == 1 || uiState.filterByPinned == 1 || uiState.filterByHidden == 1);
+        let filteringEnabled = (uiState.filterByAudible == 1 || uiState.filterByMuted == 1 || uiState.filterByPinned == 1 || uiState.filterByHidden == 1);
         if (!filteringEnabled)
             return true;
-        return  (uiState.filterByMuted  == 1 && isMuted(tab)) ||
+        return  (uiState.filterByAudible == 1 && tab.audible) ||
+                (uiState.filterByMuted  == 1 && isMuted(tab)) ||
                 (uiState.filterByPinned == 1 && tab.pinned) ||
                 (uiState.filterByHidden == 1 && tab.hidden)
     }
@@ -1159,7 +1160,7 @@ let the_module = (function() {
             $("#empty-content").removeClass("hidden");
             if (countTabs() > 0) {
                 $("#empty-title").text("");
-                $("#empty-msg1").text("Tabs are hidden due to filtering by search or by tab's muted/pinned/hidden status.");
+                $("#empty-msg1").text("Tabs are hidden due to filtering by search or by tab's audible/muted/pinned/hidden status.");
                 $("#empty-msg2").text("");
             } else {
                 $("#empty-title").text("No tab.");

@@ -12,7 +12,7 @@
 ** DONE Add show-empty-window and show-empty-container command to sidebar.
 ** DONE Move filtered by hidden/muted/pinned from footer to header.
 ** DONE Simplify show/hide the hidden/muted/pinned filter.
-** TODO Add filtered by audio playing.
+** DONE Add filtering tab by audio playing.
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Minimize windows.
 ** TODO Minimize containers.
