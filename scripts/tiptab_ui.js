@@ -261,6 +261,9 @@ let the_module = (function() {
         uiState.displayType = state.displayType || DT_ALL_TABS;
         uiState.searchTerms = state.searchTerms || [];
         uiState.thumbnailSize = state.thumbnailSize || 0;
+        uiState.showEmptyWindows = state.showEmptyWindows || false;
+        uiState.showEmptyContainers = state.showEmptyContainers || true;
+        // TODO: minimized windows and containers.
         uiState.windowsMinimized = state.windowsMinimized || {};                // a flag means the window is minimized.
         uiState.containerMinimized = state.containerMinimized || {};            // a flag means the container is minimized.
         uiState.filterByHidden = state.filterByHidden || 0;
@@ -461,6 +464,7 @@ let the_module = (function() {
         $(".v-btn-bar").on("click", ".cmd-small-size",          function(){ setThumbnailSize(0)                             });
         $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                             });
         $(".v-btn-bar").on("click", ".cmd-large-size",          function(){ setThumbnailSize(2)                             });
+        $(".v-btn-bar").on("click", ".cmd-show-empty",          function(){ toggleShowEmpty()                               });
 
         $("#main-content").on("click", ".error-close",          function(){ hideErrorMsg()                                  });
 
@@ -772,6 +776,13 @@ let the_module = (function() {
         if (uiState.thumbnailSize == 0) {   $(".cmd-small-size").addClass("active")     }
         if (uiState.thumbnailSize == 1) {   $(".cmd-medium-size").addClass("active")    }
         if (uiState.thumbnailSize == 2) {   $(".cmd-large-size").addClass("active")     }
+
+        if (is_by_window()) {
+            $(".cmd-show-empty").toggleClass("active", uiState.showEmptyWindows);
+        }
+        if (is_by_container()) {
+            $(".cmd-show-empty").toggleClass("active", uiState.showEmptyContainers);
+        }
     }
 
     function redrawFooterControls() {
@@ -1391,7 +1402,7 @@ let the_module = (function() {
 
     function showHideWindowLane(wid) {
         let windowTids = effectiveWindowTids(wid);
-        let isVisible = (ttSettings.showEmptyWindows || windowTids.length > 0);
+        let isVisible = (uiState.showEmptyWindows || windowTids.length > 0);
         let $window_lane = $(".window-lane[data-wid='" + wid + "']");
         if (isVisible)
             $window_lane.removeClass("d-none");
@@ -1505,7 +1516,7 @@ let the_module = (function() {
 
     function showHideContainerLane(cid) {
         let containerTids = effectiveContainerTids(cid);
-        let isVisible = (ttSettings.showEmptyContainers || containerTids.length > 0);
+        let isVisible = (uiState.showEmptyContainers || containerTids.length > 0);
         let $container_lane = $(".container-lane[data-cid='" + cid + "']");
         if (isVisible)
             $container_lane.removeClass("d-none");
@@ -1723,9 +1734,11 @@ let the_module = (function() {
         return browser.tabs.captureTab(tid, CAPTURE_OPTS).then( thumbnail => {
             thumbnailsMap[tid] = thumbnail;
             thumbnailsCapturing[tid] = false;
-            db.pSaveTabImage(tabById[tid].url, thumbnail);
+            db.pSaveTabImage(tabById[tid].url, thumbnail).catch( e => {
+                log.error("db.pSaveTabImage error: ", e);
+            });
         }).catch( e => {
-            log.error("captureTab error or pSaveTabImage error: ", e);
+            log.error("captureTab error: ", e);
             thumbnailsCapturing[tid] = false;
         });
     }
@@ -2276,6 +2289,24 @@ let the_module = (function() {
         setImgDimension(imgWidth[uiState.thumbnailSize], imgHeight[uiState.thumbnailSize]);
         refreshVBtnBarControls();
         redrawRefreshUIContent(false, false);
+    }
+
+    function toggleShowEmpty() {
+        switch (uiState.displayType) {
+        case DT_WINDOW:
+            uiState.showEmptyWindows = !uiState.showEmptyWindows;
+            redrawRefreshControls();
+            redrawRefreshUIContent(false, false);
+            asyncSaveUiStateNow();
+            break;
+        case DT_CONTAINER:
+            uiState.showEmptyContainers = !uiState.showEmptyContainers;
+            redrawRefreshControls();
+            redrawRefreshUIContent(false, false);
+            asyncSaveUiStateNow();
+            break;
+        }
+        
     }
 
     function duplicateTab(tid) {

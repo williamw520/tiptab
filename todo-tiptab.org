@@ -9,6 +9,11 @@
 ** DONE Text based tab view.
 ** DONE Tab tree view based on tab creator.
 ** DONE Remove filtered by window and filtered by container at the footer.
+** DONE Add show-empty-window and show-empty-container command to sidebar.
+** TODO Move filtered by Hidden/muted/pinned from footer to header.
+** TODO Add status line at footer.  Show window/tab counts and filtering action result.
+** TODO Minimize windows.
+** TODO Minimize containers.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.

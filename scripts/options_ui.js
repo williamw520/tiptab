@@ -75,8 +75,6 @@ let the_module = (function() {
     function refreshSettings() {
         $("#thumbnailPopup").prop("checked", ttSettings.thumbnailPopup);
         $("#openInNewWindow").prop("checked", ttSettings.openInNewWindow);
-        $("#showEmptyWindows").prop("checked", ttSettings.showEmptyWindows);
-        $("#showEmptyContainers").prop("checked", ttSettings.showEmptyContainers);
         $("#realtimeUpdateThumbnail").prop("checked", ttSettings.realtimeUpdateThumbnail);
 
         $("#thumbnailWidth0").val(ttSettings.thumbnailWidth0);
@@ -105,8 +103,6 @@ let the_module = (function() {
         // Input handlers
         $("#thumbnailPopup").on("change",           function(){ ttSettings.thumbnailPopup = this.checked; updateChanges() });
         $("#openInNewWindow").on("change",          function(){ ttSettings.openInNewWindow = this.checked; updateChanges() });
-        $("#showEmptyWindows").on("change",         function(){ ttSettings.showEmptyWindows = this.checked; updateChanges() });
-        $("#showEmptyContainers").on("change",      function(){ ttSettings.showEmptyContainers = this.checked; updateChanges() });
         $("#realtimeUpdateThumbnail").on("change",  function(){ ttSettings.realtimeUpdateThumbnail = this.checked; updateChanges() });
 
         $("#thumbnailWidth0").on("input",           function(){ ttSettings.thumbnailWidth0  = $(this).val(); updateChanges() });

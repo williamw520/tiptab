@@ -1168,3 +1168,14 @@ a.disabled {
     margin-left:        0.2rem;
     padding:            0 0.2rem 0 0.0rem;
 }
+
+
+.icon-my-rbox::after {
+  border: .1rem solid currentColor;
+  border-radius: .2rem;
+  height: 1em;
+  width: 1em;
+  left: 47%;
+  top: 41%;
+}
+

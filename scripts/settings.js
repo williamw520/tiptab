@@ -67,8 +67,8 @@ let the_module = (function() {
         _newVersion1() {
             this._version               = 1;
             this.thumbnailPopup         = true;
-            this.showEmptyWindows       = false;
-            this.showEmptyContainers    = true;
+            this.showEmptyWindows       = false;        // deprecated
+            this.showEmptyContainers    = true;         // deprecated
             this.realtimeUpdateThumbnail= true;
             this.enableCustomHotKey     = true;
             this.appHotKey = "";
