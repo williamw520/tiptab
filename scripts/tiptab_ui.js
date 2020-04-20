@@ -88,6 +88,11 @@ let the_module = (function() {
     const ICON_HIDDEN   = ["icons/hide-all.png", "icons/hide-hidden.png", "icons/hide-shown.png"];
     const ICON_AUDIBLE  = ["icons/audio-all.png", "icons/audio-audible.png", "icons/audio-inaudible.png"];
 
+    // Tab style for display
+    const TS_IMAGE      = 0;
+    const TS_TEXT       = 1;
+    const TS_CMD_ICONS  = ["icon-my-ts-img", "icon-menu"];
+
     // Module variables.
     let tiptabWindowActive = true;  // setupDOMListeners() is called too late after the window has been in focus.  Assume window is active on startup.
     let ttSettings = TipTabSettings.ofLatest();
@@ -259,11 +264,12 @@ let the_module = (function() {
         let uiState = {};
 
         state = state || {};
+        uiState.showTabStyle = state.showTabStyle || TS_IMAGE;
         uiState.displayType = state.displayType || DT_ALL_TABS;
         uiState.searchTerms = state.searchTerms || [];
         uiState.thumbnailSize = state.thumbnailSize || 0;
-        uiState.showEmptyWindows = state.showEmptyWindows || false;
-        uiState.showEmptyContainers = state.showEmptyContainers || true;
+        uiState.showEmptyWindows    = app.defObjVal(state, "showEmptyWindows", false);
+        uiState.showEmptyContainers = app.defObjVal(state, "showEmptyContainers", true);
         // TODO: minimized windows and containers.
         uiState.windowsMinimized = state.windowsMinimized || {};                // a flag means the window is minimized.
         uiState.containerMinimized = state.containerMinimized || {};            // a flag means the container is minimized.
@@ -458,6 +464,7 @@ let the_module = (function() {
         $(".logo").on("click",                                  showAboutDlg);
 
         // Commands on v-btn-bar
+        $(".v-btn-bar").on("click", ".cmd-tab-style",           function(){ toggleTabStyle()                                });
         $(".v-btn-bar").on("click", ".cmd-all-tabs",            function(){ selectDisplayType(DT_ALL_TABS)                  });
         $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_WINDOW)                    });
         $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_CONTAINER)                 });
@@ -533,7 +540,7 @@ let the_module = (function() {
 
         // Events on the tabtext view
         $("#main-content").on("click", ".tabtext-window",       function(){ activateWindow($(this).data("wid"))                                     });
-        $("#main-content").on("click", ".tabtext-tab-line",     function(e){ activateTid($(this).data("tid")); return stopEvent(e);                 });
+        $("#main-content").on("click", ".tabtext-tab",          function(e){ activateTid($(this).data("tid")); return stopEvent(e);                 });
 
         
         // Command containers cancel/stop event propagation
@@ -770,6 +777,8 @@ let the_module = (function() {
     }
 
     function refreshVBtnBarControls() {
+        $(".cmd-tab-style").toggleClass("active", uiState.showTabStyle == TS_TEXT);
+
         displayTypes.forEach( dt => $(".cmd-" + dt).removeClass("active") );
         $(".cmd-" + uiState.displayType).addClass("active");
 
@@ -812,7 +821,6 @@ let the_module = (function() {
     }
 
     function refreshFooterControls() {
-
         switch (uiState.displayType) {
         case DT_ALL_TABS:
             break;
@@ -969,7 +977,7 @@ let the_module = (function() {
         //resetDragAndDrop();
         switch (uiState.displayType) {
         case DT_ALL_TABS:
-            refreshAllTabsContent(false, false);
+            refreshAllTabsContentWithImages(false, false);
             effectiveTabIds.forEach( tid => refreshThumbnail(tid, false) );     // not force recapturing image
             break;
         case DT_WINDOW:
@@ -1190,12 +1198,20 @@ let the_module = (function() {
 
         switch (uiState.displayType) {
         case DT_ALL_TABS:
-            $mainContent.html(renderAllTabLane());
+            if (uiState.showTabStyle == TS_IMAGE) {
+                $mainContent.html(renderAllTabLaneInImage());
+            } else {
+                $mainContent.html(renderTextLane("all tabs in text"));
+            }
             break;
         case DT_WINDOW:
-            $mainContent.html(renderWindowLanes());         // unsafe text are left out.
-            refreshWindowsText(windowIds);                  // fill in the unsafe text of the objects using html-escaped API.
-            showHideWindowLanes();
+            if (uiState.showTabStyle == TS_IMAGE) {
+                $mainContent.html(renderWindowLanes());         // unsafe text are left out.
+                refreshWindowsText(windowIds);                  // fill in the unsafe text of the objects using html-escaped API.
+                showHideWindowLanes();
+            } else {
+                $mainContent.html(renderTextLane("window tabs in text"));
+            }
             break;
         case DT_CONTAINER:
             $mainContent.html(renderContainerLanes());      // unsafe text are left out.
@@ -1203,7 +1219,7 @@ let the_module = (function() {
             showHideContainerLanes();
             break;
         case DT_TEXT:
-            $mainContent.html(renderAllTextLane());
+            $mainContent.html(renderTextLane("all tabs in text"));
             break;
         case DT_ALL_WINDOWS:
             renderAllWindows();
@@ -1217,16 +1233,24 @@ let the_module = (function() {
     function refreshContent(forceRefreshImg, zoomOut) {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
-            refreshAllTabsContent(forceRefreshImg, zoomOut);
+            if (uiState.showTabStyle == TS_IMAGE) {
+                refreshAllTabsContentWithImages(forceRefreshImg, zoomOut);
+            } else {
+                refreshAllTabsContentWithText();
+            }
             break;
         case DT_WINDOW:
-            refreshWindowsContent(forceRefreshImg, zoomOut);
+            if (uiState.showTabStyle == TS_IMAGE) {
+                refreshWindowsContentWithImages(forceRefreshImg, zoomOut);
+            } else {
+                refreshWindowContentWithText();
+            }
             break;
         case DT_CONTAINER:
             refreshContainersContent(forceRefreshImg, zoomOut);
             break;
         case DT_TEXT:
-            refreshAllTextContent();
+            refreshWindowContentWithText();
             break;
         case DT_ALL_WINDOWS:
             refreshAllWindowsContent(forceRefreshImg, zoomOut);
@@ -1235,28 +1259,40 @@ let the_module = (function() {
     }
 
 
-    function renderAllTextLane() {
+    function renderTextLane(title) {
         return `
             <div class="content-title-bar">
-              <span class="content-title">all tabs by text</span>
+              <span class="content-title">${title}</span>
               <span class="error-display">
                 <i class="icon icon-cross" style="margin-top:-0.15rem;"></i>
                 <span class="error-msg"></span>
               </span>
             </div>
-            <div class="all-text-lane">
-              <div class="tab-text-tree"></div>
+            <div class="tabtext-tree"></div>
+        `;
+    }
+
+    function refreshAllTabsContentWithText() {
+        $(".tabtext-tree").html(renderTabTextForAllTabs());     // unsafe text are left out.
+        refreshTabTextTabAttributes();                          // fill in the unsafe text using escaped API.
+    }
+    
+    function refreshWindowContentWithText() {
+        $(".tabtext-tree").html(renderTabTextForWindows());     // unsafe text are left out.
+        refreshTabTextWindowAttributes();                       // fill in the unsafe text using escaped API.
+        refreshTabTextTabAttributes();                          // fill in the unsafe text using escaped API.
+    }
+
+    function renderTabTextForAllTabs() {
+        return `
+            <div class="tabtext-alltabs"> Tabs of all windows </div>
+            <div class="ml-6">
+                ${ renderTabTextTabs(effectiveTabIds, false) }
             </div>
         `;
     }
 
-    function refreshAllTextContent() {
-        let html = renderTabTextTree();                                     // unsafe text are left out.
-        $(".all-text-lane .tab-text-tree").html(html);
-        refreshTabTextAttributes();                                         // fill in the unsafe text using escaped API.
-    }
-
-    function renderTabTextTree() {
+    function renderTabTextForWindows() {
         return `${ windowIds.map( wid => 
                     {
                         let effectiveTids = effectiveWindowTids(wid);
@@ -1267,35 +1303,45 @@ let the_module = (function() {
 
     function renderTabTextOfWindow(wid, effectiveTids) {
         let w = windowById[wid];
-        let indentStack = [];
         return `
             <div class="tabtext-window" data-wid="${wid}">Window: <span class="tabtext-window-title">PLACEHOLDER:w.title</span> </div>
-            <div class="tabtext-tabs">
-                ${ effectiveTids.map( tid => renderTabTextOfTab(tid, indentStack) ).join("\n") }
+            <div class="ml-6">
+                ${ renderTabTextTabs(effectiveTids, true) }
             </div>
         `;
     }
 
-    function renderTabTextOfTab(tid, indentStack) {
+    function renderTabTextTabs(effectiveTids, indentEnabled) {
+        let indentStack = [];
+        return `
+            <div class="tabtext-tabs">
+                ${ effectiveTids.map( tid => renderTabTextTab(tid, indentStack, indentEnabled) ).join("\n") }
+            </div>
+        `;
+    }
+
+    function renderTabTextTab(tid, indentStack, indentEnabled) {
         let tab = tabById[tid];
         indentStack.popUntil(tab.openerTabId).push(tab.id);
         let indent = indentStack.length - 1;
-        let margin = (indent * 1.4) + "rem";
+        let margin = indentEnabled ? (indent * 1.4) + "rem" : "0rem";
         return `
-            <div class="tabtext-tab-line" data-tid="${tid}">
+            <div class="tabtext-tab" data-tid="${tid}">
                 <img  class="tabtext-tab-favicon" src="PLACEHOLDER:tab.favIconUrl" style="margin-left: ${margin}">
                 <a class="tabtext-tab-title" href="javascript:void(0)" >PLACEHOLDER:tab.title</a>
             </div>
         `;
     }
 
-    function refreshTabTextAttributes() {
-        $(".tab-text-tree .tabtext-window").each(function(){
+    function refreshTabTextWindowAttributes() {
+        $(".tabtext-window").each(function(){
             let wid = $(this).data("wid");
             $(this).find(".tabtext-window-title").text(windowById[wid].title);
         });
-        
-        $(".tab-text-tree .tabtext-tab-line").each(function(){
+    }
+    
+    function refreshTabTextTabAttributes() {
+        $(".tabtext-tab").each(function(){
             let tid = $(this).data("tid");
             let tab = tabById[tid];
             $(this).find(".tabtext-tab-favicon").attr("src", tabById[tid].favIconUrl);
@@ -1303,10 +1349,10 @@ let the_module = (function() {
         });
     }
     
-    function renderAllTabLane() {
+    function renderAllTabLaneInImage() {
         return `
             <div class="content-title-bar">
-              <span class="content-title">all tabs</span>
+              <span class="content-title">all tabs in image</span>
               <span class="error-display">
                 <i class="icon icon-cross" style="margin-top:-0.15rem;"></i>
                 <span class="error-msg"></span>
@@ -1318,7 +1364,7 @@ let the_module = (function() {
         `;
     }
 
-    function refreshAllTabsContent(forceRefreshImg, zoomOut) {
+    function refreshAllTabsContentWithImages(forceRefreshImg, zoomOut) {
         let tabs = toTabs(effectiveTabIds);
         let html = renderTabGrid(tabs);                                     // unsafe text are left out.
         $(".all-tab-lane .tab-grid").html(html);
@@ -1333,7 +1379,7 @@ let the_module = (function() {
     function renderWindowLanes() {
         return `
             <div class="content-title-bar">
-              <span class="content-title">tabs by window</span>
+              <span class="content-title">window tabs in image</span>
               <span class="error-display">
                 <i class="icon icon-cross" style="margin-top:-0.15rem;"></i>
                 <span class="error-msg"></span>
@@ -1423,7 +1469,7 @@ let the_module = (function() {
     }
 
 
-    function refreshWindowsContent(forceRefreshImg, zoomOut) {
+    function refreshWindowsContentWithImages(forceRefreshImg, zoomOut) {
         windowIds.forEach( wid => refreshWindowTabs(wid) );
 
         effectiveTabIds.forEach( tid => refreshThumbnail(tid, forceRefreshImg) );
@@ -2258,6 +2304,13 @@ let the_module = (function() {
                     },
                     {},
                     ".modal-submit");
+    }
+
+    function toggleTabStyle() {
+        uiState.showTabStyle = ((uiState.showTabStyle || 0) + 1) % 2;       // 0 or 1
+        redrawRefreshControls();
+        redrawRefreshUIContent(false, false);
+        asyncSaveUiStateNow();
     }
 
     function selectDisplayType(displayType) {
