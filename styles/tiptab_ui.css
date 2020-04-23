@@ -1149,6 +1149,11 @@ a.disabled {
 .tabtext-window:hover {
     background:         #efefef;
 }
+.tabtext-container {
+    border-top:         .05rem solid #cccccc;
+    border-bottom:      .05rem solid #cccccc;
+    padding:            0.0rem 0.5rem 0.0rem 0.5rem;
+}
 .tabtext-tabs {
     padding:            0.4rem 0 1.0rem 0rem;
 }

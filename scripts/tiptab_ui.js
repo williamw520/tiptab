@@ -48,14 +48,10 @@ let the_module = (function() {
     const DT_ALL_TABS = "all-tabs";
     const DT_WINDOW = "by-window";
     const DT_CONTAINER = "by-container";
-    const DT_TEXT = "by-text";
-    const DT_ALL_WINDOWS = "all-windows"
-    const displayTypes = [DT_ALL_TABS, DT_WINDOW, DT_CONTAINER, DT_TEXT, DT_ALL_WINDOWS];
+    const displayTypes = [DT_ALL_TABS, DT_WINDOW, DT_CONTAINER];
     function is_all_tabs()      { return uiState.displayType == DT_ALL_TABS }
     function is_by_window()     { return uiState.displayType == DT_WINDOW }
     function is_by_container()  { return uiState.displayType == DT_CONTAINER }
-    function is_by_text()       { return uiState.displayType == DT_TEXT }
-    function is_all_windows()   { return uiState.displayType == DT_ALL_WINDOWS }
 
     // Overlay animation parameters
     const NOT_MOVING_THRESHOLD = 4000;
@@ -395,7 +391,7 @@ let the_module = (function() {
     function updateWindowTitle(tab) {
         if (tab.active) {
             windowById[tab.windowId].title = tab.title;
-            refreshWindowText(windowById[tab.windowId]);
+            fillWindowText(windowById[tab.windowId]);
         }
     }
 
@@ -468,8 +464,6 @@ let the_module = (function() {
         $(".v-btn-bar").on("click", ".cmd-all-tabs",            function(){ selectDisplayType(DT_ALL_TABS)                  });
         $(".v-btn-bar").on("click", ".cmd-by-window",           function(){ selectDisplayType(DT_WINDOW)                    });
         $(".v-btn-bar").on("click", ".cmd-by-container",        function(){ selectDisplayType(DT_CONTAINER)                 });
-        $(".v-btn-bar").on("click", ".cmd-by-text",             function(){ selectDisplayType(DT_TEXT)                      });
-        $(".v-btn-bar").on("click", ".cmd-all-windows",         function(){ selectDisplayType(DT_ALL_WINDOWS)               });
         $(".v-btn-bar").on("click", ".cmd-small-size",          function(){ setThumbnailSize(0)                             });
         $(".v-btn-bar").on("click", ".cmd-medium-size",         function(){ setThumbnailSize(1)                             });
         $(".v-btn-bar").on("click", ".cmd-large-size",          function(){ setThumbnailSize(2)                             });
@@ -531,18 +525,15 @@ let the_module = (function() {
 
         // Events on tab thumbnails
         $("#main-content").on("click", ".tab-thumbnail",        onThumbnailClicked);
-        
 
         // Events on the window lane
         $("#main-content").on("click", ".window-topbar",        function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
         $("#main-content").on("click", ".window-lane .tab-grid",function(){ activateWindow($(this).closest(".window-lane").data("wid"))             });
 
-
         // Events on the tabtext view
         $("#main-content").on("click", ".tabtext-window",       function(){ activateWindow($(this).data("wid"))                                     });
         $("#main-content").on("click", ".tabtext-tab",          function(e){ activateTid($(this).data("tid")); return stopEvent(e);                 });
 
-        
         // Command containers cancel/stop event propagation
         $("#main-content").on("click", ".window-topbar-menu, .container-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private",
                                                                 function(e){ return stopEvent(e) });
@@ -777,17 +768,13 @@ let the_module = (function() {
     }
 
     function refreshVBtnBarControls() {
-        $(".cmd-tab-style").toggleClass("active", uiState.showTabStyle == TS_TEXT);
+        let isTextStyle = uiState.showTabStyle == TS_TEXT;
 
-        displayTypes.forEach( dt => $(".cmd-" + dt).removeClass("active") );
-        $(".cmd-" + uiState.displayType).addClass("active");
+        $(".cmd-all-tabs"    ).toggleClass("active", is_all_tabs());
+        $(".cmd-by-window"   ).toggleClass("active", is_by_window());
+        $(".cmd-by-container").toggleClass("active", is_by_container());
 
-        $(".cmd-small-size").removeClass("active");
-        $(".cmd-medium-size").removeClass("active");
-        $(".cmd-large-size").removeClass("active");
-        if (uiState.thumbnailSize == 0) {   $(".cmd-small-size").addClass("active")     }
-        if (uiState.thumbnailSize == 1) {   $(".cmd-medium-size").addClass("active")    }
-        if (uiState.thumbnailSize == 2) {   $(".cmd-large-size").addClass("active")     }
+        $(".cmd-tab-style").toggleClass("active", isTextStyle);
 
         if (is_by_window()) {
             $(".cmd-show-empty").toggleClass("active", uiState.showEmptyWindows);
@@ -795,6 +782,11 @@ let the_module = (function() {
         if (is_by_container()) {
             $(".cmd-show-empty").toggleClass("active", uiState.showEmptyContainers);
         }
+        $(".cmd-show-empty").toggleClass("disabled", isTextStyle);
+
+        $(".cmd-small-size" ).toggleClass("active", (uiState.thumbnailSize == 0)).toggleClass("disabled", isTextStyle);
+        $(".cmd-medium-size").toggleClass("active", (uiState.thumbnailSize == 1)).toggleClass("disabled", isTextStyle);
+        $(".cmd-large-size" ).toggleClass("active", (uiState.thumbnailSize == 2)).toggleClass("disabled", isTextStyle);
     }
 
     function redrawFooterControls() {
@@ -802,8 +794,6 @@ let the_module = (function() {
         case DT_ALL_TABS:
             break;
         case DT_WINDOW:
-            break;
-        case DT_TEXT:
             break;
         case DT_CONTAINER:
             break;
@@ -825,8 +815,6 @@ let the_module = (function() {
         case DT_ALL_TABS:
             break;
         case DT_WINDOW:
-            break;
-        case DT_TEXT:
             break;
         case DT_CONTAINER:
             break;
@@ -988,9 +976,6 @@ let the_module = (function() {
             refreshContainerTabs(cookieStoreId, false);
             effectiveContainerTids(cookieStoreId).forEach( tid => refreshThumbnail(tid, false) );
             break;
-        case DT_TEXT:
-            refreshAllTextContent();
-            break;
         }
         setupDragAndDrop();
     }
@@ -1098,7 +1083,6 @@ let the_module = (function() {
         case DT_ALL_TABS:
         case DT_WINDOW:
         case DT_CONTAINER:
-        case DT_TEXT:
             break;
         }
         return true;
@@ -1196,37 +1180,28 @@ let the_module = (function() {
     function redrawContentLayout() {
         let $mainContent = $("#main-content");
 
-        switch (uiState.displayType) {
-        case DT_ALL_TABS:
-            if (uiState.showTabStyle == TS_IMAGE) {
-                $mainContent.html(renderAllTabLaneInImage());
-            } else {
-                $mainContent.html(renderTextLane("all tabs in text"));
-            }
-            break;
-        case DT_WINDOW:
-            if (uiState.showTabStyle == TS_IMAGE) {
+        if (uiState.showTabStyle == TS_IMAGE) {
+            switch (uiState.displayType) {
+            case DT_ALL_TABS:
+                $mainContent.html(renderAllTabLane());
+                break;
+            case DT_WINDOW:
                 $mainContent.html(renderWindowLanes());         // unsafe text are left out.
-                refreshWindowsText(windowIds);                  // fill in the unsafe text of the objects using html-escaped API.
+                fillWindowsText(windowIds);                     // fill in the unsafe text of the objects using html-escaped API.
                 showHideWindowLanes();
-            } else {
-                $mainContent.html(renderTextLane("window tabs in text"));
+                break;
+            case DT_CONTAINER:
+                $mainContent.html(renderContainerLanes());      // unsafe text are left out.
+                fillContainerText(containerIds);                // fill in the unsafe text of the objects using html-escaped API.
+                showHideContainerLanes();
+                break;
             }
-            break;
-        case DT_CONTAINER:
-            $mainContent.html(renderContainerLanes());      // unsafe text are left out.
-            fillContainerText(containerIds);                // fill in the unsafe text of the objects using html-escaped API.
-            showHideContainerLanes();
-            break;
-        case DT_TEXT:
-            $mainContent.html(renderTextLane("all tabs in text"));
-            break;
-        case DT_ALL_WINDOWS:
-            renderAllWindows();
-            break;
-        default:
-            $mainContent.html("Unknown displayType " + uiState.displayType);
-            break;
+        } else {
+            switch (uiState.displayType) {
+            case DT_ALL_TABS:   $mainContent.html(renderTextLane("all tabs in text"));          break;
+            case DT_WINDOW:     $mainContent.html(renderTextLane("window tabs in text"));       break;
+            case DT_CONTAINER:  $mainContent.html(renderTextLane("container tabs in text"));    break;
+            }
         }
     }
     
@@ -1243,17 +1218,15 @@ let the_module = (function() {
             if (uiState.showTabStyle == TS_IMAGE) {
                 refreshWindowsContentWithImages(forceRefreshImg, zoomOut);
             } else {
-                refreshWindowContentWithText();
+                refreshWindowsContentWithText();
             }
             break;
         case DT_CONTAINER:
-            refreshContainersContent(forceRefreshImg, zoomOut);
-            break;
-        case DT_TEXT:
-            refreshWindowContentWithText();
-            break;
-        case DT_ALL_WINDOWS:
-            refreshAllWindowsContent(forceRefreshImg, zoomOut);
+            if (uiState.showTabStyle == TS_IMAGE) {
+                refreshContainersContentWithImages(forceRefreshImg, zoomOut);
+            } else {
+                refreshContainersContentWithText();
+            }
             break;
         }
     }
@@ -1277,7 +1250,7 @@ let the_module = (function() {
         refreshTabTextTabAttributes();                          // fill in the unsafe text using escaped API.
     }
     
-    function refreshWindowContentWithText() {
+    function refreshWindowsContentWithText() {
         $(".tabtext-tree").html(renderTabTextForWindows());     // unsafe text are left out.
         refreshTabTextWindowAttributes();                       // fill in the unsafe text using escaped API.
         refreshTabTextTabAttributes();                          // fill in the unsafe text using escaped API.
@@ -1349,7 +1322,7 @@ let the_module = (function() {
         });
     }
     
-    function renderAllTabLaneInImage() {
+    function renderAllTabLane() {
         return `
             <div class="content-title-bar">
               <span class="content-title">all tabs in image</span>
@@ -1422,11 +1395,11 @@ let the_module = (function() {
     }
 
     // Use html-escaped API to fill in unsafe text.
-    function refreshWindowsText(windowIds) {
-        windowIds.map( wid => windowById[wid] ).forEach(refreshWindowText);
+    function fillWindowsText(windowIds) {
+        windowIds.map( wid => windowById[wid] ).forEach(fillWindowText);
     }
 
-    function refreshWindowText(w) {
+    function fillWindowText(w) {
         $(".window-lane[data-wid='" + w.id + "'] .window-title")
             .text(w.title)
             .removeClass("bold")
@@ -1452,7 +1425,7 @@ let the_module = (function() {
         if (uiState.displayType == DT_WINDOW) {
             let $mainContent = $("#main-content");
             $mainContent.append(renderWindowLane(win));     // render without the unsafe text.
-            refreshWindowsText([win.id]);                   // fill in the unsafe text of the objects using html-escaped API.
+            fillWindowsText([win.id]);                      // fill in the unsafe text of the objects using html-escaped API.
             let $window_lane = $(".window-lane[data-wid='" + win.id + "']");
             $window_lane.removeClass("d-none");
             redrawFooterControls();
@@ -1561,7 +1534,7 @@ let the_module = (function() {
             $container_lane.removeClass("d-none").addClass("d-none");
     }
 
-    function refreshContainersContent(forceRefreshImg, zoomOut) {
+    function refreshContainersContentWithImages(forceRefreshImg, zoomOut) {
         containerIds.forEach( cid => refreshContainerTabs(cid) );
 
         effectiveTabIds.forEach( tid => refreshThumbnail(tid, forceRefreshImg) );
@@ -1570,6 +1543,12 @@ let the_module = (function() {
         }
     }
 
+    function refreshContainersContentWithText() {
+        $(".tabtext-tree").html(renderTabTextForContainers());  // unsafe text are left out.
+        refreshTabTextContainerAttributes();                    // fill in the unsafe text using escaped API.
+        refreshTabTextTabAttributes();                          // fill in the unsafe text using escaped API.
+    }
+    
     function refreshContainerTabs(cid) {
         let containerTabs = effectiveContainerTabs(cid);
         let $container_lane = $(".container-lane[data-cid='" + cid + "']");
@@ -1580,12 +1559,29 @@ let the_module = (function() {
         }
     }
 
-
-    function renderAllWindows() {
-        return "all windows";
+    function renderTabTextForContainers() {
+        return `${ containerIds.map( cid => 
+                    {
+                        let effectiveTids = effectiveContainerTids(cid);
+                        return effectiveTids.length == 0 ? "" : renderTabTextOfContainer(cid, effectiveTids);
+                    }).join("\n") 
+                }`;
     }
 
-    function refreshAllWindowsContent(forceRefreshImg, zoomOut) {
+    function renderTabTextOfContainer(cid, effectiveTids) {
+        return `
+            <div class="tabtext-container" data-cid="${cid}">Container: <span class="tabtext-container-title">PLACEHOLDER:container.name</span> </div>
+            <div class="ml-6">
+                ${ renderTabTextTabs(effectiveTids, true) }
+            </div>
+        `;
+    }
+
+    function refreshTabTextContainerAttributes() {
+        $(".tabtext-container").each(function(){
+            let cid = $(this).data("cid");
+            $(this).find(".tabtext-container-title").text(containerById[cid].name);
+        });
     }
 
 
@@ -1846,10 +1842,6 @@ let the_module = (function() {
             break;
         case DT_CONTAINER:
             setupDragAndDropForDT_Container();
-            break;
-        case DT_TEXT:
-            break;
-        case DT_ALL_WINDOWS:
             break;
         }
     }

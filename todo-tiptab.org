@@ -2,7 +2,7 @@
 * Feature TODO
 ** DONE Text view for by-all-tabs type.
 ** DONE Text view for by-window type.
-** TODO Text view for by-container type.
+** DONE Text view for by-container type.
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Minimize windows.
 ** TODO Minimize containers.
