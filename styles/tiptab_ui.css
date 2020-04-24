@@ -624,10 +624,25 @@ a.disabled {
     overflow:           hidden;
     text-overflow:      ellipsis;
 }
+.window-topbar-cmds {
+    position:           absolute;
+    top:                var(--lane-topbar-gap);
+    right:              2.5rem;
+    line-height:        0;
+}
+.btn.window-topbar-cmd {
+    width:              var(--lane-btn-width);
+    height:             var(--lane-btn-height);
+    padding:            0 0 0.05rem 0;
+    font-size:          50%;
+    display:            flex;
+    align-items:        center;
+    justify-content:    center;
+}
 .window-topbar-menu {
     position:           absolute;
     top:                var(--lane-topbar-gap);
-    right:              var(--lane-topbar-gap);
+    right:              calc(var(--lane-topbar-gap) + 0.5rem);
     line-height:        0;
 }
 .btn.window-menu-dropdown {

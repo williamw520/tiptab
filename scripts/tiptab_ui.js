@@ -1369,6 +1369,11 @@ let the_module = (function() {
               <div class="window-lane d-none" data-wid="${w.id}" style="${border_color_private(w.incognito)} ${box_shadow_private(w.incognito)}">
                 <div class="window-topbar">
                   <div class="window-title" title="Click to active the window">WINDOW-TITLE</div>
+
+                  <div class="window-topbar-cmds">
+                    <button class="cmd-create-tab btn btn-primary window-topbar-cmd" title="Create tab in the window." tabindex="-1"> <i class="icon icon-plus"></i> </button>
+                  </div>
+
                   <div class="dropdown dropdown-right window-topbar-menu">
                     <div class="btn-group" >
                       <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
@@ -1496,7 +1501,7 @@ let the_module = (function() {
                   <span class="container-name" style="color: ${c.colorCode}">CONTAINER-NAME</span>
                 </div>
 
-                <div class="container-topbar-cmds dbg-bg">
+                <div class="container-topbar-cmds">
                   <button class="cmd-create-c-tab btn btn-primary container-topbar-cmd" title="Create tab in the container." tabindex="-1"> <i class="icon icon-plus"></i> </button>
                 </div>
 
@@ -2380,9 +2385,9 @@ let the_module = (function() {
 
     function pCreateWindowTab(wid) {
         return browser.tabs.create({
-            active:     false,
+            active:     true,
             windowId:   wid,
-        });
+        }).then( tab => activateTab(tab) );
     }
 
     function createContainerTab(cid) {
