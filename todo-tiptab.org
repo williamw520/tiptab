@@ -3,7 +3,7 @@
 ** DONE Saved search items are saved immediately.  Changes can be undone until Done button is clicked.
 ** TODO Minimize windows.
 ** TODO Minimize containers.
-** TODO Create tab command button in a container.
+** DONE Create tab command button in a container.
 ** TODO Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Drag and drop multiple tabs across containers.

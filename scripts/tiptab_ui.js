@@ -1496,6 +1496,10 @@ let the_module = (function() {
                   <span class="container-name" style="color: ${c.colorCode}">CONTAINER-NAME</span>
                 </div>
 
+                <div class="container-topbar-cmds dbg-bg">
+                  <button class="cmd-create-c-tab btn btn-primary container-topbar-cmd" title="Create tab in the container." tabindex="-1"> <i class="icon icon-plus"></i> </button>
+                </div>
+
                 <div class="dropdown dropdown-right container-topbar-menu">
                   <div class="btn-group" >
                     <a href="#" class="btn btn-primary dropdown-toggle container-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
