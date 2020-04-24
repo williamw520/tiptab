@@ -3,6 +3,7 @@
 ** DONE Text view for by-all-tabs type.
 ** DONE Text view for by-window type.
 ** DONE Text view for by-container type.
+** DONE Saved search items are saved immediately.  Changes can be undone until Done button is clicked.
 ** TODO Minimize windows.
 ** TODO Minimize containers.
 ** TODO Create tab command button in a container.
@@ -245,17 +246,18 @@ The following 3rd party libraries are used in this extension.  The versions and 
 
 Tip Tab let you manage and navigate the open browser tabs visually, similar to the Exposé feature on Mac OS.
 
-NOTE: Starting from version 2.3, Tip Tab requires Firefox 61, to support the hidden tab feature.
+NOTE: Starting from version 2.15, Tip Tab requires Firefox 67, to utilize the ES6 module feature.
 
 <b>Feature Highlight:</b>
 <ul>
-  <li> Visual tab navigation with mouse.
-  <li> Visual tab navigation with keyboard (with tab/enter or hotkey).
+  <li> Visual tab navigation.
+  <li> Textual tab navigation.
+  <li> Visual/textual tab navigation with keyboard.
   <li> Tab preview on popup.
-  <li> Custom sizes of tab thumbnails.
   <li> Showing tabs by all, by windows, or by containers.
-  <li> Search tabs.  Filter by search words in titles.
-  <li> Filter tabs by windows or by containers.  Filter by status (hidden, muted, pinned).
+  <li> Search tabs by searching words in titles.
+  <li> Filter tabs by status (audible, muted, pinned, hidden).
+  <li> Save search keywords to build pre-set tab filters.
   <li> Showing tab attributes with decoration, colors, and status icons.
   <li> Tab commands: reload, hide, mute, pin, copy, screenshot download, various flavors of close commands, etc.
   <li> Window commands, applying to all the tabs in a window.
@@ -265,6 +267,7 @@ NOTE: Starting from version 2.3, Tip Tab requires Firefox 61, to support the hid
   <li> Drag and drop to copy tabs across different domains (containers and private windows).
   <li> Live sync of outside tab events and window events (create, move, close, etc).
   <li> Live sync of website navigation on tab.
+  <li> Custom sizes of tab thumbnails.
   <li> Custom hot key.
   <li> Options page.
 </ul>

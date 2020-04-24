@@ -103,7 +103,8 @@ let the_module = (function() {
     let tiptapTid;                  // the current TipTab's tab id
     let currentLastActiveTabId = 0; // the previous active tab on the current window.
     let previousFocusedTid = 0;
-    let searchSaving = false;
+    let searchSavingMode = false;
+    let oldSavedSearch = null;
     let dragSelectionMode = false;
 
     let uiState = {};
@@ -540,9 +541,9 @@ let the_module = (function() {
         // Search handler
         $(".cmd-search").on("click",                            function(){ $(this).select()                                                        });
         $(".cmd-search").on("keyup paste",                      function(){ searchTabs($(this).val())                                               });
-        $(".cmd-clear-search").on("click",                      function(){ $(".cmd-search").val("").select(); searchTabs("")                       });
+        $(".cmd-clear-search").on("click",                      function(){ $(".cmd-search").val("").select();  searchTabs("")                      });
         $(".cmd-search-save").on("click",                       function(){ toggleSearchSaving()                                                    });
-        $(".cmd-search-save-cancel").on("click",                function(){ endSearchSaving()                                                       });
+        $(".cmd-search-save-undo").on("click",                  function(){ undoSearchSaving()                                                      });
         $("#saved-search").on("click", ".btn-saved-search",     function(){ handleSavedSearch($(this))                                              });
 
         $(window).focus(function(){
@@ -2692,34 +2693,42 @@ let the_module = (function() {
     }
 
     function toggleSearchSaving() {
-        if (searchSaving) {
-            // done searchSaving
-            // Save the temporarily stored search text in the button to uiState.
-            for (let i = 0; i < MAX_SAVED_SEARCHES; i++) {
-                uiState.savedSearch[i] = $("#saved-search .btn-saved-search").eq(i).text();
-            }
+        if (searchSavingMode) {
+            // stop searchSaving
             endSearchSaving();
         } else {
             // start searchSaving
-            searchSaving = true;
+            searchSavingMode = true;
+            oldSavedSearch = uiState.savedSearch.slice();       // clone existing savedSearch for undo.
             showSavedSearchButtonsForSaving();
-            $(".cmd-search-save").attr("title", "Finish saving search button changes");
+            $(".cmd-search-save").attr("title", "Done saving search");
             $(".cmd-search-save i").removeClass("icon-link").addClass("icon-check");
-            $(".cmd-search-save-cancel").removeClass("invisible");
+            $(".cmd-search-save-undo").removeClass("invisible");
         }
     }
 
+    function undoSearchSaving() {
+        if (oldSavedSearch) {
+            uiState.savedSearch = oldSavedSearch;
+            asyncSaveUiStateNow();
+        }
+        endSearchSaving();
+    }
+
     function endSearchSaving() {
-        searchSaving = false;
+        searchSavingMode = false;
+        oldSavedSearch = null;
         redrawSavedSearches();
         $(".cmd-search-save i").removeClass("icon-check").addClass("icon-link");
-        $(".cmd-search-save-cancel").addClass("invisible");
+        $(".cmd-search-save-undo").addClass("invisible");
     }
  
     function handleSavedSearch($btn) {
         let index = $btn.index();
-        if (searchSaving) {
-            $btn.text($(".cmd-search").val());  // save the search text in the button's text temporarily.
+        if (searchSavingMode) {
+            uiState.savedSearch[index] = $(".cmd-search").val();    // save the search right the way.
+            dSaveUiState();
+            $btn.text(uiState.savedSearch[index]);
         } else {
             let txt = uiState.savedSearch[index] || "";
             $(".cmd-search").val(txt).select();
