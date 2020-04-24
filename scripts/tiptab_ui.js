@@ -2387,16 +2387,16 @@ let the_module = (function() {
         let existingWid = tabs.length > 0 ? tabs[0].windowId : null;
         if (existingWid) {
             browser.tabs.create({
-                active:         false,
+                active:         true,
                 windowId:       existingWid,
                 cookieStoreId:  cid,
-            });
+            }).then( tab => activateTab(tab) );
         } else {
             pCreateWindow(is_firefox_private(cid)).then( w => browser.tabs.create({
-                active:         false,
+                active:         true,
                 windowId:       w.id,
                 cookieStoreId:  cid,
-            }) ).then( ()   => pRefocusTiptap() );
+            }) ).then( tab => activateTab(tab) );
         }
     }
 

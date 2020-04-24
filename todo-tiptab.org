@@ -1,8 +1,5 @@
 
 * Feature TODO
-** DONE Text view for by-all-tabs type.
-** DONE Text view for by-window type.
-** DONE Text view for by-container type.
 ** DONE Saved search items are saved immediately.  Changes can be undone until Done button is clicked.
 ** TODO Minimize windows.
 ** TODO Minimize containers.
@@ -26,6 +23,9 @@
 - Filtering tabs by audio playing.
 - Show thumbnails of discarded tabs using old cached images.
 ** Changes
+- Text view for by-all-tabs type.
+- Text view for by-window type.
+- Text view for by-container type.
 - Migration to ES6 module system.
 - Use thumbnails cached in database to draw discarded tabs.
 - Clean up permission usage.  Remove unneeded permissions.
