@@ -148,7 +148,6 @@ let the_module = (function() {
             .then(() => db.pOpenDB() )
             .then(() => pGetCurrnetTab() )
             .then(() => pGetCurrentLastActiveTab() )
-            .then(() => generateUILayout() )
             .then(() => pLoadUiState() )
             .then(() => refreshStaticUI() )     // for the UI that need to be set up before setting up the DOM listeners.
             .then(() => setupDOMListeners() )
@@ -267,9 +266,8 @@ let the_module = (function() {
         uiState.thumbnailSize = state.thumbnailSize || 0;
         uiState.showEmptyWindows    = app.defObjVal(state, "showEmptyWindows", false);
         uiState.showEmptyContainers = app.defObjVal(state, "showEmptyContainers", true);
-        // TODO: minimized windows and containers.
-        uiState.windowsMinimized = state.windowsMinimized || {};                // a flag means the window is minimized.
-        uiState.containerMinimized = state.containerMinimized || {};            // a flag means the container is minimized.
+        uiState.windowsMinimized = state.windowsMinimized || {};                // a true flag means the window is minimized.
+        uiState.containersMinimized = state.containersMinimized || {};          // a true flag means the container is minimized.
         uiState.filterByMuted = state.filterByMuted || 0;
         uiState.filterByPinned = state.filterByPinned || 0;
         uiState.filterByHidden = state.filterByHidden || 0;
@@ -472,7 +470,11 @@ let the_module = (function() {
 
         $("#main-content").on("click", ".error-close",          function(){ hideErrorMsg()                                  });
 
-        // Window command handlers.  Event propagation stopped by .window-topbar-menu.
+        // Window topbar command handlers.
+        $("#main-content").on("click", ".cmd-minimize-win",     function(){ minimizeWindowLane($(this).closest(".window-lane").data("wid"))         });
+        $("#main-content").on("click", ".cmd-restore-win",      function(){ restoreWindowLane($(this).closest(".window-lane").data("wid"))          });
+        
+        // Window command handlers.  Event propagation stopped by .lane-topbar-cmds.
         $("#main-content").on("click", ".cmd-reload-w-tabs",    function(){ reloadWindowTabs($(this).closest(".window-lane").data("wid"))           });
         $("#main-content").on("click", ".cmd-create-tab",       function(){ pCreateWindowTab($(this).closest(".window-lane").data("wid"))           });
         $("#main-content").on("click", ".cmd-copy-w-title-url", function(){ copyWindowTabTitleUrls($(this).closest(".window-lane").data("wid"))     });
@@ -484,7 +486,11 @@ let the_module = (function() {
         $("#main-content").on("click", ".cmd-unpin-w-all",      function(){ pinWindowTabs($(this).closest(".window-lane").data("wid"), false)       });
         $("#main-content").on("click", ".cmd-close-w-tabs",     function(){ pCloseWindowTabs($(this).closest(".window-lane").data("wid"))           });
 
-        // Container command handlers.  Event propagation stopped by .container-topbar-menu.
+        // Container topbar command handlers.
+        $("#main-content").on("click", ".cmd-minimize-c",       function(){ minimizeContainerLane($(this).closest(".container-lane").data("cid"))   });
+        $("#main-content").on("click", ".cmd-restore-c",        function(){ restoreContainerLane($(this).closest(".container-lane").data("cid"))    });
+        
+        // Container command handlers.  Event propagation stopped by .lane-topbar-cmds.
         $("#main-content").on("click", ".cmd-reload-c-tabs",    function(){ reloadContainerTabs($(this).closest(".container-lane").data("cid"))     });
         $("#main-content").on("click", ".cmd-create-c-tab",     function(){ createContainerTab($(this).closest(".container-lane").data("cid"))      });
         $("#main-content").on("click", ".cmd-group-c-tabs",     function(){ groupContainerTab($(this).closest(".container-lane").data("cid"))       });
@@ -536,7 +542,7 @@ let the_module = (function() {
         $("#main-content").on("click", ".tabtext-tab",          function(e){ activateTid($(this).data("tid")); return stopEvent(e);                 });
 
         // Command containers cancel/stop event propagation
-        $("#main-content").on("click", ".window-topbar-menu, .container-topbar-menu, .tab-topbar-menu, .tab-topbar-cmds, .status-private",
+        $("#main-content").on("click", ".tab-topbar-menu, .tab-topbar-cmds, .status-private, .lane-topbar-cmds",
                                                                 function(e){ return stopEvent(e) });
         // Search handler
         $(".cmd-search").on("click",                            function(){ $(this).select()                                                        });
@@ -739,9 +745,6 @@ let the_module = (function() {
         });
     }
 
-
-    function generateUILayout() {
-    }
 
     function refreshStaticUI() {
         // log.info("refreshStaticUI");
@@ -1189,12 +1192,12 @@ let the_module = (function() {
             case DT_WINDOW:
                 $mainContent.html(renderWindowLanes());         // unsafe text are left out.
                 fillWindowsText(windowIds);                     // fill in the unsafe text of the objects using html-escaped API.
-                showHideWindowLanes();
+                refreshWindowControlsOnLanes();
                 break;
             case DT_CONTAINER:
                 $mainContent.html(renderContainerLanes());      // unsafe text are left out.
                 fillContainerText(containerIds);                // fill in the unsafe text of the objects using html-escaped API.
-                showHideContainerLanes();
+                refreshContainerControlsOnLanes();
                 break;
             }
         } else {
@@ -1370,30 +1373,33 @@ let the_module = (function() {
                 <div class="window-topbar">
                   <div class="window-title" title="Click to active the window">WINDOW-TITLE</div>
 
-                  <div class="window-topbar-cmds">
-                    <button class="cmd-create-tab btn btn-primary window-topbar-cmd" title="Create tab in the window." tabindex="-1"> <i class="icon icon-plus"></i> </button>
+                  <div class="lane-topbar-cmds">
+                    <button class="cmd-create-tab   btn btn-link lane-topbar-cmd mr-4" title="Create tab in the window" tabindex="-1"> <i class="icon icon-plus"></i> </button>
+                    <button class="cmd-minimize-win btn btn-link lane-topbar-cmd mr-4" title="Minimize this panel" tabindex="-1"> <i class="icon icon-arrow-up"></i> </button>
+                    <button class="cmd-restore-win  btn btn-link lane-topbar-cmd mr-4" title="Restore this panel"  tabindex="-1"> <i class="icon icon-arrow-down"></i> </button>
+                    <div class="dropdown dropdown-right">
+                      <div class="btn-group" >
+                        <a href="#" class="btn btn-link dropdown-toggle lane-menu-dropdown" tabindex="-1"><i class="icon icon-menu"></i></a>
+                        <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
+                          <li class="menu-item" title="Reload tabs in window"><a href="#" class="cmd-reload-w-tabs nowrap">Reload Tabs</a> </li>
+                          <li class="menu-item" title="Create tab in window"> <a href="#" class="cmd-create-tab nowrap">Create Tab</a> </li>
+                          <li class="divider"></li>
+                          <li class="menu-item" title="Copy titles and Urls of tabs in window"> <a href="#" class="cmd-copy-w-title-url nowrap">Copy Titles & Urls</a> </li>
+                          <li class="divider"></li>
+                          <li class="menu-item" title="Mute tabs in window">  <a href="#" class="cmd-mute-w-all nowrap">Mute Tabs</a> </li>
+                          <li class="menu-item" title="Unmute tabs in window"><a href="#" class="cmd-unmute-w-all nowrap">Unmute Tabs</a> </li>
+                          <li class="menu-item" title="Pin tabs in window">   <a href="#" class="cmd-pin-w-all nowrap">Pin Tabs</a> </li>
+                          <li class="menu-item" title="Unpin tabs in window"> <a href="#" class="cmd-unpin-w-all nowrap">Unpin Tabs</a> </li>
+                          <li class="menu-item" title="Show tabs in window">  <a href="#" class="cmd-show-w-all nowrap">Show Tabs</a> </li>
+                          <li class="menu-item" title="Hide tabs in window">  <a href="#" class="cmd-hide-w-all nowrap">Hide Tabs</a> </li>
+                          <li class="divider"></li>
+                          <li class="menu-item" title="Close tabs in window"> <a href="#" class="cmd-close-w-tabs nowrap">Close All Tabs</a> </li>
+                        </ul>
+                      </div>
+                    </div>
+
                   </div>
 
-                  <div class="dropdown dropdown-right window-topbar-menu">
-                    <div class="btn-group" >
-                      <a href="#" class="btn btn-primary dropdown-toggle window-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
-                      <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
-                        <li class="menu-item" title="Reload tabs in window"><a href="#" class="cmd-reload-w-tabs nowrap">Reload Tabs</a> </li>
-                        <li class="menu-item" title="Create tab in window"> <a href="#" class="cmd-create-tab nowrap">Create Tab</a> </li>
-                        <li class="divider"></li>
-                        <li class="menu-item" title="Copy titles and Urls of tabs in window"> <a href="#" class="cmd-copy-w-title-url nowrap">Copy Titles & Urls</a> </li>
-                        <li class="divider"></li>
-                        <li class="menu-item" title="Mute tabs in window">  <a href="#" class="cmd-mute-w-all nowrap">Mute Tabs</a> </li>
-                        <li class="menu-item" title="Unmute tabs in window"><a href="#" class="cmd-unmute-w-all nowrap">Unmute Tabs</a> </li>
-                        <li class="menu-item" title="Pin tabs in window">   <a href="#" class="cmd-pin-w-all nowrap">Pin Tabs</a> </li>
-                        <li class="menu-item" title="Unpin tabs in window"> <a href="#" class="cmd-unpin-w-all nowrap">Unpin Tabs</a> </li>
-                        <li class="menu-item" title="Show tabs in window">  <a href="#" class="cmd-show-w-all nowrap">Show Tabs</a> </li>
-                        <li class="menu-item" title="Hide tabs in window">  <a href="#" class="cmd-hide-w-all nowrap">Hide Tabs</a> </li>
-                        <li class="divider"></li>
-                        <li class="menu-item" title="Close tabs in window"> <a href="#" class="cmd-close-w-tabs nowrap">Close All Tabs</a> </li>
-                      </ul>
-                    </div>
-                  </div>
                 </div>
                 <div class="tab-grid"></div>
               </div>
@@ -1412,11 +1418,12 @@ let the_module = (function() {
             .addClass(w.focused ? "bold" : "");
     }
 
-    function showHideWindowLanes() {
-        windowIds.forEach( wid => showHideWindowLane(wid) );
+    function refreshWindowControlsOnLanes() {
+        windowIds.forEach( wid => refreshWindowControlsOnLane(wid) );
     }
 
-    function showHideWindowLane(wid) {
+    function refreshWindowControlsOnLane(wid) {
+        // show or hide lane.
         let windowTids = effectiveWindowTids(wid);
         let isVisible = (uiState.showEmptyWindows || windowTids.length > 0);
         let $window_lane = $(".window-lane[data-wid='" + wid + "']");
@@ -1424,6 +1431,11 @@ let the_module = (function() {
             $window_lane.removeClass("d-none");
         else
             $window_lane.removeClass("d-none").addClass("d-none");
+
+        // minimize or restore lane.
+        $window_lane.find(".cmd-minimize-win").toggleClass("d-hide", uiState.windowsMinimized[wid] == true);
+        $window_lane.find(".cmd-restore-win" ).toggleClass("d-hide", uiState.windowsMinimized[wid] != true);
+        $window_lane.find(".tab-grid").toggleClass("d-hide", uiState.windowsMinimized[wid] == true);
     }
 
 
@@ -1501,21 +1513,22 @@ let the_module = (function() {
                   <span class="container-name" style="color: ${c.colorCode}">CONTAINER-NAME</span>
                 </div>
 
-                <div class="container-topbar-cmds">
-                  <button class="cmd-create-c-tab btn btn-primary container-topbar-cmd" title="Create tab in the container." tabindex="-1"> <i class="icon icon-plus"></i> </button>
-                </div>
-
-                <div class="dropdown dropdown-right container-topbar-menu">
-                  <div class="btn-group" >
-                    <a href="#" class="btn btn-primary dropdown-toggle container-menu-dropdown" tabindex="-1"><i class="icon icon-caret"></i></a>
-                    <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
-                      <li class="menu-item" title="Reload tabs in container"> <a href="#" class="cmd-reload-c-tabs nowrap">Reload Tabs</a> </li>
-                      <li class="menu-item" title="Create tab in container"> <a href="#" class="cmd-create-c-tab nowrap">Create Tab</a> </li>
-                      <li class="divider"></li>
-                      <li class="menu-item" title="Move all container tabs to its own window"> <a href="#" class="cmd-group-c-tabs nowrap">Group Tabs</a> </li>
-                      <li class="divider"></li>
-                      <li class="menu-item" title="Close all tabs in container"> <a href="#" class="cmd-close-c-tabs nowrap">Close Tabs</a> </li>
-                    </ul>
+                <div class="lane-topbar-cmds">
+                  <button class="cmd-create-c-tab btn btn-link lane-topbar-cmd mr-4" title="Create tab in the container." tabindex="-1"> <i class="icon icon-plus"></i> </button>
+                  <button class="cmd-minimize-c btn btn-link lane-topbar-cmd mr-4" title="Minimize this panel" tabindex="-1"> <i class="icon icon-arrow-up"></i> </button>
+                  <button class="cmd-restore-c  btn btn-link lane-topbar-cmd mr-4 d-hide" title="Restore this panel"  tabindex="-1"> <i class="icon icon-arrow-down"></i> </button>
+                  <div class="dropdown dropdown-right">
+                    <div class="btn-group" >
+                      <a href="#" class="btn btn-link dropdown-toggle lane-menu-dropdown" tabindex="-1"><i class="icon icon-menu"></i></a>
+                      <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
+                        <li class="menu-item" title="Reload tabs in container"> <a href="#" class="cmd-reload-c-tabs nowrap">Reload Tabs</a> </li>
+                        <li class="menu-item" title="Create tab in container"> <a href="#" class="cmd-create-c-tab nowrap">Create Tab</a> </li>
+                        <li class="divider"></li>
+                        <li class="menu-item" title="Move all container tabs to its own window"> <a href="#" class="cmd-group-c-tabs nowrap">Group Tabs</a> </li>
+                        <li class="divider"></li>
+                        <li class="menu-item" title="Close all tabs in container"> <a href="#" class="cmd-close-c-tabs nowrap">Close Tabs</a> </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
@@ -1530,11 +1543,12 @@ let the_module = (function() {
         containerIds.map( cid => containerById[cid] ).forEach( c => $(".container-lane[data-cid='" + c.cookieStoreId + "'] .container-name").text(c.name) );
     }
 
-    function showHideContainerLanes() {
-        containerIds.forEach( cid => showHideContainerLane(cid) );
+    function refreshContainerControlsOnLanes() {
+        containerIds.forEach( cid => refreshContainerControlsOnLane(cid) );
     }
 
-    function showHideContainerLane(cid) {
+    function refreshContainerControlsOnLane(cid) {
+        // show or hide container lane
         let containerTids = effectiveContainerTids(cid);
         let isVisible = (uiState.showEmptyContainers || containerTids.length > 0);
         let $container_lane = $(".container-lane[data-cid='" + cid + "']");
@@ -1542,6 +1556,11 @@ let the_module = (function() {
             $container_lane.removeClass("d-none");
         else
             $container_lane.removeClass("d-none").addClass("d-none");
+
+        // minimize or restore lane.
+        $container_lane.find(".cmd-minimize-c").toggleClass("d-hide", uiState.containersMinimized[cid] == true);
+        $container_lane.find(".cmd-restore-c" ).toggleClass("d-hide", uiState.containersMinimized[cid] != true);
+        $container_lane.find(".tab-grid").toggleClass("d-hide", uiState.containersMinimized[cid] == true);
     }
 
     function refreshContainersContentWithImages(forceRefreshImg, zoomOut) {
@@ -2363,6 +2382,26 @@ let the_module = (function() {
 
     function reloadTab(tid) {
         browser.tabs.reload(tid);
+    }
+
+    function minimizeWindowLane(wid) {
+        uiState.windowsMinimized[wid] = true;
+        refreshWindowControlsOnLane(wid);
+    }
+
+    function restoreWindowLane(wid) {
+        uiState.windowsMinimized[wid] = false;
+        refreshWindowControlsOnLane(wid);
+    }
+
+    function minimizeContainerLane(cid) {
+        uiState.containersMinimized[cid] = true;
+        refreshContainerControlsOnLane(cid);
+    }
+
+    function restoreContainerLane(cid) {
+        uiState.containersMinimized[cid] = false;
+        refreshContainerControlsOnLane(cid);
     }
 
     function reloadWindowTabs(wid) {
