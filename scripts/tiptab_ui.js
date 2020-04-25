@@ -451,7 +451,7 @@ let the_module = (function() {
         // Global menu at the top navbar
         $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage()               });
         $("#global-cmds").on("click", ".cmd-refresh",           pReloadRedrawRefreshContent);
-        $("#global-cmds").on("click", ".cmd-create-window",     function(){ pCreateWindow().then(() => pRefocusTiptap())    });
+        $("#global-cmds").on("click", ".cmd-create-window",     function(){ pCreateWindow().then(w => activateWindow(w.id)) });
         $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                                  });
         $("#global-cmds").on("click", ".cmd-drag-mode",         function(){ toggleDragMode()                                });
         $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(effectiveTabIds, true)                 });
