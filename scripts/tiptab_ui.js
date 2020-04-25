@@ -240,13 +240,12 @@ let the_module = (function() {
     function setupGCTask() {
         setTimeout( () => {
             let nowMS = Date.now();
-            Object.keys(uiState.windowsMinimized)
-                .filter(  key => (nowMS - uiState.windowsMinimized[key]) > minimizedExpirationMS )
-                .forEach( key => delete uiState.windowsMinimized[key] );
-            Object.keys(uiState.containersMinimized)
-                .filter(  key => (nowMS - uiState.containersMinimized[key]) > minimizedExpirationMS )
-                .forEach( key => delete uiState.containersMinimized[key] );
-            dSaveUiState();
+            let wins = Object.keys(uiState.windowsMinimized).filter( key => (nowMS - uiState.windowsMinimized[key]) > minimizedExpirationMS );
+            wins.forEach( key => delete uiState.windowsMinimized[key] );
+            let ctrs = Object.keys(uiState.containersMinimized).filter( key => (nowMS - uiState.containersMinimized[key]) > minimizedExpirationMS );
+            ctrs.forEach( key => delete uiState.containersMinimized[key] );
+            if ( (wins.length + ctrs.length) > 0 )
+                dSaveUiState();
         }, 15*1000);
     }
 
@@ -2404,21 +2403,25 @@ let the_module = (function() {
     function minimizeWindowLane(wid) {
         uiState.windowsMinimized[wid] = Date.now();
         refreshWindowControlsOnLane(wid);
+        dSaveUiState();
     }
 
     function restoreWindowLane(wid) {
         delete uiState.windowsMinimized[wid];
         refreshWindowControlsOnLane(wid);
+        dSaveUiState();
     }
 
     function minimizeContainerLane(cid) {
         uiState.containersMinimized[cid] = Date.now();
         refreshContainerControlsOnLane(cid);
+        dSaveUiState();
     }
 
     function restoreContainerLane(cid) {
         delete uiState.containersMinimized[cid];
         refreshContainerControlsOnLane(cid);
+        dSaveUiState();
     }
 
     function reloadWindowTabs(wid) {
