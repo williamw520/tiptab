@@ -165,6 +165,7 @@ let the_module = (function() {
             .then(() => browser.tabs.onMoved.addListener(tabs_onMoved) )
             .then(() => setupMessageHandlers() )
             .then(() => pHandleFirstAppCmd() )
+            .then(() => setupGCTask() )
             //.then(() => refreshBrowserActionTooltip() )
             //.then(() => log.info("Page initialization done") )
             .then(() => postInit() )
@@ -235,6 +236,20 @@ let the_module = (function() {
         });
     }
 
+    const minimizedExpirationMS = 14 * 24 * 60 * 60 * 1000;
+    function setupGCTask() {
+        setTimeout( () => {
+            let nowMS = Date.now();
+            Object.keys(uiState.windowsMinimized)
+                .filter(  key => (nowMS - uiState.windowsMinimized[key]) > minimizedExpirationMS )
+                .forEach( key => delete uiState.windowsMinimized[key] );
+            Object.keys(uiState.containersMinimized)
+                .filter(  key => (nowMS - uiState.containersMinimized[key]) > minimizedExpirationMS )
+                .forEach( key => delete uiState.containersMinimized[key] );
+            dSaveUiState();
+        }, 15*1000);
+    }
+
     function asyncSaveUiStateNow() {
         //log.info("asyncSaveUiStateNow");
         if (uiState) {
@@ -266,8 +281,8 @@ let the_module = (function() {
         uiState.thumbnailSize = state.thumbnailSize || 0;
         uiState.showEmptyWindows    = app.defObjVal(state, "showEmptyWindows", false);
         uiState.showEmptyContainers = app.defObjVal(state, "showEmptyContainers", true);
-        uiState.windowsMinimized = state.windowsMinimized || {};                // a true flag means the window is minimized.
-        uiState.containersMinimized = state.containersMinimized || {};          // a true flag means the container is minimized.
+        uiState.windowsMinimized    = state.windowsMinimized || {};             // wid:minimized-time, the window is minimized.
+        uiState.containersMinimized = state.containersMinimized || {};          // cid:minimized-time, the container is minimized.
         uiState.filterByMuted = state.filterByMuted || 0;
         uiState.filterByPinned = state.filterByPinned || 0;
         uiState.filterByHidden = state.filterByHidden || 0;
@@ -1433,9 +1448,10 @@ let the_module = (function() {
             $window_lane.removeClass("d-none").addClass("d-none");
 
         // minimize or restore lane.
-        $window_lane.find(".cmd-minimize-win").toggleClass("d-hide", uiState.windowsMinimized[wid] == true);
-        $window_lane.find(".cmd-restore-win" ).toggleClass("d-hide", uiState.windowsMinimized[wid] != true);
-        $window_lane.find(".tab-grid").toggleClass("d-hide", uiState.windowsMinimized[wid] == true);
+        let isMinimized = uiState.windowsMinimized[wid] != undefined;
+        $window_lane.find(".cmd-minimize-win").toggleClass("d-hide", isMinimized);
+        $window_lane.find(".cmd-restore-win" ).toggleClass("d-hide", !isMinimized);
+        $window_lane.find(".tab-grid").toggleClass("d-hide", isMinimized);
     }
 
 
@@ -1558,9 +1574,10 @@ let the_module = (function() {
             $container_lane.removeClass("d-none").addClass("d-none");
 
         // minimize or restore lane.
-        $container_lane.find(".cmd-minimize-c").toggleClass("d-hide", uiState.containersMinimized[cid] == true);
-        $container_lane.find(".cmd-restore-c" ).toggleClass("d-hide", uiState.containersMinimized[cid] != true);
-        $container_lane.find(".tab-grid").toggleClass("d-hide", uiState.containersMinimized[cid] == true);
+        let isMinimized = uiState.containersMinimized[cid] != undefined;
+        $container_lane.find(".cmd-minimize-c").toggleClass("d-hide", isMinimized);
+        $container_lane.find(".cmd-restore-c" ).toggleClass("d-hide", !isMinimized);
+        $container_lane.find(".tab-grid").toggleClass("d-hide", isMinimized);
     }
 
     function refreshContainersContentWithImages(forceRefreshImg, zoomOut) {
@@ -2385,22 +2402,22 @@ let the_module = (function() {
     }
 
     function minimizeWindowLane(wid) {
-        uiState.windowsMinimized[wid] = true;
+        uiState.windowsMinimized[wid] = Date.now();
         refreshWindowControlsOnLane(wid);
     }
 
     function restoreWindowLane(wid) {
-        uiState.windowsMinimized[wid] = false;
+        delete uiState.windowsMinimized[wid];
         refreshWindowControlsOnLane(wid);
     }
 
     function minimizeContainerLane(cid) {
-        uiState.containersMinimized[cid] = true;
+        uiState.containersMinimized[cid] = Date.now();
         refreshContainerControlsOnLane(cid);
     }
 
     function restoreContainerLane(cid) {
-        uiState.containersMinimized[cid] = false;
+        delete uiState.containersMinimized[cid];
         refreshContainerControlsOnLane(cid);
     }
 
