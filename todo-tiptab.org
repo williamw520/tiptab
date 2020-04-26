@@ -1,10 +1,5 @@
 
 * Feature TODO
-** DONE Saved search items are saved immediately.  Changes can be undone until Done button is clicked.
-** DONE Minimize windows.
-** DONE Minimize containers.
-** DONE Create tab command button in a container.
-** DONE Smart Tab Create: Create tab in the container of the current tab, with shortcut support.  Alt+Ctrl+T
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
@@ -16,6 +11,18 @@
 ** TODO Show bookmarks as tab box, with saved thumbnails shown.
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
+
+* Release 2.16
+** Feature
+- Minimize/restore window panels.
+- Minimize/restore container panels.
+- Smart New Tab shortcut Ctrl+Alt+T, or MacCtrl+Command+T on Mac.
+** Changes
+- Saved search items are saved immediately.  Changes can be undone until Done button is clicked.
+- Minimize windows.
+- Minimize containers.
+- Create tab command button in a container.
+- Smart New Tab shortcut - create tab in the container of the current tab, with Ctrl+Alt+T
 
 * Release 2.15
 ** Feature
@@ -270,6 +277,7 @@ NOTE: Starting from version 2.15, Tip Tab requires Firefox 67, to utilize the ES
   <li> Custom sizes of tab thumbnails.
   <li> Custom hot key.
   <li> Options page.
+  <li> Bonus: Smart New Tab shortcut - create a new tab in the container of the current tab, with Ctrl+Alt+T.
 </ul>
 
 <b>Permissions Usage Disclosure:</b>
