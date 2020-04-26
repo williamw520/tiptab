@@ -692,12 +692,6 @@ a.disabled {
     align-items:        center;
     justify-content:    center;
 }
-.container-topbar-menu {
-    position:           absolute;
-    top:                var(--lane-topbar-gap);
-    right:              calc(var(--lane-topbar-gap) + 0.5rem);
-    line-height:        0;
-}
 .btn.container-menu-dropdown {
     width:              var(--lane-btn-width);
     height:             var(--lane-btn-height);

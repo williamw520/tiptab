@@ -1392,7 +1392,7 @@ let the_module = (function() {
                     <button class="cmd-create-tab   btn btn-link lane-topbar-cmd mr-4" title="Create tab in the window" tabindex="-1"> <i class="icon icon-plus"></i> </button>
                     <button class="cmd-minimize-win btn btn-link lane-topbar-cmd mr-4" title="Minimize this panel" tabindex="-1"> <i class="icon icon-arrow-up"></i> </button>
                     <button class="cmd-restore-win  btn btn-link lane-topbar-cmd mr-4" title="Restore this panel"  tabindex="-1"> <i class="icon icon-arrow-down"></i> </button>
-                    <div class="dropdown dropdown-right">
+                    <div class="dropdown dropdown-right window-topbar-menu">
                       <div class="btn-group" >
                         <a href="#" class="btn btn-link dropdown-toggle lane-menu-dropdown" tabindex="-1"><i class="icon icon-menu"></i></a>
                         <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
@@ -1533,7 +1533,7 @@ let the_module = (function() {
                   <button class="cmd-create-c-tab btn btn-link lane-topbar-cmd mr-4" title="Create tab in the container." tabindex="-1"> <i class="icon icon-plus"></i> </button>
                   <button class="cmd-minimize-c btn btn-link lane-topbar-cmd mr-4" title="Minimize this panel" tabindex="-1"> <i class="icon icon-arrow-up"></i> </button>
                   <button class="cmd-restore-c  btn btn-link lane-topbar-cmd mr-4 d-hide" title="Restore this panel"  tabindex="-1"> <i class="icon icon-arrow-down"></i> </button>
-                  <div class="dropdown dropdown-right">
+                  <div class="dropdown dropdown-right container-topbar-menu">
                     <div class="btn-group" >
                       <a href="#" class="btn btn-link dropdown-toggle lane-menu-dropdown" tabindex="-1"><i class="icon icon-menu"></i></a>
                       <ul class="menu" style="min-width: 6rem; margin-top: -2px;">
@@ -2404,25 +2404,25 @@ let the_module = (function() {
     function minimizeWindowLane(wid) {
         uiState.windowsMinimized[wid] = Date.now();
         refreshWindowControlsOnLane(wid);
-        dSaveUiState();
+        asyncSaveUiStateNow();
     }
 
     function restoreWindowLane(wid) {
         delete uiState.windowsMinimized[wid];
         refreshWindowControlsOnLane(wid);
-        dSaveUiState();
+        asyncSaveUiStateNow();
     }
 
     function minimizeContainerLane(cid) {
         uiState.containersMinimized[cid] = Date.now();
         refreshContainerControlsOnLane(cid);
-        dSaveUiState();
+        asyncSaveUiStateNow();
     }
 
     function restoreContainerLane(cid) {
         delete uiState.containersMinimized[cid];
         refreshContainerControlsOnLane(cid);
-        dSaveUiState();
+        asyncSaveUiStateNow();
     }
 
     function toggleMinimize() {
@@ -2434,7 +2434,7 @@ let the_module = (function() {
                 windowIds.forEach( wid => uiState.windowsMinimized[wid] = Date.now() );
             }
             refreshWindowControlsOnLanes();
-            dSaveUiState();
+            asyncSaveUiStateNow();
         } else if (uiState.displayType == DT_CONTAINER) {
             let minimizedCids = containerIds.filter( cid => uiState.containersMinimized[cid] != undefined );
             if (minimizedCids.length > 0) {
@@ -2443,7 +2443,7 @@ let the_module = (function() {
                 containerIds.forEach( cid => uiState.containersMinimized[cid] = Date.now() );
             }
             refreshContainerControlsOnLanes();
-            dSaveUiState();
+            asyncSaveUiStateNow();
         }
     }
 
@@ -2661,7 +2661,7 @@ let the_module = (function() {
 
     function toggleFilterByStatus(fieldNameOfFilterBy) {
         uiState[fieldNameOfFilterBy] = ((uiState[fieldNameOfFilterBy] || 0) + 1) % 2;       // 0 or 1
-        dSaveUiState();
+        asyncSaveUiStateNow();
         refreshHeaderControls();
         refreshFooterControls();
         redrawRefreshContentOnFiltering();
