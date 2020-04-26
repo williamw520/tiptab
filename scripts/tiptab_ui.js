@@ -238,15 +238,15 @@ let the_module = (function() {
 
     const minimizedExpirationMS = 14 * 24 * 60 * 60 * 1000;
     function setupGCTask() {
-        setTimeout( () => {
-            let nowMS = Date.now();
-            let wins = Object.keys(uiState.windowsMinimized).filter( key => (nowMS - uiState.windowsMinimized[key]) > minimizedExpirationMS );
-            wins.forEach( key => delete uiState.windowsMinimized[key] );
-            let ctrs = Object.keys(uiState.containersMinimized).filter( key => (nowMS - uiState.containersMinimized[key]) > minimizedExpirationMS );
-            ctrs.forEach( key => delete uiState.containersMinimized[key] );
-            if ( (wins.length + ctrs.length) > 0 )
-                dSaveUiState();
-        }, 15*1000);
+        // setTimeout( () => {
+        //     let nowMS = Date.now();
+        //     let wins = Object.keys(uiState.windowsMinimized).filter( key => (nowMS - uiState.windowsMinimized[key]) > minimizedExpirationMS );
+        //     wins.forEach( key => delete uiState.windowsMinimized[key] );
+        //     let ctrs = Object.keys(uiState.containersMinimized).filter( key => (nowMS - uiState.containersMinimized[key]) > minimizedExpirationMS );
+        //     ctrs.forEach( key => delete uiState.containersMinimized[key] );
+        //     if ( (wins.length + ctrs.length) > 0 )
+        //         dSaveUiState();
+        // }, 15*1000);
     }
 
     function asyncSaveUiStateNow() {
@@ -466,6 +466,7 @@ let the_module = (function() {
         $("#global-cmds").on("click", ".cmd-create-window",     function(){ pCreateWindow().then(w => activateWindow(w.id)) });
         $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                                  });
         $("#global-cmds").on("click", ".cmd-drag-mode",         function(){ toggleDragMode()                                });
+        $("#global-cmds").on("click", ".cmd-minimize-all",      function(){ toggleMinimize()                                });
         $("#global-cmds").on("click", ".cmd-mute-all",          function(){ muteTabs(effectiveTabIds, true)                 });
         $("#global-cmds").on("click", ".cmd-unmute-all",        function(){ muteTabs(effectiveTabIds, false)                });
         $("#global-cmds").on("click", ".cmd-close-ui",          function(){ pSendCmd({ cmd: "close-ui" })                   });
@@ -2422,6 +2423,28 @@ let the_module = (function() {
         delete uiState.containersMinimized[cid];
         refreshContainerControlsOnLane(cid);
         dSaveUiState();
+    }
+
+    function toggleMinimize() {
+        if (uiState.displayType == DT_WINDOW) {
+            let minimizedWids = windowIds.filter( wid => uiState.windowsMinimized[wid] != undefined );
+            if (minimizedWids.length > 0) {
+                uiState.windowsMinimized = {};
+            } else {
+                windowIds.forEach( wid => uiState.windowsMinimized[wid] = Date.now() );
+            }
+            refreshWindowControlsOnLanes();
+            dSaveUiState();
+        } else if (uiState.displayType == DT_CONTAINER) {
+            let minimizedCids = containerIds.filter( cid => uiState.containersMinimized[cid] != undefined );
+            if (minimizedCids.length > 0) {
+                uiState.containersMinimized = {};
+            } else {
+                containerIds.forEach( cid => uiState.containersMinimized[cid] = Date.now() );
+            }
+            refreshContainerControlsOnLanes();
+            dSaveUiState();
+        }
     }
 
     function reloadWindowTabs(wid) {

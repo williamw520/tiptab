@@ -1216,3 +1216,18 @@ a.disabled {
   top: 41%;
 }
 
+.icon-my-window::before {
+  border: .1rem solid currentColor;
+  height: 0.4em;
+  width: 1em;
+  left: 46%;
+  top:  15%;
+}
+.icon-my-window::after {
+  border: .1rem solid currentColor;
+  height: 0.4em;
+  width: 1em;
+  left: 46%;
+  top:  75%;
+}
+
