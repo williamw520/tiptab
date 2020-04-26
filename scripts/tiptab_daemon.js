@@ -79,7 +79,14 @@ let the_module = (function() {
 
     function commands_onCommand(command) {
         // log.info("commands_onCommand, command: " + command);
-        pActivateTipTabUI(command);
+        switch (command) {
+        case "container-new-tab":
+            pNewTabInContainer();
+            break;
+        default:
+            pActivateTipTabUI(command);
+            break;
+        }
     }
 
     function tabs_onActivated(activeInfo) {
@@ -169,6 +176,20 @@ let the_module = (function() {
                 lastAppCommand = appCmd;
                 return pOpenNewTipTab();
             }
+        });
+    }
+
+    function pNewTabInContainer() {
+        return browser.tabs.query( { active: true, currentWindow: true } ).then( tabs => {
+            if (!tabs || tabs.length == 0)
+                return;
+            let currentTab = tabs[0];
+            return browser.tabs.create( {
+                url:            "about:blank",
+                index:          currentTab.index + 1,
+                windowId:       currentTab.windowId,
+                cookieStoreId:  currentTab.cookieStoreId,
+            } );
         });
     }
 

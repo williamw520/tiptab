@@ -56,6 +56,13 @@
                 "mac": "MacCtrl+Shift+F"
             },
             "description": "Search tabs."
+        },
+        "container-new-tab": {
+            "suggested_key": {
+                "default": "Ctrl+Alt+T",
+                "mac": "MacCtrl+Command+T"
+            },
+            "description": "Search tabs."
         }
     },
 
