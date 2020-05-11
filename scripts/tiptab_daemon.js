@@ -164,12 +164,12 @@ let the_module = (function() {
         return browser.tabs.query({url: TIPTAB_URL}).then( tabs => {
             let ttTab = tabs.length > 0 ? tabs[0] : null;
             if (ttTab) {
-                return browser.windows.getLastFocused().then( focusedWin => {
-                    let ttWinHasFocus = ttTab.windowId == focusedWin.id;
-                    let ttTabIsActive = ttTab.active;
-                    return browser.runtime.sendMessage({ cmd: "appCommand", arg: appCmd,
-                                                         ttWinHasFocus: ttWinHasFocus, ttTabIsActive: ttTabIsActive });
-                });
+                return browser.windows.update(ttTab.windowId,  {focused: true})
+                    .then( () => browser.tabs.update(ttTab.id, {active:  true}) )
+                    .then( () => browser.runtime.sendMessage({ cmd: "appCommand",
+                                                               arg: appCmd,
+                                                               ttWinHasFocus: true,
+                                                               ttTabIsActive: true }) );
             } else {
                 // No existing TipTab page.  Create one.
                 // The newly created page is not ready to handle message yet.  Save the appCmd for later retrieval during extension's init.

@@ -1,5 +1,6 @@
 
 * Feature TODO
+** DONE Bug: when a Tip Tab page is unloaded but remains as an inactive tab, launching Tip Tab won't work.
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
@@ -251,9 +252,7 @@ The following 3rd party libraries are used in this extension.  The versions and 
 
 * Description
 
-Tip Tab let you manage and navigate the open browser tabs visually, similar to the Exposé feature on Mac OS.
-
-NOTE: Starting from version 2.15, Tip Tab requires Firefox 67, to utilize the ES6 module feature.
+Tip Tab let you search, navigate, and organize the browser tabs.  The visual navigation is inspired by the Exposé feature on Mac.
 
 <b>Feature Highlight:</b>
 <ul>
@@ -294,6 +293,7 @@ NOTE: Starting from version 2.15, Tip Tab requires Firefox 67, to utilize the ES
 
 <b>Information:</b>
 <ul>
+  <li>Ctrl+Alt+T is the smart tab create shortcut to create a new tab in the same container as the current one.
   <li>Ctrl+Shift+L is the default hotkey to activate Tip Tab; also for cycling through the tab focus.</li>
   <li>Ctrl+Shift+F is the default hotkey to search Tip Tab.</li>
   <li>Custom hotkeys can be set up in the Options page to override the default ones.</li>
@@ -303,6 +303,7 @@ NOTE: Starting from version 2.15, Tip Tab requires Firefox 67, to utilize the ES
   <li>Dragging and dropping tabs across security domains (containers and normal/private windows) would only copy the tab's url and open it as new.
       The tab history and cookies are NOT copied, to maintain the security isolation of the tabs.</li>
 </ul>
+NOTE: Starting from version 2.15, Tip Tab requires Firefox 67, to utilize the ES6 module feature.
 
 <b>Issues:</b>
 <ul>
