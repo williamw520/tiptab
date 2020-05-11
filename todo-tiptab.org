@@ -240,17 +240,15 @@ The following 3rd party libraries are used in this extension.  The versions and 
 
 * 3rd Party Libraries
 - JQuery 3.5.0
-   https://code.jquery.com/jquery/
    https://code.jquery.com/jquery-3.5.0.min.js
 - JQuery UI 1.12.1
-   https://jqueryui.com/download/all/
    https://jqueryui.com/resources/download/jquery-ui-1.12.1.zip
+- Spark-MD5 3.0.0
+   https://github.com/satazor/js-spark-md5/blob/3.0.0/spark-md5.min.js
 - Spectre CSS
    version 0.5.8
    https://github.com/picturepan2/spectre/releases
    https://github.com/picturepan2/spectre/archive/v0.5.8.zip, from the directory spectre-0.5.8/docs/dist/.
-- Spark-MD5 3.0.0
-   https://github.com/satazor/js-spark-md5/blob/3.0.0/spark-md5.min.js
 
 
 * Description
