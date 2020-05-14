@@ -29,6 +29,7 @@ import app from "/scripts/util/app.js";
 import db from "/scripts/util/db.js";
 import ringbuf from "/scripts/util/ringbuf.js";
 import wwhotkey from "/scripts/util/wwhotkey.js";
+import ui from "/scripts/util/ui.js";
 import settings from "/scripts/settings.js";
 import dlg from "/scripts/util/dlg.js";
 
@@ -149,6 +150,7 @@ let the_module = (function() {
             .then(() => pGetCurrnetTab() )
             .then(() => pGetCurrentLastActiveTab() )
             .then(() => pLoadUiState() )
+            .then(() => applyTheme() )
             .then(() => refreshStaticUI() )     // for the UI that need to be set up before setting up the DOM listeners.
             .then(() => setupDOMListeners() )
             .then(() => setupKeyboardListeners() )
@@ -286,6 +288,7 @@ let the_module = (function() {
         uiState.filterByPinned = state.filterByPinned || 0;
         uiState.filterByHidden = state.filterByHidden || 0;
         uiState.filterByAudible = state.filterByAudible || 0;
+        uiState.theme = app.defObjVal(state, "theme", ui.THEME_SYSTEM);
 
         uiState.savedSearch = (state.savedSearch && app.isArray(state.savedSearch)) ? state.savedSearch : [];
         if (uiState.savedSearch.length < MAX_SAVED_SEARCHES) {
@@ -462,6 +465,7 @@ let the_module = (function() {
 
         // Global menu at the top navbar
         $("#global-cmds").on("click", ".cmd-options",           function(){ browser.runtime.openOptionsPage()               });
+        $("#global-cmds").on("click", ".cmd-toggle-theme",      toggleTheme);
         $("#global-cmds").on("click", ".cmd-refresh",           pReloadRedrawRefreshContent);
         $("#global-cmds").on("click", ".cmd-create-window",     function(){ pCreateWindow().then(w => activateWindow(w.id)) });
         $("#global-cmds").on("click", ".cmd-undo-close",        function(){ undoCloseTab()                                  });
@@ -772,7 +776,8 @@ let the_module = (function() {
     
     function redrawRefreshControls() {
         // VBar buttons are always visible and no need to redraw.
-        
+
+        refreshGlobalCmds();
         refreshVBtnBarControls();
         refreshHeaderControls();
         redrawFooterControls();     // footer controls are dynamic and need redrawing based on current state of the data.
@@ -784,6 +789,12 @@ let the_module = (function() {
         refreshVBtnBarControls();
         refreshHeaderControls();
         refreshFooterControls();
+    }
+
+    function refreshGlobalCmds() {
+        // Only replaces the text but preserves other child elements.
+        $(".cmd-toggle-theme").contents().filter(function(){ return this.nodeType == 3 }).first().replaceWith("  Theme - " + uiState.theme);
+        $(".cmd-toggle-theme").attr("title", ui.themeDesc(uiState.theme) + " [system color mode: " + ui.systemColorScheme() + "]" );
     }
 
     function refreshVBtnBarControls() {
@@ -2852,6 +2863,18 @@ let the_module = (function() {
         let tooltip  = manifest.name + " (" + hotkeys + ")";
         browser.browserAction.setTitle({ title: tooltip });
     }
+
+    function toggleTheme() {
+        uiState.theme = ui.nextTheme(uiState.theme);
+        dSaveUiState();
+        applyTheme();
+        refreshGlobalCmds();
+    }
+
+    function applyTheme() {
+        document.documentElement.setAttribute("theme", uiState.theme);
+    }
+
 
     log.info("module loaded");
     return module;

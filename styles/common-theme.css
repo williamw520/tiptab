@@ -1,0 +1,248 @@
+/*
+  Tip Tab
+  A Firefox extension to manage and navigate the browser tabs.
+  Copyright (C) 2018-2020  William Wong (williamw520@gmail.com)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+:root {
+    /* Predefined constants for light mode. */
+    --lit-background-color:     #fff;
+    --lit-color:                #3b4351;
+    --lit-link-color:           #5755d9;
+    --lit-img-filter:           none;
+    --lit-btn-bg:               #fff;
+    --lit-btn-color:            #5755d9;
+    --lit-btn-border:           .05rem solid #007bff;
+    --lit-btn-focus-bg:         #f1f1fc;
+    --lit-btn-focus-color:      #5755d9;
+    --lit-header-bg:            #fff;
+    --lit-menu-bg:              #fff;
+    --lit-detail-header-bg:     #eeeeee;
+    --lit-window-header-bg:     #fbfbfb;
+    --lit-input-bg:             #fff;
+    --lit-input-color:          #3b4351;
+    --lit-list-item-hover:      #d2d9de;
+    --lit-list-selected-bg:     #cbe6fa;
+    --lit-sort-selected-bg:     #ebfbfb;
+    --lit-tag-bg:               #f0f1f4;
+    --lit-tag-tb-border-color:  #b0b1b4;
+    --lit-detail-readonly-bg:   #e66300;
+    --lit-detail-readonly-clr:  #eee;
+    --lit-non-local-source-bg:  #feea78;
+    --lit-tab-badge-shadow:     0 0 0 .1rem #fff;
+    --lit-tooltip-bg:           #eee;
+    --lit-tooltip-color:        #3b4381;
+
+    /* Predefined constants for dark mode. */
+    --drk-background-color:     #262833;
+    --drk-color:                #e4e4e4;
+    --drk-link-color:           #e39777;
+    --drk-img-filter:           grayscale(20%);
+    --drk-btn-bg:               #7e8ce0;
+    --drk-btn-color:            #e4e4e4;
+    --drk-btn-border:           .05rem solid #646464;
+    --drk-btn-focus-bg:         #9eacf0;
+    --drk-btn-focus-color:      #f8f8f8;
+    --drk-header-bg:            #262833;
+    --drk-menu-bg:              #464853;
+    --drk-detail-header-bg:     #40424d;
+    --drk-window-header-bg:     #333540;
+    --drk-input-bg:             #3f3f3f;
+    --drk-input-color:          none;
+    --drk-list-item-hover:      #767883;
+    --drk-list-selected-bg:     #565863;
+    --drk-sort-selected-bg:     #aebcf0;
+    --drk-tag-bg:               #b0b1b4;
+    --drk-tag-tb-border-color:  #e0e1e4;
+    --drk-detail-readonly-bg:   #e39777;
+    --drk-detail-readonly-clr:  #eee;
+    --drk-non-local-source-bg:  #feea78;
+    --drk-non-local-source-bg:  #a99756;
+    --drk-tab-badge-shadow:     0 0 0 0rem #444;
+    --drk-tooltip-bg:           #ddd;
+    --drk-tooltip-color:        #3b4381;
+
+    /* Theme variables for defaulting to light mode or system light mode. */
+    --thm-background-color:     var(--lit-background-color);
+    --thm-color:                var(--lit-color);
+    --thm-link-color:           var(--lit-link-color);
+    --thm-img-filter:           var(--lit-img-filter);
+    --thm-btn-bg:               var(--lit-btn-bg);
+    --thm-btn-color:            var(--lit-btn-color);
+    --thm-btn-border:           var(--lit-btn-border);
+    --thm-btn-focus-bg:         var(--lit-btn-focus-bg);
+    --thm-btn-focus-color:      var(--lit-btn-focus-color);
+    --thm-header-bg:            var(--lit-header-bg);
+    --thm-menu-bg:              var(--lit-menu-bg);
+    --thm-detail-header-bg:     var(--lit-detail-header-bg);
+    --thm-window-header-bg:     var(--lit-window-header-bg);
+    --thm-input-bg:             var(--lit-input-bg);
+    --thm-input-color:          var(--lit-input-color);
+    --thm-list-item-hover:      var(--lit-list-item-hover);
+    --thm-list-selected-bg:     var(--lit-list-selected-bg);
+    --thm-sort-selected-bg:     var(--lit-sort-selected-bg);
+    --thm-tag-bg:               var(--lit-tag-bg);
+    --thm-tag-tb-border-color:  var(--lit-tag-tb-border-color);
+    --thm-detail-readonly-bg:   var(--lit-detail-readonly-bg);
+    --thm-detail-readonly-clr:  var(--lit-detail-readonly-clr);
+    --thm-non-local-source-bg:  var(--lit-non-local-source-bg);
+    --thm-tab-badge-shadow:     var(--lit-tab-badge-shadow);
+    --thm-tooltip-bg:           var(--lit-tooltip-bg);
+    --thm-tooltip-color:        var(--lit-tooltip-color);
+}
+
+@media (prefers-color-scheme: light) {
+    /* Variables for defaulting to system dark mode. */
+    :root {
+        --thm-background-color:     var(--lit-background-color);
+        /* --thm-background-color:     #f8f8f8; */
+        --thm-color:                var(--lit-color);
+        --thm-link-color:           var(--lit-link-color);
+        --thm-img-filter:           var(--lit-img-filter);
+        --thm-btn-bg:               var(--lit-btn-bg);
+        --thm-btn-color:            var(--lit-btn-color);
+        --thm-btn-border:           var(--lit-btn-border);
+        --thm-btn-focus-bg:         var(--lit-btn-focus-bg);
+        --thm-btn-focus-color:      var(--lit-btn-focus-color);
+        --thm-header-bg:            var(--lit-header-bg);
+        --thm-menu-bg:              var(--lit-menu-bg);
+        --thm-detail-header-bg:     var(--lit-detail-header-bg);
+        --thm-window-header-bg:     var(--lit-window-header-bg);
+        --thm-input-bg:             var(--lit-input-bg);
+        --thm-input-color:          var(--lit-input-color);
+        --thm-list-item-hover:      var(--lit-list-item-hover);
+        --thm-list-selected-bg:     var(--lit-list-selected-bg);
+        --thm-sort-selected-bg:     var(--lit-sort-selected-bg);
+        --thm-tag-bg:               var(--lit-tag-bg);
+        --thm-tag-tb-border-color:  var(--lit-tag-tb-border-color);
+        --thm-detail-readonly-bg:   var(--lit-detail-readonly-bg);
+        --thm-detail-readonly-clr:  var(--lit-detail-readonly-clr);
+        --thm-non-local-source-bg:  var(--lit-non-local-source-bg);
+        --thm-tab-badge-shadow:     var(--lit-tab-badge-shadow);
+        --thm-tooltip-bg:           var(--lit-tooltip-bg);
+        --thm-tooltip-color:        var(--lit-tooltip-color);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    /* Variables for defaulting to system dark mode. */
+    :root {
+        --thm-background-color:     var(--drk-background-color);
+        /* --thm-background-color:     #363843; */
+        --thm-color:                var(--drk-color);
+        --thm-link-color:           var(--drk-link-color);
+        --thm-img-filter:           var(--drk-img-filter);
+        --thm-btn-bg:               var(--drk-btn-bg);
+        --thm-btn-color:            var(--drk-btn-color);
+        --thm-btn-border:           var(--drk-btn-border);
+        --thm-btn-focus-bg:         var(--drk-btn-focus-bg);
+        --thm-btn-focus-color:      var(--drk-btn-focus-color);
+        --thm-header-bg:            var(--drk-header-bg);
+        --thm-menu-bg:              var(--drk-menu-bg);
+        --thm-detail-header-bg:     var(--drk-detail-header-bg);
+        --thm-window-header-bg:     var(--drk-window-header-bg);
+        --thm-input-bg:             var(--drk-input-bg);
+        --thm-input-color:          var(--drk-input-color);
+        --thm-list-item-hover:      var(--drk-list-item-hover);
+        --thm-list-selected-bg:     var(--drk-list-selected-bg);
+        --thm-sort-selected-bg:     var(--drk-sort-selected-bg);
+        --thm-tag-bg:               var(--drk-tag-bg);
+        --thm-tag-tb-border-color:  var(--drk-tag-tb-border-color);
+        --thm-detail-readonly-bg:   var(--drk-detail-readonly-bg);
+        --thm-detail-readonly-clr:  var(--drk-detail-readonly-clr);
+        --thm-non-local-source-bg:  var(--drk-non-local-source-bg);
+        --thm-tab-badge-shadow:     var(--drk-tab-badge-shadow);
+        --thm-tooltip-bg:           var(--drk-tooltip-bg);
+        --thm-tooltip-color:        var(--drk-tooltip-color);
+    }
+}
+
+
+/* Add the attribute [theme] to group theme variables to let the user to force to light or dark theme by setting the attribute. */
+/* [theme="system"] is not defined so when the attribute [theme] is not defined, the system's theme is used. */
+
+[theme="light"] {
+    /* Variables for user forcing to light mode.  Same as the default light mode. */
+    --thm-background-color:     var(--lit-background-color);
+    --thm-color:                var(--lit-color);
+    --thm-link-color:           var(--lit-link-color);
+    --thm-img-filter:           var(--lit-img-filter);
+    --thm-btn-bg:               var(--lit-btn-bg);
+    --thm-btn-color:            var(--lit-btn-color);
+    --thm-btn-border:           var(--lit-btn-border);
+    --thm-btn-focus-bg:         var(--lit-btn-focus-bg);
+    --thm-btn-focus-color:      var(--lit-btn-focus-color);
+    --thm-header-bg:            var(--lit-header-bg);
+    --thm-menu-bg:              var(--lit-menu-bg);
+    --thm-detail-header-bg:     var(--lit-detail-header-bg);
+    --thm-window-header-bg:     var(--lit-window-header-bg);
+    --thm-input-bg:             var(--lit-input-bg);
+    --thm-input-color:          var(--lit-input-color);
+    --thm-list-item-hover:      var(--lit-list-item-hover);
+    --thm-list-selected-bg:     var(--lit-list-selected-bg);
+    --thm-sort-selected-bg:     var(--lit-sort-selected-bg);
+    --thm-tag-bg:               var(--lit-tag-bg);
+    --thm-tag-tb-border-color:  var(--lit-tag-tb-border-color);
+    --thm-detail-readonly-bg:   var(--lit-detail-readonly-bg);
+    --thm-detail-readonly-clr:  var(--lit-detail-readonly-clr);
+    --thm-non-local-source-bg:  var(--lit-non-local-source-bg);
+    --thm-tab-badge-shadow:     var(--lit-tab-badge-shadow);
+    --thm-tooltip-bg:           var(--lit-tooltip-bg);
+    --thm-tooltip-color:        var(--lit-tooltip-color);
+}
+
+[theme="dark"] {
+    /* Variables for user forcing to dark mode. */
+    --thm-background-color:     var(--drk-background-color);
+    --thm-color:                var(--drk-color);
+    --thm-link-color:           var(--drk-link-color);
+    --thm-img-filter:           var(--drk-img-filter);
+    --thm-btn-bg:               var(--drk-btn-bg);
+    --thm-btn-color:            var(--drk-btn-color);
+    --thm-btn-border:           var(--drk-btn-border);
+    --thm-btn-focus-bg:         var(--drk-btn-focus-bg);
+    --thm-btn-focus-color:      var(--drk-btn-focus-color);
+    --thm-header-bg:            var(--drk-header-bg);
+    --thm-menu-bg:              var(--drk-menu-bg);
+    --thm-detail-header-bg:     var(--drk-detail-header-bg);
+    --thm-window-header-bg:     var(--drk-window-header-bg);
+    --thm-input-bg:             var(--drk-input-bg);
+    --thm-input-color:          var(--drk-input-color);
+    --thm-list-item-hover:      var(--drk-list-item-hover);
+    --thm-list-selected-bg:     var(--drk-list-selected-bg);
+    --thm-sort-selected-bg:     var(--drk-sort-selected-bg);
+    --thm-tag-bg:               var(--drk-tag-bg);
+    --thm-tag-tb-border-color:  var(--drk-tag-tb-border-color);
+    --thm-detail-readonly-bg:   var(--drk-detail-readonly-bg);
+    --thm-detail-readonly-clr:  var(--drk-detail-readonly-clr);
+    --thm-non-local-source-bg:  var(--drk-non-local-source-bg);
+    --thm-tab-badge-shadow:     var(--drk-tab-badge-shadow);
+    --thm-tooltip-bg:           var(--drk-tooltip-bg);
+    --thm-tooltip-color:        var(--drk-tooltip-color);
+}
+
+
+select {
+    color:              var(--thm-color);
+    background-color:   var(--thm-background-color);
+}
+
+.form-input {
+    background-color:   var(--thm-input-bg);
+    color:              var(--thm-input-color);
+}
+
+

@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+@import url("/styles/tiptab-theme.css");
+
+
 :root {
     --header-height:        2.2rem;
     --footer-height:        2.2rem;
@@ -86,6 +89,8 @@ html {
 }
 
 body {
+    background-color:   var(--thm-background-color);
+    color:              var(--thm-color);
 }
 
 .hidden {

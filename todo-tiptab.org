@@ -1,5 +1,6 @@
 
 * Feature TODO
+** TODO Add theme system, including dark theme support.
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.

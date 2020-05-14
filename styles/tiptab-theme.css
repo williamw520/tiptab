@@ -1,0 +1,64 @@
+/*
+  Tip Tab
+  A Firefox extension to manage and navigate the browser tabs.
+  Copyright (C) 2018-2020  William Wong (williamw520@gmail.com)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+@import url("/styles/common-theme.css");
+
+:root {
+    /* Predefined constants for light mode. */
+    --lit-panel-bg:             #ececec;
+    --lit-panel-body-bg:        #fcfcfc;
+
+    /* Predefined constants for dark mode. */
+    --drk-panel-bg:             #363843;
+    --drk-panel-body-bg:        #464853;
+
+    /* Theme variables for defaulting to light mode or system light mode. */
+    --thm-panel-bg:             var(--lit-panel-bg);
+    --thm-panel-body-bg:        var(--lit-panel-body-bg);
+}
+
+@media (prefers-color-scheme: light) {
+    /* Variables for defaulting to system dark mode. */
+    :root {
+        --thm-panel-bg:             var(--lit-panel-bg);
+        --thm-panel-body-bg:        var(--lit-panel-body-bg);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    /* Variables for defaulting to system dark mode. */
+    :root {
+        --thm-panel-bg:             var(--drk-panel-bg);
+        --thm-panel-body-bg:        var(--drk-panel-body-bg);
+    }
+}
+
+/* Forced theme is applied to the .modal class element. */
+[theme="light"] {
+    /* Variables for user forcing to light mode.  Same as the default light mode. */
+    --thm-panel-bg:             var(--lit-panel-bg);
+    --thm-panel-body-bg:        var(--lit-panel-body-bg);
+}
+
+[theme="dark"] {
+    /* Variables for user forcing to dark mode. */
+    --thm-panel-bg:             var(--drk-panel-bg);
+    --thm-panel-body-bg:        var(--drk-panel-body-bg);
+}
+
