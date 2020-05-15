@@ -189,6 +189,12 @@ let the_module = (function() {
         //db.pQueryByRange(null, app.offsetByDays(new Date(), -1)).then( records => log.info( records.map( r => app.pick(r, "key", "updated") ) ) );
         // db.pQueryBRange(null, app.offsetByDays(new Date(), -1), ["key", "updated"]).then( records => log.info( records ) );
         //db.pDeleteByRange(null, app.offsetByDays(new Date(), -1)).then( count => log.info( count ) );
+        
+        //log.info(ui.getCssVars("", "*"));
+        // log.info(ui.getCssVars("--thm-"));
+        // log.info("ui.isSystemDarkMode: " + ui.isSystemDarkMode());
+        // log.info("ui.isSystemLightMode: " + ui.isSystemLightMode());
+        // log.info("ui.isSystemNoPreference: " + ui.isSystemNoPreference());
     }
 
     function pGetCurrnetTab() {
@@ -832,9 +838,9 @@ let the_module = (function() {
 
     function refreshHeaderControls() {
         $(".cmd-filter-by-audible img").attr("src", ICON_AUDIBLE[uiState.filterByAudible]);
-        $(".cmd-filter-by-muted img"  ).attr("src", ICON_MUTED[uiState.filterByMuted]);
-        $(".cmd-filter-by-pinned img" ).attr("src", ICON_PINNED[uiState.filterByPinned]);
-        $(".cmd-filter-by-hidden img" ).attr("src", ICON_HIDDEN[uiState.filterByHidden]);
+        $(".cmd-filter-by-muted   img").attr("src", ICON_MUTED[uiState.filterByMuted]);
+        $(".cmd-filter-by-pinned  img").attr("src", ICON_PINNED[uiState.filterByPinned]);
+        $(".cmd-filter-by-hidden  img").attr("src", ICON_HIDDEN[uiState.filterByHidden]);
 
         $(".cmd-drag-mode").removeClass("btn-link").addClass(dragSelectionMode ? "" : "btn-link");
         $(".cmd-drag-mode").attr("data-badge", dragSelectionMode ? "+" : "");
@@ -2872,7 +2878,8 @@ let the_module = (function() {
     }
 
     function applyTheme() {
-        document.documentElement.setAttribute("theme", uiState.theme);
+        // document.documentElement.setAttribute("theme", uiState.theme);
+        ui.applyThemeCssVars(uiState.theme);
     }
 
 

@@ -18,8 +18,9 @@
 */
 
 :root {
-    /* Predefined constants for light mode. */
-    --lit-background-color:     #fff;
+    /* Predefined constants for light mode.  This is the default setting. */
+    --lit-background-color:     #ffffff;
+    --lit-surround-pane-bg:     #fcfcfc;
     --lit-color:                #3b4351;
     --lit-link-color:           #5755d9;
     --lit-img-filter:           none;
@@ -33,6 +34,7 @@
     --lit-detail-header-bg:     #eeeeee;
     --lit-window-header-bg:     #fbfbfb;
     --lit-input-bg:             #fff;
+    --lit-input-focus-bg:       #ffffee;
     --lit-input-color:          #3b4351;
     --lit-list-item-hover:      #d2d9de;
     --lit-list-selected-bg:     #cbe6fa;
@@ -48,11 +50,12 @@
 
     /* Predefined constants for dark mode. */
     --drk-background-color:     #262833;
+    --drk-surround-pane-bg:     #363843;
     --drk-color:                #e4e4e4;
     --drk-link-color:           #e39777;
     --drk-img-filter:           grayscale(20%);
     --drk-btn-bg:               #7e8ce0;
-    --drk-btn-color:            #e4e4e4;
+    --drk-btn-color:            #f4f4f4;
     --drk-btn-border:           .05rem solid #646464;
     --drk-btn-focus-bg:         #9eacf0;
     --drk-btn-focus-color:      #f8f8f8;
@@ -61,6 +64,7 @@
     --drk-detail-header-bg:     #40424d;
     --drk-window-header-bg:     #333540;
     --drk-input-bg:             #3f3f3f;
+    --drk-input-focus-bg:       #4b5361;
     --drk-input-color:          none;
     --drk-list-item-hover:      #767883;
     --drk-list-selected-bg:     #565863;
@@ -76,162 +80,24 @@
     --drk-tooltip-color:        #3b4381;
 
     /* Theme variables for defaulting to light mode or system light mode. */
-    --thm-background-color:     var(--lit-background-color);
-    --thm-color:                var(--lit-color);
-    --thm-link-color:           var(--lit-link-color);
-    --thm-img-filter:           var(--lit-img-filter);
-    --thm-btn-bg:               var(--lit-btn-bg);
-    --thm-btn-color:            var(--lit-btn-color);
-    --thm-btn-border:           var(--lit-btn-border);
-    --thm-btn-focus-bg:         var(--lit-btn-focus-bg);
-    --thm-btn-focus-color:      var(--lit-btn-focus-color);
-    --thm-header-bg:            var(--lit-header-bg);
-    --thm-menu-bg:              var(--lit-menu-bg);
-    --thm-detail-header-bg:     var(--lit-detail-header-bg);
-    --thm-window-header-bg:     var(--lit-window-header-bg);
-    --thm-input-bg:             var(--lit-input-bg);
-    --thm-input-color:          var(--lit-input-color);
-    --thm-list-item-hover:      var(--lit-list-item-hover);
-    --thm-list-selected-bg:     var(--lit-list-selected-bg);
-    --thm-sort-selected-bg:     var(--lit-sort-selected-bg);
-    --thm-tag-bg:               var(--lit-tag-bg);
-    --thm-tag-tb-border-color:  var(--lit-tag-tb-border-color);
-    --thm-detail-readonly-bg:   var(--lit-detail-readonly-bg);
-    --thm-detail-readonly-clr:  var(--lit-detail-readonly-clr);
-    --thm-non-local-source-bg:  var(--lit-non-local-source-bg);
-    --thm-tab-badge-shadow:     var(--lit-tab-badge-shadow);
-    --thm-tooltip-bg:           var(--lit-tooltip-bg);
-    --thm-tooltip-color:        var(--lit-tooltip-color);
+    /* --thm-* theme variables are created automaticallyfrom --lit-* names using ui.applyThemeCssVars() */
+    /* Use --thm-* variables in CSS styles. */
+
+    /* --thm-background-color:     var(--lit-background-color); */
+    /* --thm-surround-pane-bg:     var(--lit-surround-pane-bg); */
+    /* --thm-color:                var(--lit-color); */
 }
 
 @media (prefers-color-scheme: light) {
     /* Variables for defaulting to system dark mode. */
     :root {
-        --thm-background-color:     var(--lit-background-color);
-        /* --thm-background-color:     #f8f8f8; */
-        --thm-color:                var(--lit-color);
-        --thm-link-color:           var(--lit-link-color);
-        --thm-img-filter:           var(--lit-img-filter);
-        --thm-btn-bg:               var(--lit-btn-bg);
-        --thm-btn-color:            var(--lit-btn-color);
-        --thm-btn-border:           var(--lit-btn-border);
-        --thm-btn-focus-bg:         var(--lit-btn-focus-bg);
-        --thm-btn-focus-color:      var(--lit-btn-focus-color);
-        --thm-header-bg:            var(--lit-header-bg);
-        --thm-menu-bg:              var(--lit-menu-bg);
-        --thm-detail-header-bg:     var(--lit-detail-header-bg);
-        --thm-window-header-bg:     var(--lit-window-header-bg);
-        --thm-input-bg:             var(--lit-input-bg);
-        --thm-input-color:          var(--lit-input-color);
-        --thm-list-item-hover:      var(--lit-list-item-hover);
-        --thm-list-selected-bg:     var(--lit-list-selected-bg);
-        --thm-sort-selected-bg:     var(--lit-sort-selected-bg);
-        --thm-tag-bg:               var(--lit-tag-bg);
-        --thm-tag-tb-border-color:  var(--lit-tag-tb-border-color);
-        --thm-detail-readonly-bg:   var(--lit-detail-readonly-bg);
-        --thm-detail-readonly-clr:  var(--lit-detail-readonly-clr);
-        --thm-non-local-source-bg:  var(--lit-non-local-source-bg);
-        --thm-tab-badge-shadow:     var(--lit-tab-badge-shadow);
-        --thm-tooltip-bg:           var(--lit-tooltip-bg);
-        --thm-tooltip-color:        var(--lit-tooltip-color);
     }
 }
 
 @media (prefers-color-scheme: dark) {
     /* Variables for defaulting to system dark mode. */
     :root {
-        --thm-background-color:     var(--drk-background-color);
-        /* --thm-background-color:     #363843; */
-        --thm-color:                var(--drk-color);
-        --thm-link-color:           var(--drk-link-color);
-        --thm-img-filter:           var(--drk-img-filter);
-        --thm-btn-bg:               var(--drk-btn-bg);
-        --thm-btn-color:            var(--drk-btn-color);
-        --thm-btn-border:           var(--drk-btn-border);
-        --thm-btn-focus-bg:         var(--drk-btn-focus-bg);
-        --thm-btn-focus-color:      var(--drk-btn-focus-color);
-        --thm-header-bg:            var(--drk-header-bg);
-        --thm-menu-bg:              var(--drk-menu-bg);
-        --thm-detail-header-bg:     var(--drk-detail-header-bg);
-        --thm-window-header-bg:     var(--drk-window-header-bg);
-        --thm-input-bg:             var(--drk-input-bg);
-        --thm-input-color:          var(--drk-input-color);
-        --thm-list-item-hover:      var(--drk-list-item-hover);
-        --thm-list-selected-bg:     var(--drk-list-selected-bg);
-        --thm-sort-selected-bg:     var(--drk-sort-selected-bg);
-        --thm-tag-bg:               var(--drk-tag-bg);
-        --thm-tag-tb-border-color:  var(--drk-tag-tb-border-color);
-        --thm-detail-readonly-bg:   var(--drk-detail-readonly-bg);
-        --thm-detail-readonly-clr:  var(--drk-detail-readonly-clr);
-        --thm-non-local-source-bg:  var(--drk-non-local-source-bg);
-        --thm-tab-badge-shadow:     var(--drk-tab-badge-shadow);
-        --thm-tooltip-bg:           var(--drk-tooltip-bg);
-        --thm-tooltip-color:        var(--drk-tooltip-color);
     }
-}
-
-
-/* Add the attribute [theme] to group theme variables to let the user to force to light or dark theme by setting the attribute. */
-/* [theme="system"] is not defined so when the attribute [theme] is not defined, the system's theme is used. */
-
-[theme="light"] {
-    /* Variables for user forcing to light mode.  Same as the default light mode. */
-    --thm-background-color:     var(--lit-background-color);
-    --thm-color:                var(--lit-color);
-    --thm-link-color:           var(--lit-link-color);
-    --thm-img-filter:           var(--lit-img-filter);
-    --thm-btn-bg:               var(--lit-btn-bg);
-    --thm-btn-color:            var(--lit-btn-color);
-    --thm-btn-border:           var(--lit-btn-border);
-    --thm-btn-focus-bg:         var(--lit-btn-focus-bg);
-    --thm-btn-focus-color:      var(--lit-btn-focus-color);
-    --thm-header-bg:            var(--lit-header-bg);
-    --thm-menu-bg:              var(--lit-menu-bg);
-    --thm-detail-header-bg:     var(--lit-detail-header-bg);
-    --thm-window-header-bg:     var(--lit-window-header-bg);
-    --thm-input-bg:             var(--lit-input-bg);
-    --thm-input-color:          var(--lit-input-color);
-    --thm-list-item-hover:      var(--lit-list-item-hover);
-    --thm-list-selected-bg:     var(--lit-list-selected-bg);
-    --thm-sort-selected-bg:     var(--lit-sort-selected-bg);
-    --thm-tag-bg:               var(--lit-tag-bg);
-    --thm-tag-tb-border-color:  var(--lit-tag-tb-border-color);
-    --thm-detail-readonly-bg:   var(--lit-detail-readonly-bg);
-    --thm-detail-readonly-clr:  var(--lit-detail-readonly-clr);
-    --thm-non-local-source-bg:  var(--lit-non-local-source-bg);
-    --thm-tab-badge-shadow:     var(--lit-tab-badge-shadow);
-    --thm-tooltip-bg:           var(--lit-tooltip-bg);
-    --thm-tooltip-color:        var(--lit-tooltip-color);
-}
-
-[theme="dark"] {
-    /* Variables for user forcing to dark mode. */
-    --thm-background-color:     var(--drk-background-color);
-    --thm-color:                var(--drk-color);
-    --thm-link-color:           var(--drk-link-color);
-    --thm-img-filter:           var(--drk-img-filter);
-    --thm-btn-bg:               var(--drk-btn-bg);
-    --thm-btn-color:            var(--drk-btn-color);
-    --thm-btn-border:           var(--drk-btn-border);
-    --thm-btn-focus-bg:         var(--drk-btn-focus-bg);
-    --thm-btn-focus-color:      var(--drk-btn-focus-color);
-    --thm-header-bg:            var(--drk-header-bg);
-    --thm-menu-bg:              var(--drk-menu-bg);
-    --thm-detail-header-bg:     var(--drk-detail-header-bg);
-    --thm-window-header-bg:     var(--drk-window-header-bg);
-    --thm-input-bg:             var(--drk-input-bg);
-    --thm-input-color:          var(--drk-input-color);
-    --thm-list-item-hover:      var(--drk-list-item-hover);
-    --thm-list-selected-bg:     var(--drk-list-selected-bg);
-    --thm-sort-selected-bg:     var(--drk-sort-selected-bg);
-    --thm-tag-bg:               var(--drk-tag-bg);
-    --thm-tag-tb-border-color:  var(--drk-tag-tb-border-color);
-    --thm-detail-readonly-bg:   var(--drk-detail-readonly-bg);
-    --thm-detail-readonly-clr:  var(--drk-detail-readonly-clr);
-    --thm-non-local-source-bg:  var(--drk-non-local-source-bg);
-    --thm-tab-badge-shadow:     var(--drk-tab-badge-shadow);
-    --thm-tooltip-bg:           var(--drk-tooltip-bg);
-    --thm-tooltip-color:        var(--drk-tooltip-color);
 }
 
 

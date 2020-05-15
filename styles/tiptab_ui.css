@@ -93,6 +93,7 @@ body {
     color:              var(--thm-color);
 }
 
+
 .hidden {
     display:        none;
 }
@@ -147,6 +148,16 @@ body {
 }
 .w7rem {
     width:          7rem;
+}
+
+.btn {
+    background-color:   var(--thm-btn-bg);
+    color:              var(--thm-btn-color);
+    border:             var(--thm-btn-border);
+}
+.btn:focus, .btn:hover {
+    background-color:   var(--thm-btn-focus-bg);
+    color:              var(--thm-btn-focus-color);
 }
 
 .btn.btn-cmd {
@@ -473,6 +484,7 @@ a.disabled {
     width:          100vw;                  /* use 100% viewport to avoid the scrollbar changing the width. */
     padding:        0;
     background:     #fdfdfd;
+    background:     var(--thm-surround-pane-bg);
     border-bottom:  0.02rem solid #b0b0b0;
     z-index:        1000;
     
@@ -556,6 +568,7 @@ a.disabled {
     z-index:        1000;
     overflow-x:     hidden; /* Disable horizontal scroll */
     overflow-y:     hidden; /* Disable vertical scroll */
+    background:     var(--thm-surround-pane-bg);
 }
 .h-container .right-pane {
     flex:           0 0 var(--right-pane-width);
@@ -714,9 +727,13 @@ a.disabled {
     font-size:          0.7rem;
     height:             1.4rem;
     padding:            0.05rem 0.3rem;
+    background-color:   var(--thm-input-bg);
+    color:              var(--thm-input-color);
 }
 .cmd-search:focus {
-    background:         #ffffee;
+    /* background:         #ffffee; */
+    background:         var(--thm-input-focus-bg);
+    color:              var(--thm-input-focus-color);
     border-color:       #5755d9; 
     box-shadow:         0 0 0 .1rem rgba(87, 85, 217, .2);
 }
@@ -1006,6 +1023,9 @@ a.disabled {
     justify-content:    center;    
 }
 
+.menu {
+    background-color:   var(--thm-menu-bg);
+}
 
 /* Override Spectre's .dropdown, dropdown-toggle, and .menu to make it more user friendly. */
 .dropdown .dropdown-toggle:focus {
