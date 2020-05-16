@@ -184,13 +184,14 @@ let the_module = (function() {
         //     let itemInfo = $(this).prop("tagName") + ", id: " + $(this).attr("id") + ", class: " + $(this).attr("class") + ", tabindex: " + $(this).attr("tabindex");
         //     log.info(itemInfo);
         // });
+
         //db.pQueryByRange().then( records => log.info( records.map( r => app.pick(r, "key", "updated") ) ) );
         //db.pQueryByRange(null, null, ["updated"]).then( records => log.info( records ) );
         //db.pQueryByRange(null, app.offsetByDays(new Date(), -1)).then( records => log.info( records.map( r => app.pick(r, "key", "updated") ) ) );
-        // db.pQueryBRange(null, app.offsetByDays(new Date(), -1), ["key", "updated"]).then( records => log.info( records ) );
+        //db.pQueryByRange(null, app.offsetByDays(new Date(), -1), ["key", "updated"]).then( records => log.info( records ) );
         //db.pDeleteByRange(null, app.offsetByDays(new Date(), -1)).then( count => log.info( count ) );
         
-        //log.info(ui.getCssVars("", "*"));
+        // log.info(ui.getCssVars("", "*"));
         // log.info(ui.getCssVars("--thm-"));
         // log.info("ui.isSystemDarkMode: " + ui.isSystemDarkMode());
         // log.info("ui.isSystemLightMode: " + ui.isSystemLightMode());
@@ -1542,8 +1543,9 @@ let the_module = (function() {
                  style="border: 0.1rem solid ${c.colorCode}; ${box_shadow_private(is_firefox_private(c.cookieStoreId))}">
               <div class="container-topbar">
                 <div class="container-title" title="${is_firefox_default(c.cookieStoreId) ? '' : 'Container'}">
-                  <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.2rem; visibility: ${is_firefox_default(c.cookieStoreId) ? 'hidden' : 'visible'};">
-                  <span class="container-name" style="color: ${c.colorCode}">CONTAINER-NAME</span>
+                  <div style="background: ${c.colorCode}; width:12px; height:12px; margin-right: 0.4rem;"></div>
+                  <img src="${c.iconUrl}" style="width:12px; height:12px; margin-right: 0.4rem; display: ${is_real_container(c.cookieStoreId) ? 'block' : 'none'};">
+                  <span class="container-name">CONTAINER-NAME</span>
                 </div>
 
                 <div class="lane-topbar-cmds">

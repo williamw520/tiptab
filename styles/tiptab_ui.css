@@ -153,11 +153,15 @@ body {
 .btn {
     background-color:   var(--thm-btn-bg);
     color:              var(--thm-btn-color);
-    border:             var(--thm-btn-border);
+    border:             .05rem solid var(--thm-btn-border-color);
 }
 .btn:focus, .btn:hover {
     background-color:   var(--thm-btn-focus-bg);
     color:              var(--thm-btn-focus-color);
+}
+.btn.active {
+    background-color:   var(--thm-btn-active-bg);
+    border:             .05rem solid var(--thm-btn-border-color);
 }
 
 .btn.btn-cmd {
@@ -183,6 +187,10 @@ body {
 }
 .btn.btn-lv3 {
     border:         .05rem solid #007bff;
+}
+
+.btn.btn-link {
+    color:          var(--thm-btn-color);
 }
 
 .wnd-img {
@@ -478,6 +486,11 @@ a.disabled {
 
 /* app specific styles */
 
+.empty {
+    background-color:   var(--thm-background-color);
+    color:              var(--thm-color);
+}
+
 .header-bar {
     position:       fixed;
     height:         var(--header-height);
@@ -534,6 +547,9 @@ a.disabled {
     width:          1.4rem;
     padding:        0;
     line-height:    0;
+    margin-right:   0.05rem;
+    background:     var(--thm-btn-img-bg);
+    border:         .05rem dotted var(--thm-btn-border-color);
 }
 .btn.btn-img img {
     margin-top:     1px;
@@ -593,8 +609,7 @@ a.disabled {
 
 .content-title-bar {
     font-size:          75%;
-    color:              gray;
-    background:         #fbfbfb;
+    background:         var(--thm-content-title-bar-bg);
     padding:            0;
     border-bottom:      0.02rem solid #e0e0e0;
     display:            relative;
@@ -620,11 +635,12 @@ a.disabled {
 
 .all-tab-lane {
     padding:            1rem 1rem 1rem 0.5rem;
+    background:         var(--thm-lane-bg);
 }
 
 .window-lane {
     margin:             1rem;
-    background:         #fbfbfb;
+    background:         var(--thm-lane-bg);
     border:             var(--img-border) solid #b0b0b0;
     box-shadow:         1px 1px #dddddd;
 }
@@ -632,7 +648,7 @@ a.disabled {
     position:           relative;
     height:             var(--lane-topbar-height);
     margin-bottom:      var(--tab-gap);
-    background:         #f4f4f4;
+    background:         var(--thm-window-topbar-bg);
     border-bottom:      0.02rem solid #d0d0d0;
 }
 .window-title {
@@ -673,7 +689,7 @@ a.disabled {
 
 .container-lane {
     margin:             1rem;
-    background:         #fbfbfb;
+    background:         var(--thm-lane-bg);
     border:             var(--img-border) solid #b0b0b0;
     box-shadow:         2px 1px #dddddd;
 }
@@ -681,7 +697,7 @@ a.disabled {
     position:           relative;
     height:             var(--lane-topbar-height);
     margin-bottom:      var(--tab-gap);
-    background:         #f4f4f4;
+    background:         var(--thm-window-topbar-bg);
     border-bottom:      0.02rem solid #d0d0d0;
 }
 .container-title {
@@ -690,7 +706,6 @@ a.disabled {
     font-size:          85%;
     margin-bottom:      var(--tab-gap);
     padding:            0.1rem var(--tab-gap) 0.1rem var(--tab-gap);
-    background:         #f4f4f4;
     border-bottom:      0.02rem solid #d0d0d0;
 }
 .container-topbar-cmds {
@@ -731,7 +746,6 @@ a.disabled {
     color:              var(--thm-input-color);
 }
 .cmd-search:focus {
-    /* background:         #ffffee; */
     background:         var(--thm-input-focus-bg);
     color:              var(--thm-input-focus-color);
     border-color:       #5755d9; 
@@ -743,17 +757,15 @@ a.disabled {
 }
 .btn-saved-search {
     width:              5rem;
-    border:             .05rem dotted #007bff;
+    border:             .05rem dotted var(--thm-btn-border-color);
     white-space:        nowrap;
     overflow:           hidden;
     text-overflow:      ellipsis;
 }
 .btn-saved-search-saving {
-    background:         #ffffee;
+    background:         var(--thm-input-focus-bg);
+    color:              var(--thm-input-focus-color);
     box-shadow:         0 0 .1rem 0 rgba(0, 0, 255, 1.0);
-}
-.btn-saved-search-saving-new {
-    color:              gray;
 }
 
 .tab-grid {
@@ -964,7 +976,9 @@ a.disabled {
     display:            flex;
     align-items:        center;
     justify-content:    center;    
+    color:              var(--thm-btn-color);
 }
+
 
 /* The selection checkmark button for the tab-box */
 .tab-topbar-selection {
@@ -983,7 +997,8 @@ a.disabled {
     padding:            0 0 0.02rem 0;
     display:            flex;
     align-items:        center;
-    justify-content:    center;    
+    justify-content:    center;
+    color:              var(--thm-btn-color);
 }
 .tab-box            .tab-topbar-selection {
     display:            none;
@@ -1020,7 +1035,8 @@ a.disabled {
     padding:            0 0 0.05rem 0;
     display:            flex;
     align-items:        center;
-    justify-content:    center;    
+    justify-content:    center;
+    color:              var(--thm-btn-color);
 }
 
 .menu {
@@ -1225,6 +1241,12 @@ a.disabled {
     padding:            0 0.2rem 0 0.0rem;
 }
 
+a {
+    color:              var(--thm-link-color);
+}
+img {
+    filter:             var(--thm-img-filter);
+}
 
 .icon-my-rbox::after {
   border: .1rem solid currentColor;

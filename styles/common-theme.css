@@ -21,63 +21,44 @@
     /* Predefined constants for light mode.  This is the default setting. */
     --lit-background-color:     #ffffff;
     --lit-surround-pane-bg:     #fcfcfc;
+    --lit-lane-bg:              #fbfbfb;
+    --lit-window-topbar-bg:     #f4f4f4;
+    --lit-content-title-bar-bg: #fbfbfb;
     --lit-color:                #3b4351;
     --lit-link-color:           #5755d9;
     --lit-img-filter:           none;
     --lit-btn-bg:               #fff;
     --lit-btn-color:            #5755d9;
-    --lit-btn-border:           .05rem solid #007bff;
     --lit-btn-focus-bg:         #f1f1fc;
     --lit-btn-focus-color:      #5755d9;
-    --lit-header-bg:            #fff;
+    --lit-btn-active-bg:        #4b48d6;
+    --lit-btn-border-color:     #007bff;
+    --lit-btn-img-bg:           none;
     --lit-menu-bg:              #fff;
-    --lit-detail-header-bg:     #eeeeee;
-    --lit-window-header-bg:     #fbfbfb;
     --lit-input-bg:             #fff;
     --lit-input-focus-bg:       #ffffee;
     --lit-input-color:          #3b4351;
-    --lit-list-item-hover:      #d2d9de;
-    --lit-list-selected-bg:     #cbe6fa;
-    --lit-sort-selected-bg:     #ebfbfb;
-    --lit-tag-bg:               #f0f1f4;
-    --lit-tag-tb-border-color:  #b0b1b4;
-    --lit-detail-readonly-bg:   #e66300;
-    --lit-detail-readonly-clr:  #eee;
-    --lit-non-local-source-bg:  #feea78;
-    --lit-tab-badge-shadow:     0 0 0 .1rem #fff;
-    --lit-tooltip-bg:           #eee;
-    --lit-tooltip-color:        #3b4381;
 
     /* Predefined constants for dark mode. */
     --drk-background-color:     #262833;
-    --drk-surround-pane-bg:     #363843;
+    --drk-surround-pane-bg:     #464843;
+    --drk-lane-bg:              #464843;
+    --drk-window-topbar-bg:     #666863;
+    --drk-content-title-bar-bg: #464843;
     --drk-color:                #e4e4e4;
     --drk-link-color:           #e39777;
-    --drk-img-filter:           grayscale(20%);
-    --drk-btn-bg:               #7e8ce0;
+    --drk-img-filter:           grayscale(30%) brightness(75%);
+    --drk-btn-bg:               #4e5cb0;
     --drk-btn-color:            #f4f4f4;
-    --drk-btn-border:           .05rem solid #646464;
     --drk-btn-focus-bg:         #9eacf0;
     --drk-btn-focus-color:      #f8f8f8;
-    --drk-header-bg:            #262833;
+    --drk-btn-active-bg:        #9eacf0;
+    --drk-btn-border-color:     lightgray;
+    --drk-btn-img-bg:           #c8c8c8;
     --drk-menu-bg:              #464853;
-    --drk-detail-header-bg:     #40424d;
-    --drk-window-header-bg:     #333540;
     --drk-input-bg:             #3f3f3f;
     --drk-input-focus-bg:       #4b5361;
     --drk-input-color:          none;
-    --drk-list-item-hover:      #767883;
-    --drk-list-selected-bg:     #565863;
-    --drk-sort-selected-bg:     #aebcf0;
-    --drk-tag-bg:               #b0b1b4;
-    --drk-tag-tb-border-color:  #e0e1e4;
-    --drk-detail-readonly-bg:   #e39777;
-    --drk-detail-readonly-clr:  #eee;
-    --drk-non-local-source-bg:  #feea78;
-    --drk-non-local-source-bg:  #a99756;
-    --drk-tab-badge-shadow:     0 0 0 0rem #444;
-    --drk-tooltip-bg:           #ddd;
-    --drk-tooltip-color:        #3b4381;
 
     /* Theme variables for defaulting to light mode or system light mode. */
     /* --thm-* theme variables are created automaticallyfrom --lit-* names using ui.applyThemeCssVars() */
