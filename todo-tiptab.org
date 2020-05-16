@@ -1,6 +1,8 @@
 
 * Feature TODO
-** TODO Add theme system, including dark theme support.
+** DONE Add theming system.
+** DONE Add support for light, dark, and system themes.
+** DONE Add dark theme styles.
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
@@ -13,6 +15,11 @@
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
 
+
+* Release 2.18
+** Feature
+- Theme function, with support for light theme, dark theme, and system-theme.
+- Dark theme styling support.
 
 * Release 2.17
 ** Bug Fix: when a Tip Tab page is unloaded but remains as an inactive tab, launching Tip Tab won't work.

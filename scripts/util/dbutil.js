@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Non-ES6 global includes:
-// <script src="/pkg/spark-md5/spark-md5.min.js"></script>
-
 import logger from "/scripts/util/logger.js";
 import appcfg from "/scripts/util/appcfg.js";
 

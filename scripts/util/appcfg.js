@@ -28,8 +28,8 @@ let the_module = (function() {
 
     // Module export
     module.APPNAME = "tiptab";
-    module.LOGLEVEL = logger.LOG;
-    //module.LOGLEVEL = logger.WARN;
+    //module.LOGLEVEL = logger.LOG;
+    module.LOGLEVEL = logger.WARN;
 
     const log = new logger.Logger(module.APPNAME, module.NAME, module.LOGLEVEL);
     log.info("module loaded");
