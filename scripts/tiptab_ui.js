@@ -31,6 +31,7 @@ import ringbuf from "/scripts/util/ringbuf.js";
 import wwhotkey from "/scripts/util/wwhotkey.js";
 import ui from "/scripts/util/ui.js";
 import settings from "/scripts/settings.js";
+import uistate from "/scripts/uistate.js";
 import dlg from "/scripts/util/dlg.js";
 
 
@@ -49,7 +50,6 @@ let the_module = (function() {
     const DT_ALL_TABS = "all-tabs";
     const DT_WINDOW = "by-window";
     const DT_CONTAINER = "by-container";
-    const displayTypes = [DT_ALL_TABS, DT_WINDOW, DT_CONTAINER];
     function is_all_tabs()      { return uiState.displayType == DT_ALL_TABS }
     function is_by_window()     { return uiState.displayType == DT_WINDOW }
     function is_by_container()  { return uiState.displayType == DT_CONTAINER }
@@ -69,9 +69,6 @@ let the_module = (function() {
     function is_firefox_private(id) { return id == CT_FIREFOX_PRIVATE }
     function is_real_container(id)  { return !is_firefox_default(id) && !is_firefox_private(id) }
 
-    // Search
-    const MAX_SAVED_SEARCHES = 8;
-
     // Colors
     //const COLOR_DEFAULT = "#c7c9cd";
     const COLOR_DEFAULT = "#97999d";
@@ -84,11 +81,6 @@ let the_module = (function() {
     const ICON_PINNED   = ["icons/pin-all.png",  "icons/pin-pinned.png",  "icons/pin-unpinned.png"];
     const ICON_HIDDEN   = ["icons/hide-all.png", "icons/hide-hidden.png", "icons/hide-shown.png"];
     const ICON_AUDIBLE  = ["icons/audio-all.png", "icons/audio-audible.png", "icons/audio-inaudible.png"];
-
-    // Tab style for display
-    const TS_IMAGE      = 0;
-    const TS_TEXT       = 1;
-    const TS_CMD_ICONS  = ["icon-my-ts-img", "icon-menu"];
 
     // Module variables.
     let tiptabWindowActive = true;  // setupDOMListeners() is called too late after the window has been in focus.  Assume window is active on startup.
@@ -108,7 +100,7 @@ let the_module = (function() {
     let oldSavedSearch = null;
     let dragSelectionMode = false;
 
-    let uiState = {};
+    let uiState;
     let tabById = {};               // the only map holding the Tab objects.
     let windowById = {};            // the only map holding the Window objects.  note that the tabs member is not loaded; use tabIdsByWid instead.
     let windowIds = [];             // track the order of the windows, id only.
@@ -149,7 +141,7 @@ let the_module = (function() {
             .then(() => db.pOpenDB() )
             .then(() => pGetCurrnetTab() )
             .then(() => pGetCurrentLastActiveTab() )
-            .then(() => pLoadUiState() )
+            .then(() => uistate.pLoadUiState().then( state => uiState = state ) )
             .then(() => applyTheme() )
             .then(() => refreshStaticUI() )     // for the UI that need to be set up before setting up the DOM listeners.
             .then(() => setupDOMListeners() )
@@ -259,54 +251,11 @@ let the_module = (function() {
     }
 
     function asyncSaveUiStateNow() {
-        //log.info("asyncSaveUiStateNow");
-        if (uiState) {
-            browser.storage.local.set({ "uiState": uiState });
-        }
+        if (uiState)
+            uistate.asyncSaveUiState(uiState);
     }
 
     let dSaveUiState = app.debounce(asyncSaveUiStateNow, 5*1000, false);
-
-    function pLoadUiState() {
-        //log.info("pLoadUiState");
-        return browser.storage.local.get("uiState")
-            .then( objFromJson => {
-                uiState = normalizeUiState(objFromJson.uiState);
-            })
-            .catch(e => {
-                uiState = normalizeUiState();
-                log.info(dump(e));
-            })
-    }
-
-    function normalizeUiState(state) {
-        let uiState = {};
-
-        state = state || {};
-        uiState.showTabStyle = state.showTabStyle || TS_IMAGE;
-        uiState.displayType = state.displayType || DT_ALL_TABS;
-        uiState.searchTerms = state.searchTerms || [];
-        uiState.thumbnailSize = state.thumbnailSize || 0;
-        uiState.showEmptyWindows    = app.defObjVal(state, "showEmptyWindows", false);
-        uiState.showEmptyContainers = app.defObjVal(state, "showEmptyContainers", true);
-        uiState.windowsMinimized    = state.windowsMinimized || {};             // wid:minimized-time, the window is minimized.
-        uiState.containersMinimized = state.containersMinimized || {};          // cid:minimized-time, the container is minimized.
-        uiState.filterByMuted = state.filterByMuted || 0;
-        uiState.filterByPinned = state.filterByPinned || 0;
-        uiState.filterByHidden = state.filterByHidden || 0;
-        uiState.filterByAudible = state.filterByAudible || 0;
-        uiState.theme = app.defObjVal(state, "theme", ui.THEME_SYSTEM);
-
-        uiState.savedSearch = (state.savedSearch && app.isArray(state.savedSearch)) ? state.savedSearch : [];
-        if (uiState.savedSearch.length < MAX_SAVED_SEARCHES) {
-            for (var i = uiState.savedSearch.length; i < MAX_SAVED_SEARCHES; i++)
-                uiState.savedSearch[i] = "";
-        } else if (uiState.savedSearch.length > MAX_SAVED_SEARCHES) {
-            uiState.savedSearch.length = MAX_SAVED_SEARCHES;
-        }
-
-        return uiState;
-    }
 
     function thumbnailDimFromSetting(theSettings) {
         imgWidth[0]  = theSettings.thumbnailWidth0  || "8.0rem";
@@ -663,7 +612,7 @@ let the_module = (function() {
         document.removeEventListener("keyup", hotKeyupHandler, false);
 
         savedSearchSeqs = [];
-        for (let i = 1; i <= MAX_SAVED_SEARCHES; i++) {
+        for (let i = 1; i <= uistate.MAX_SAVED_SEARCHES; i++) {
             let prefix = (ttSettings.savedSearchKeyPrefix || "").trim();
             let keySeq = prefix == "" ? "" : prefix + i;            // Ctrl+Shift+1 to Ctrl+Shift+8
             savedSearchSeqs.push(wwhotkey.KeySeq.ofKeySeq(keySeq));
@@ -805,7 +754,7 @@ let the_module = (function() {
     }
 
     function refreshVBtnBarControls() {
-        let isTextStyle = uiState.showTabStyle == TS_TEXT;
+        let isTextStyle = uiState.showTabStyle == uistate.TS_TEXT;
 
         $(".cmd-all-tabs"    ).toggleClass("active", is_all_tabs());
         $(".cmd-by-window"   ).toggleClass("active", is_by_window());
@@ -1217,7 +1166,7 @@ let the_module = (function() {
     function redrawContentLayout() {
         let $mainContent = $("#main-content");
 
-        if (uiState.showTabStyle == TS_IMAGE) {
+        if (uiState.showTabStyle == uistate.TS_IMAGE) {
             switch (uiState.displayType) {
             case DT_ALL_TABS:
                 $mainContent.html(renderAllTabLane());
@@ -1245,21 +1194,21 @@ let the_module = (function() {
     function refreshContent(forceRefreshImg, zoomOut) {
         switch (uiState.displayType) {
         case DT_ALL_TABS:
-            if (uiState.showTabStyle == TS_IMAGE) {
+            if (uiState.showTabStyle == uistate.TS_IMAGE) {
                 refreshAllTabsContentWithImages(forceRefreshImg, zoomOut);
             } else {
                 refreshAllTabsContentWithText();
             }
             break;
         case DT_WINDOW:
-            if (uiState.showTabStyle == TS_IMAGE) {
+            if (uiState.showTabStyle == uistate.TS_IMAGE) {
                 refreshWindowsContentWithImages(forceRefreshImg, zoomOut);
             } else {
                 refreshWindowsContentWithText();
             }
             break;
         case DT_CONTAINER:
-            if (uiState.showTabStyle == TS_IMAGE) {
+            if (uiState.showTabStyle == uistate.TS_IMAGE) {
                 refreshContainersContentWithImages(forceRefreshImg, zoomOut);
             } else {
                 refreshContainersContentWithText();

@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+@import url("/styles/options-theme.css");
+
+
 :root {
     --header-height:        2.2rem;
     --footer-height:        2.2rem;
@@ -26,7 +29,61 @@
 html {
     /* font-size controls the root em (rem) unit size.  Set this to control the size of all components. */
     font-size: 18px;
+    /* font-size:      16px; */
 }
+
+body {
+    background-color:   var(--thm-background-color);
+    color:              var(--thm-color);
+}
+a {
+    color:              var(--thm-link-color);
+}
+img {
+    filter:             var(--thm-img-filter);
+}
+
+.panel {
+    background:         var(--thm-panel-bg);
+}
+
+.panel-body {
+    background:         var(--thm-panel-body-bg);
+}
+
+select {
+    background-color:   var(--thm-input-bg);
+}
+select.form-select {
+    background-color:   var(--thm-input-bg) !important;
+}
+option {
+    background-color:   var(--thm-input-bg);
+}
+
+.form-input {
+    background-color:   var(--thm-input-bg);
+    color:              var(--thm-input-color);
+}
+
+.divider[data-content]::after,
+.divider-vert[data-content]::after {
+    color:              var(--thm-link-color);
+    background:         var(--thm-panel-body-bg);
+}
+
+.btn {
+    background-color:   var(--thm-btn-bg);
+    color:              var(--thm-btn-color);
+    border:             var(--thm-btn-border);
+}
+.btn:focus, .btn:hover {
+    background-color:   var(--thm-btn-focus-bg);
+    color:              var(--thm-btn-focus-color);
+}
+
+
+
 
 .form-input-error {
     display:        none;

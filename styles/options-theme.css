@@ -1,0 +1,52 @@
+/*
+  Session Boss
+  A Firefox extension to manage the browser tab sessions.
+  Copyright (C) 2018 William Wong.  All rights reserved.
+  williamw520@gmail.com
+*/
+
+@import url("/styles/common-theme.css");
+
+:root {
+    /* Predefined constants for light mode. */
+    --lit-panel-bg:             #ececec;
+    --lit-panel-body-bg:        #fcfcfc;
+
+    /* Predefined constants for dark mode. */
+    --drk-panel-bg:             #363843;
+    --drk-panel-body-bg:        #464853;
+
+    /* Theme variables for defaulting to light mode or system light mode. */
+    --thm-panel-bg:             var(--lit-panel-bg);
+    --thm-panel-body-bg:        var(--lit-panel-body-bg);
+}
+
+@media (prefers-color-scheme: light) {
+    /* Variables for defaulting to system dark mode. */
+    :root {
+        --thm-panel-bg:             var(--lit-panel-bg);
+        --thm-panel-body-bg:        var(--lit-panel-body-bg);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    /* Variables for defaulting to system dark mode. */
+    :root {
+        --thm-panel-bg:             var(--drk-panel-bg);
+        --thm-panel-body-bg:        var(--drk-panel-body-bg);
+    }
+}
+
+/* Forced theme is applied to the .modal class element. */
+[theme="light"] {
+    /* Variables for user forcing to light mode.  Same as the default light mode. */
+    --thm-panel-bg:             var(--lit-panel-bg);
+    --thm-panel-body-bg:        var(--lit-panel-body-bg);
+}
+
+[theme="dark"] {
+    /* Variables for user forcing to dark mode. */
+    --thm-panel-bg:             var(--drk-panel-bg);
+    --thm-panel-body-bg:        var(--drk-panel-body-bg);
+}
+

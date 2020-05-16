@@ -24,6 +24,8 @@ import appcfg from "/scripts/util/appcfg.js";
 import app from "/scripts/util/app.js";
 import wwhotkey from "/scripts/util/wwhotkey.js";
 import settings from "/scripts/settings.js";
+import uistate from "/scripts/uistate.js";
+import ui from "/scripts/util/ui.js";
 
 
 // options module
@@ -37,6 +39,7 @@ let the_module = (function() {
     let orgSettings = TipTabSettings.ofLatest();
     let ttSettings  = TipTabSettings.ofLatest();
     let hasChanged  = false;
+    let uiState;
 
     // Firefox's Content Security Policy for WebExtensions prohibits running any Javascript in the html page.
     // Wait for the page loaded event before doing anything.
@@ -49,6 +52,8 @@ let the_module = (function() {
                 orgSettings = tts;
                 ttSettings = Object.assign({}, orgSettings);
             }))
+            .then(() => uistate.pLoadUiState().then( state => uiState = state ) )
+            .then(() => applyTheme())
             .then(() => setupDOMListeners())
             .then(() => refreshControls())
             .then(() => refreshSettings())
@@ -56,6 +61,10 @@ let the_module = (function() {
             .then(() => log.info("Page initialization done") )
             .catch( e => log.warn(e) )
     });
+
+    function applyTheme() {
+        ui.applyThemeCssVars(uiState.theme);
+    }
 
     function refreshControls() {
         if (hasChanged) {
