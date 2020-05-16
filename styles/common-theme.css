@@ -38,6 +38,7 @@
     --lit-input-bg:             #fff;
     --lit-input-focus-bg:       #ffffee;
     --lit-input-color:          #3b4351;
+    --lit-tabbox-focus-color:   rgba(0, 0, 192, 1.0);
 
     /* Predefined constants for dark mode. */
     --drk-background-color:     #262833;
@@ -59,6 +60,8 @@
     --drk-input-bg:             #3f3f3f;
     --drk-input-focus-bg:       #4b5361;
     --drk-input-color:          none;
+    --drk-tabbox-focus-color:   #ffa533;
+
 
     /* Theme variables for defaulting to light mode or system light mode. */
     /* --thm-* theme variables are created automaticallyfrom --lit-* names using ui.applyThemeCssVars() */

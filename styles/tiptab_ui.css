@@ -841,7 +841,7 @@ a.disabled {
     opacity:            1;
 }
 .tab-box:focus {
-    box-shadow:         0 0 .085rem .085rem rgba(0, 0, 192, 1.0);
+    box-shadow:         0 0 .085rem .085rem var(--thm-tabbox-focus-color);
     outline:            none;
 }
 
