@@ -61,6 +61,14 @@ let the_module = (function() {
         return pTxRead(pDbGetter, storeName, tx => pRequest(tx.objectStore(storeName).get(key)));
     }
 
+    async function pGetRecords(pDbGetter, storeName, keys) {
+        return pTxRead(pDbGetter, storeName, tx => {
+            let store = tx.objectStore(storeName);
+            let reqs  = keys.map( key => pRequest(store.get(key)) );
+            return Promise.all(reqs);
+        });
+    }
+
     // Get a field of a record
     function pGetRecordField(pDbGetter, storeName, key, fieldName) {
         return pGetRecord(pDbGetter, storeName, key).then(record => record ? record[fieldName] : null);
@@ -103,6 +111,7 @@ let the_module = (function() {
     module.pRequest = pRequest;
     module.pTransaction = pTransaction;
     module.pGetRecord = pGetRecord;
+    module.pGetRecords = pGetRecords;
     module.pGetRecordField = pGetRecordField;
     module.pBatchPuts = pBatchPuts;
     module.pIterateByRange = pIterateByRange;

@@ -108,6 +108,7 @@ let the_module = (function() {
     let containerById = {};         // the only map holding the Container objects
     let containerIds = [];          // track the order of the containers, id only.
     let tabIdsByCid = {};           // track the list of tab ids by container id.
+    let cachedFavIconMap = {};      // cached favicons mapped by Tab url.
 
     let effectiveTabIds = [];       // list of tab ids after filtering.
     let effectiveTidSet = new Set();
@@ -177,17 +178,18 @@ let the_module = (function() {
         //     log.info(itemInfo);
         // });
 
-        //db.pQueryByRange().then( records => log.info( records.map( r => app.pick(r, "key", "updated") ) ) );
-        //db.pQueryByRange(null, null, ["updated"]).then( records => log.info( records ) );
-        //db.pQueryByRange(null, app.offsetByDays(new Date(), -1)).then( records => log.info( records.map( r => app.pick(r, "key", "updated") ) ) );
-        //db.pQueryByRange(null, app.offsetByDays(new Date(), -1), ["key", "updated"]).then( records => log.info( records ) );
-        //db.pDeleteByRange(null, app.offsetByDays(new Date(), -1)).then( count => log.info( count ) );
+        //db.pQueryTabImagesByRange().then( records => log.info( records.map( r => app.pick(r, "key", "updated") ) ) );
+        //db.pQueryTabImagesByRange(null, null, ["updated"]).then( records => log.info( records ) );
+        //db.pQueryTabImagesByRange(null, app.offsetByDays(new Date(), -1)).then( records => log.info( records.map( r => app.pick(r, "key", "updated") ) ) );
+        //db.pQueryTabImagesByRange(null, app.offsetByDays(new Date(), -1), ["key", "updated"]).then( records => log.info( records ) );
+        //db.pDeleteTabImagesByRange(null, app.offsetByDays(new Date(), -1)).then( count => log.info( count ) );
         
         // log.info(ui.getCssVars("", "*"));
         // log.info(ui.getCssVars("--thm-"));
         // log.info("ui.isSystemDarkMode: " + ui.isSystemDarkMode());
         // log.info("ui.isSystemLightMode: " + ui.isSystemLightMode());
         // log.info("ui.isSystemNoPreference: " + ui.isSystemNoPreference());
+
     }
 
     function pGetCurrnetTab() {
@@ -852,12 +854,22 @@ let the_module = (function() {
     }
 
     function pReloadTabsWindowsAndContainers() {
+        let tabs;
         return browser.tabs.query({})
-            .then( tabs => {
-                //tabs            = tabs.filter( tab => !is_tiptaburl(tab.url) );     // get rid of the TipTab tab.
+            .then( resultTabs => {
+                tabs = resultTabs;
+                //tabs          = tabs.filter( tab => !is_tiptaburl(tab.url) );     // get rid of the TipTab tab.
                 tabById         = tabs.reduce( (map, tab) => { map[tab.id] = tab; return map }, {} );
-                return tabs;
-            }).then( tabs => {
+            }).then( () => {
+                let             urls = tabs.map( tab => tab.url );
+                let             uniqUrls = [...new Set(urls)];
+                return db.pGetTabFavicons(uniqUrls);            // load existing cached favIcons.
+            }).then( favIconRecords => {
+                favIconRecords.filter( rec => rec ).forEach( rec => cachedFavIconMap[rec.key] = rec.image );
+            }).then( () => {
+                let notCachedFavIconTabs = tabs.filter( tab => !cachedFavIconMap[db.urlToKey(tab.url)] );
+                return db.pSaveTabFavicons(notCachedFavIconTabs);
+            }).then( () => {
                 let uniqueIds   = new Set(tabs.map( tab => tab.windowId ));
                 let winIds      = [...uniqueIds];
                 tabIdsByWid     = winIds.reduce( (map, wid) => { map[wid] = []; return map }, {} );
@@ -1303,7 +1315,8 @@ let the_module = (function() {
         $(".tabtext-tab").each(function(){
             let tid = $(this).data("tid");
             let tab = tabById[tid];
-            $(this).find(".tabtext-tab-favicon").attr("src", tabById[tid].favIconUrl);
+            let favIconUrl = tab.favIconUrl ? tab.favIconUrl : cachedFavIconMap[db.urlToKey(tab.url)];
+            $(this).find(".tabtext-tab-favicon").attr("src", favIconUrl);
             $(this).find(".tabtext-tab-title"  ).text(tab.title).addClass(tab.active ? "bold" : "");
         });
     }

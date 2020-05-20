@@ -34,7 +34,7 @@ let the_module = (function() {
     const log = new logger.Logger(appcfg.APPNAME, module.NAME, appcfg.LOGLEVEL);
 
     const INDEXED_DB_NAME = "tiptab-db";
-    const INDEXED_DB_VERSION = 1;
+    const INDEXED_DB_VERSION = 2;
 
     let openedDB;       // cached opened db
 
@@ -46,7 +46,12 @@ let the_module = (function() {
             log.info("onupgradeneeded");
             let db = event.target.result;
             if (!db.objectStoreNames.contains("TabImage")) {
-                let store = db.createObjectStore("TabImage", { keyPath: "key" });   // Don't change any of the key fieldname; Firefox doesn't seem to like it.
+                // Don't change any of the key fieldname; Firefox doesn't seem to like it.
+                let store = db.createObjectStore("TabImage", { keyPath: "key" });   // map the hash of the tab url to the tab image.
+                store.createIndex("updated", "updated", { unique: false });
+            }
+            if (!db.objectStoreNames.contains("TabFavicon")) {
+                let store = db.createObjectStore("TabFavicon", { keyPath: "key" }); // map the hostname of tab url to the tab favicon.
                 store.createIndex("updated", "updated", { unique: false });
             }
         };
@@ -95,15 +100,13 @@ let the_module = (function() {
     }
 
     function pGetTabImage(tabUrl) {
-        log.timeSet("pGetTabImage", "start");
         let urlhash = new SparkMD5().append(tabUrl).end();
-        return dbutil.pGetRecord(pOpenDB, "TabImage", urlhash)
-            .then( x => (log.timeOn("pGetTabImage", "done"), x) );
+        return dbutil.pGetRecord(pOpenDB, "TabImage", urlhash);
     }
 
     // Set fromDate to null to start from the beginning of time.
     // Set toDate to null to the most recent time.
-    async function pQueryByRange(rangeFrom, rangeTo, fields) {
+    async function pQueryTabImagesByRange(rangeFrom, rangeTo, fields) {
         let records = [];
         await dbutil.pIterateByRange(pOpenDB, "TabImage", "updated", "readonly", rangeFrom, rangeTo, (cursor) => {
             records.push(fields ? app.pick(cursor.value, ...fields) : cursor.value);   // accumulate the records, with the selected fields.
@@ -111,7 +114,7 @@ let the_module = (function() {
         return records;
     }
 
-    async function pDeleteByRange(rangeFrom, rangeTo) {
+    async function pDeleteTabImagesByRange(rangeFrom, rangeTo) {
         let deletedCount = 0;
         await dbutil.pIterateByRange(pOpenDB, "TabImage", "updated", "readwrite", rangeFrom, rangeTo, (cursor) => {
             cursor.delete();
@@ -120,29 +123,72 @@ let the_module = (function() {
         return deletedCount;
     }
 
-    async function pClearImageDb() {
+
+    function urlToKey(url) {
+        let u = new URL(url);
+        //log.info("urlToKey - url: " + url + ", u: " + u + ", u.origin: " + u.origin + ", bool: " + (u && u.origin) + ", res: " + (u.origin && u.origin != "null" ? u.origin : url));
+        //log.info(app.isStr(u.origin));
+        return u.origin && u.origin != "null" ? u.origin : url;
+    }
+
+    async function pSaveTabFavicons(tabs) {
         let db      = await pOpenDB();
-        let tx      = db.transaction(["TabImage"], "readwrite");
-        await dbutil.pRequest(tx.objectStore("TabImage").clear());
+        let tx      = db.transaction(["TabFavicon"], "readwrite");
+        let store   = tx.objectStore("TabFavicon");
+        let ts      = new Date();
+        tabs = tabs.filter( tab => tab.favIconUrl );
+        return Promise.all( tabs.map( tab => dbutil.pRequest(store.put({ key:     urlToKey(tab.url),
+                                                                         image:   tab.favIconUrl,
+                                                                         updated: ts} )) )
+                          ).then( () => dbutil.pTransaction(tx) )
+    }
+
+    function pGetTabFavicon(url) {
+        return dbutil.pGetRecord(pOpenDB, "TabFavicon", urlToKey(url));
+    }
+
+    function pGetTabFavicons(urls) {
+        return dbutil.pGetRecords(pOpenDB, "TabFavicon", urls.map(urlToKey));
+    }
+
+    // Set fromDate to null to start from the beginning of time.
+    // Set toDate to null to the most recent time.
+    async function pQueryTabFaviconsByRange(rangeFrom, rangeTo, fields) {
+        let records = [];
+        await dbutil.pIterateByRange(pOpenDB, "TabFavicon", "updated", "readonly", rangeFrom, rangeTo, (cursor) => {
+            records.push(fields ? app.pick(cursor.value, ...fields) : cursor.value);   // accumulate the records, with the selected fields.
+        });
+        return records;
+    }
+
+    async function pDeleteTabFaviconsByRange(rangeFrom, rangeTo) {
+        let deletedCount = 0;
+        await dbutil.pIterateByRange(pOpenDB, "TabFavicon", "updated", "readwrite", rangeFrom, rangeTo, (cursor) => {
+            cursor.delete();
+            deletedCount++;
+        });
+        return deletedCount;
+    }
+
+    // storeName: "TabImage" or "TabFavicon"
+    async function pClearStore(storeName) {
+        let db      = await pOpenDB();
+        let tx      = db.transaction([storeName], "readwrite");
+        await dbutil.pRequest(tx.objectStore(storeName).clear());
         return dbutil.pTransaction(tx);
     }
 
-    async function pExportImageDb() {
+    async function pExportStore(storeName) {
         let db      = await pOpenDB();
-        let tx      = db.transaction(["TabImage"], "readonly");
+        let tx      = db.transaction([storeName], "readonly");
         let result  = {
-            "TabImage":     await dbutil.pRequest(tx.objectStore("TabImage").getAll()),
+            [storeName]:    await dbutil.pRequest(tx.objectStore(storeName).getAll()),
         };
         return dbutil.pTransaction(tx).then( () => result );
     }
 
-    function validateImportImageDb(dbJson) {
-        if (!dbJson["TabImage"]) throw Error("Favicon data 'TabImage' is not found.");
-        return dbJson;
-    }
-    
-    async function pImportImageDb(dbRecordsJson) {
-        let stores  = ["TabImage"];
+    async function pImportStore(storeName, dbRecordsJson) {
+        let stores  = [storeName];
         let db      = await pOpenDB();
         let tx      = db.transaction(stores, "readwrite");
         return Promise.all( stores.map( table => dbutil.pBatchPuts(tx.objectStore(table), dbRecordsJson[table]) ) )
@@ -156,12 +202,17 @@ let the_module = (function() {
     module.pDeleteDB = pDeleteDB;
     module.pSaveTabImage = pSaveTabImage;
     module.pGetTabImage = pGetTabImage;
-    module.pQueryByRange = pQueryByRange;
-    module.pDeleteByRange = pDeleteByRange;
-    module.pClearImageDb = pClearImageDb;
-    module.pExportImageDb = pExportImageDb;
-    module.pImportImageDb = pImportImageDb;
-    module.validateImportImageDb = validateImportImageDb;
+    module.pQueryTabImagesByRange  = pQueryTabImagesByRange;
+    module.pDeleteTabImagesByRange = pDeleteTabImagesByRange;
+
+    module.urlToKey = urlToKey;
+    module.pSaveTabFavicons = pSaveTabFavicons;
+    module.pGetTabFavicon = pGetTabFavicon;
+    module.pGetTabFavicons = pGetTabFavicons;
+    module.pDeleteTabFaviconsByRange = pDeleteTabFaviconsByRange;
+    module.pClearStore = pClearStore;
+    module.pExportStore = pExportStore;
+    module.pImportStore = pImportStore;
 
     log.info("module loaded");
     return module;

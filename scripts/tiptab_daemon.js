@@ -230,7 +230,7 @@ let the_module = (function() {
 
     function gcOldImages() {
         let deleteDaysAgo = 30;
-        db.pDeleteByRange(null, app.offsetByDays(new Date(), -deleteDaysAgo));
+        db.pDeleteTabImagesByRange(null, app.offsetByDays(new Date(), -deleteDaysAgo));
     }
     
     init();
