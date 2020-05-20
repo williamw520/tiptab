@@ -1,6 +1,5 @@
 
 * Feature TODO
-** DONE Cache thumbnails.  Use them when tabs are in "discarded" state.
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
@@ -13,6 +12,12 @@
 ** TODO Save all screenshots.  This needs zip support in Javascript.
 ** TODO Sort tabs
 
+
+* Release 2.19
+** Feature
+- Show tab's favicon even when it's in the "discarded" state.
+** Changes
+- Cache thumbnails.  Use them when tabs are in "discarded" state.
 
 * Release 2.18
 ** Feature
