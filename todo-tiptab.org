@@ -1,5 +1,32 @@
 
+* Develpment, Build, and Release
+** To install the dependency packages and development tools.
+   npm install
+   npm -g install web-ext
+** To set up build/dist folders and copy the required packages.
+   ./setup.sh
+** To build the release distribution package
+   ./build.sh
+** To run the extension in the browser.
+*** Run web-ext in the app directory for using the source directory as runtime files.  Changes in source is hot loaded.
+   cd app
+   web-ext run
+*** Run web-ext in the dist/app directory for using the staging directory as runtime files.
+   cd dist\app
+   web-ext run
+*** Load the dist\web-ext-artifact\*.zip file for using the deployment package.
+   web-ext run
+   about:debugging, load the zip file.
+*** On the launched browser, open the about:debugging page to access the extension.
+   about:debugging#/runtime/this-firefox
+*** To enable logging, uncomment the LOGLEVEL statement in util/appcfg.js.  Re-comment it out for release build.
+    module.LOGLEVEL = logger.LOG;
+    //module.LOGLEVEL = logger.WARN;
+
+
 * Feature TODO
+** TODO Fill in the thumbnails in a callback timer one by one to avoid hogging the CPU and hanging user input.
+** TODO Add a queue for background tasks to perform tasks one by one.
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Drag and drop multiple tabs across containers.
 ** TODO In-app shortcut keys.  Custom in-app shortcut keys.
