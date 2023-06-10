@@ -25,7 +25,9 @@
 
 
 * Feature TODO
-** TODO Fill in the thumbnails in a callback timer one by one to avoid hogging the CPU and hanging user input.
+** DONE Bug: On a session with many tabs, the initial UI refresh blocks the user input on search for far too long.
+** CANCELED Fill in the thumbnails in a callback timer one by one to avoid hogging the CPU and hanging user input.
+    The previous fix on the bug fixed the problem.
 ** TODO Add a queue for background tasks to perform tasks one by one.
 ** TODO Add status line at footer.  Show window/tab counts and filtering action result.
 ** TODO Drag and drop multiple tabs across containers.
