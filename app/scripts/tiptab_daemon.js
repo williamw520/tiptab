@@ -49,7 +49,7 @@ let the_module = (function() {
     let TipTabSettings = settings.TipTabSettings;
 
     const MAX_ACTIVATED_HISTORY = 10;
-    const TIPTAB_URL = browser.extension.getURL("tiptab.html");
+    const TIPTAB_URL = browser.runtime.getURL("tiptab.html");
 
     // Module variables.
     let ttSettings = TipTabSettings.ofLatest();

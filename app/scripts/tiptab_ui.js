@@ -43,7 +43,7 @@ let the_module = (function() {
 
     let TipTabSettings = settings.TipTabSettings;
 
-    const tiptabUrl = browser.extension.getURL("tiptab.html");
+    const tiptabUrl = browser.runtime.getURL("tiptab.html");
     function is_tiptaburl(url) { return url.startsWith(tiptabUrl) };    // sometimes # is added to the end of the url; just check prefix.
 
     // Display types
