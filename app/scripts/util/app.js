@@ -1,7 +1,7 @@
 /*
   Tip Tab
   A Firefox extension to manage and navigate the browser tabs.
-  Copyright (C) 2018  William Wong (williamw520@gmail.com)
+  Copyright (C) 2018-2023  William Wong (williamw520@gmail.com)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
