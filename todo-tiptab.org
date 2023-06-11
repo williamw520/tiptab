@@ -44,6 +44,7 @@
 * Release 2.20
 ** Changes
 - Bug fix: On a session with many tabs, the initial UI refresh blocks the user input on search for far too long.
+- Update to be in compiance with the Browser Extension Manifest v3 specification.
 
 * Release 2.19
 ** Feature
