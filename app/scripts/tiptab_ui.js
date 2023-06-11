@@ -390,7 +390,7 @@ let the_module = (function() {
     const ATTRS_FOR_UPDATE = ["url", "title", "favIconUrl", "audible", "pinned", "mutedInfo", "hidden"];
     
     function tabs_onUpdated(tabId, info, tab) {
-        //log.info("tabs_onUpdated ", tabId, Object.keys(info));
+        // log.info("tabs_onUpdated ", tabId, Object.keys(info));
         let exists = createTabDataAsNeeded(tab);    // tabs_onUpdated(, "favIconUrl", ) will be called before tabs_onCreated!
         if (!exists) {
             renderNewTab(tabById[tabId]);
@@ -850,7 +850,8 @@ let the_module = (function() {
 
 
     function pReloadRedrawRefreshContent() {
-        return pReloadTabsWindowsAndContainers().then( () => redrawRefreshUIContent(true, true) );
+        return pReloadTabsWindowsAndContainers()
+            .then( () => redrawRefreshUIContent(true, true) );
     }
 
     function pReloadTabsWindowsAndContainers() {
@@ -1771,20 +1772,20 @@ let the_module = (function() {
 
         if (thumbnailsMap[tid] && !forceRefreshImg) {
             // For other redrawing cases, use the image cached in memory.
-            renderThumbnail(tid, thumbnailsMap[tid]);
+            renderThumbnail(tid);
         } else {
             let tab = tabById[tid];
             if (tab.discarded) {
                 db.pGetTabImage(tab.url).then( record => {
                     if (record) {
                         thumbnailsMap[tid] = record.image;
-                        renderThumbnail(tid, thumbnailsMap[tid]);
+                        renderThumbnail(tid);
                     } else {
-                        pCaptureTab(tid).then( () => renderThumbnail(tid, thumbnailsMap[tid]) );
+                        pCaptureTab(tid).then( () => renderThumbnail(tid) );
                     }
                 });
             } else {
-                pCaptureTab(tid).then( () => renderThumbnail(tid, thumbnailsMap[tid]) );
+                pCaptureTab(tid).then( () => renderThumbnail(tid) );
             }
         }
     }
@@ -1807,7 +1808,8 @@ let the_module = (function() {
         return $tabbox(tid).find("img.tab-img");
     }
 
-    function renderThumbnail(tid, thumbnail) {
+    function renderThumbnail(tid) {
+        let thumbnail = thumbnailsMap[tid];
         $tabimg(tid).attr("src", thumbnail);
     }
 
